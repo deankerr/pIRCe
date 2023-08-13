@@ -7,7 +7,7 @@ debug.formatters.m = (v) => {
     const text = 'content' in v ? v.content.toString() : 'text' in v ? v.text.toString() : null
 
     let result = ''
-    if (role) result += `${role}]`
+    if (role) result += `${role.slice(0, 1).toUpperCase()}]`
     if (nick) result += `<${nick}>`
     if (text) result += text
 

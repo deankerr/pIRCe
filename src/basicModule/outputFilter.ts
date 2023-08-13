@@ -1,4 +1,4 @@
-import { context } from '../index.js'
+import { context } from './index.js'
 
 const maxNewlines = 3
 

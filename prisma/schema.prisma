@@ -40,3 +40,23 @@ model BasicModuleChatHistory {
   name String?
   content String
 }
+
+// Route: handling function/component group msg is sent to
+// Profile: Data used by the route, ie. prompt with history
+
+// match channel to route/profile
+model BasicModuleRoutes {
+  server String
+  target String // PM support?
+  match String // regexp to trigger
+  route String // function name/id
+  @@id([server, target, match, route])
+}
+
+
+model BasicModuleRouteProfile {
+  id Int @id @default(autoincrement()) // eventually for history
+  prompt String // support functions in the future
+  memoryLength Int
+  maxTokens Int
+}

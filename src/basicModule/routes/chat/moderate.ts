@@ -1,6 +1,5 @@
-import { Message, prisma } from '../db.js'
-import { context } from '../index.js'
-import { dbug } from '../logger.js'
+import { prisma, type Message } from '../../db.js'
+import { context, dbug } from '../../index.js'
 import { openAI } from './openAI.js'
 
 const log = dbug('moderation')

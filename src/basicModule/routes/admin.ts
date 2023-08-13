@@ -1,5 +1,5 @@
-import { command } from './command.js'
-import type { Message } from './db.js'
+import { command } from '../command.js'
+import type { Message } from '../db.js'
 
 export async function admin(msg: Message) {
   // admin commands

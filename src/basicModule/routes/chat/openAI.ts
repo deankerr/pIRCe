@@ -1,6 +1,6 @@
 import { Configuration, OpenAIApi, type CreateChatCompletionRequest } from 'openai'
 
-import { dbug } from '../logger.js'
+import { dbug } from '../../index.js'
 
 export type OAIChatMessages = CreateChatCompletionRequest['messages']
 

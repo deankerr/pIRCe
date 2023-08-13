@@ -1,7 +1,5 @@
-import { command } from '../command.js'
-import { addChatHistory, getChatHistory, type Message } from '../db.js'
-import { context } from '../index.js'
-import { dbug } from '../logger.js'
+import { addChatHistory, getChatHistory, type Message } from '../../db.js'
+import { command, context, dbug } from '../../index.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 
@@ -29,7 +27,7 @@ export async function chat(msg: Message) {
   } as const
 
   const conversation = [system, ...history, user]
-  conversation.forEach((m) => log('%m', m))
+  // conversation.forEach((m) => log('%m', m))
 
   const result = await openAI.chat(conversation, options.chatMaxTokens)
   if (!result) return log('chat failed')

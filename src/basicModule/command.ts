@@ -1,5 +1,5 @@
 import type { CommandMessage } from '../types.js'
-import { outputFilter } from './chat/outputFilter.js'
+import { outputFilter } from './outputFilter.js'
 
 const send = (message: CommandMessage) => {
   if (!process.send) throw new Error('process.send is unavailable')

@@ -2,11 +2,19 @@ import { config } from '@creditkarma/dynamic-config'
 import { PrismaClient } from '@prisma/client'
 
 import { BasicModuleOptions, EventMessage } from '../types.js'
-import type { OAIChatMessages } from './chat/openAI.js'
+import type { OAIChatMessages } from './routes/chat/openAI.js'
 
 export type { Message } from '@prisma/client'
 
 export const prisma = new PrismaClient()
+
+export async function getRoutes(server: string, target: string) {
+  console.log('getroutes', server, target)
+  const routes = await prisma.basicModuleRoutes.findMany({
+    where: { server: { in: [server, '*'] }, target: { in: [target, '*'] } },
+  })
+  return routes
+}
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({

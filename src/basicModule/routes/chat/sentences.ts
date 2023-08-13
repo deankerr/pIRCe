@@ -1,4 +1,4 @@
-import { dbug } from '../logger.js'
+import { dbug } from '../../index.js'
 
 const log = dbug('sent')
 
