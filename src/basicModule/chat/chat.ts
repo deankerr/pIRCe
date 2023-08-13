@@ -1,5 +1,5 @@
+import { command } from '../command.js'
 import { addChatHistory, getChatHistory, getOptions, type Message } from '../db.js'
-import { sendCommand } from '../index.js'
 import { logger } from '../logger.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
@@ -48,5 +48,5 @@ export async function chat(msg: Message) {
   const response = { role: 'assistant', content: result.message } as const
   addChatHistory(msg.target, user, response)
 
-  sendCommand.say(msg.target, result.message)
+  command.say(msg.target, result.message)
 }
