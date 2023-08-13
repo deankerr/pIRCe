@@ -1,0 +1,12 @@
+node_modules
+build
+
+.env
+
+config/*
+!config/default.ts
+
+logs
+*.log
+
+*.db

@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  time DateTime @default(now())
+
+  target String // channel, or origin nick in pm
+  nick String
+  text String
+  type String // message | action
+
+  checked Boolean @default(false)
+  allowed Boolean @default(false)
+  
+  user String?
+  host String?
+  server String
+}
+
+// JSON record store for arbitrary module data, ie. options/settings
+model BasicModuleOptions {
+  key String @id
+  value String
+}
+
+model BasicModuleChatHistory {
+  id Int @id @default(autoincrement())
+  target String
+  role String
+  name String?
+  content String
+}
