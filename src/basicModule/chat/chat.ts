@@ -1,11 +1,11 @@
 import { command } from '../command.js'
 import { addChatHistory, getChatHistory, type Message } from '../db.js'
 import { context } from '../index.js'
-import { logger } from '../logger.js'
+import { dbug } from '../logger.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 
-const log = logger.extend('chat')
+const log = dbug('chat')
 
 export async function chat(msg: Message) {
   const { self, options } = context
@@ -13,7 +13,7 @@ export async function chat(msg: Message) {
 
   if (!chatTrigger.test(msg.text)) return log('skipped %O', chatTrigger)
 
-  log('chat: %s: %s', msg.nick, msg.text)
+  log('start: %m', msg)
 
   const moderatedMsg = await moderate(msg)
 
@@ -29,13 +29,13 @@ export async function chat(msg: Message) {
   } as const
 
   const conversation = [system, ...history, user]
-  log('conversation: %O', conversation)
+  conversation.forEach((m) => log('%m', m))
 
   const result = await openAI.chat(conversation, options.chatMaxTokens)
   if (!result) return log('chat failed')
 
   log(
-    '< %s {%s %d/%d/%d}',
+    '>%m {%s %d/%d/%d}',
     result.message,
     result.finishReason,
     result.usage?.prompt_tokens,

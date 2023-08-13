@@ -3,11 +3,11 @@ import { admin } from './admin.js'
 import { chat } from './chat/chat.js'
 import { createMessage } from './db.js'
 import { context } from './index.js'
-import { logger } from './logger.js'
+import { dbug } from './logger.js'
 
-const log = logger.extend('router')
+const log = dbug('router')
 
-log('routes: ?')
+log('routes: TODO ?')
 export async function router(message: EventMessage) {
   const { options } = context
   const msg = await createMessage(message)

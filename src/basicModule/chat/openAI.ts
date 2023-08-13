@@ -1,10 +1,10 @@
 import { Configuration, OpenAIApi, type CreateChatCompletionRequest } from 'openai'
 
-import { logger } from '../logger.js'
+import { dbug } from '../logger.js'
 
 export type OAIChatMessages = CreateChatCompletionRequest['messages']
 
-const log = logger.extend('openAI')
+const log = dbug('openAI')
 
 const apiKey = process.env.OPENAI_API_KEY
 if (!apiKey) throw new Error('OPENAI_API_KEY is not set')

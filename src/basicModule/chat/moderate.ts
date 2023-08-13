@@ -1,9 +1,9 @@
 import { Message, prisma } from '../db.js'
 import { context } from '../index.js'
-import { logger } from '../logger.js'
+import { dbug } from '../logger.js'
 import { openAI } from './openAI.js'
 
-const log = logger.extend('moderation')
+const log = dbug('moderation')
 
 export async function moderate(msg: Message) {
   const { options } = context

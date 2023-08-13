@@ -1,6 +1,6 @@
-import { logger } from '../logger.js'
+import { dbug } from '../logger.js'
 
-const log = logger.extend('sen')
+const log = dbug('sent')
 
 export function sentences(input: string) {
   if (!input) return [``]
