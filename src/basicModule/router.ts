@@ -6,13 +6,10 @@ import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
 
-const realroutes = [admin, chat]
+const routeList = [admin, chat]
+log('routes: %o', routeList)
 
-// const matchers = {
-//   toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i'),
-//   adminKeyword: new RegExp(`^${msg.text} `, 'i'),
-// }
-
+// create dynamic/context specific matchers
 function match(ctx: typeof context, msg: Message) {
   const matchers = {
     toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i').test(msg.text),
@@ -22,25 +19,20 @@ function match(ctx: typeof context, msg: Message) {
   return matchers as Record<string, boolean>
 }
 
-log('routes: TODO ?')
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
   const routes = await getRoutes(msg.server, msg.target)
-  log('got routes: %o', routes)
   const matchers = match(context, msg)
-  log('matchers: %o', matchers)
 
-  const routematch = routes.map((r) => (matchers[r.match] ? r.route : null)).filter(Boolean)
-  log('results %o', routematch)
-  // TODO abort if none
+  const matched = routes.map((r) => (matchers[r.match] ? r.route : null)).filter(Boolean)
+  log('matched: %O', matched)
 
-  const theroute = realroutes.find((r) => r.name === routematch[0])
+  const route = routeList.find((r) => r.name === matched[0]) //? handle multiple
 
-  if (theroute) {
-    log('ROUTE: %s', theroute.name)
-    theroute(msg)
-  } else {
-    log('No Route Found')
+  if (typeof route === 'function') route(msg)
+  else {
+    log('matched: %o', route)
+    throw new Error('Invalid route')
   }
 }
