@@ -1,10 +1,9 @@
 import { getOptions } from '../db.js'
 
-const options = await getOptions()
-
 const maxNewlines = 3
 
-export function outputFilter(text: string) {
+export async function outputFilter(text: string) {
+  const options = await getOptions()
   // remove excess newlines, concat to one line if above max
   const split = text.split('\n').filter((t) => t !== '')
   const joined = split.length > maxNewlines ? split.join(' ') : split.join('\n')

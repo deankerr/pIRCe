@@ -6,6 +6,7 @@ import type { OAIChatMessages } from './chat/openAI.js'
 import { logger } from './logger.js'
 
 export type { Message } from '@prisma/client'
+
 export const prisma = new PrismaClient()
 
 const log = logger.extend('db')
@@ -51,6 +52,7 @@ export async function getChatHistory(target: string, limit: number): Promise<OAI
 // TODO ensure only runs once
 let optionsInitialized = false
 export async function initializeOptions() {
+  log('init options')
   const defaultOptions = await config().get<BasicModuleOptions>('basicModuleOptions')
   const currentOptions = await prisma.basicModuleOptions.findMany()
 

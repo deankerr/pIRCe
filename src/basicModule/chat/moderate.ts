@@ -2,10 +2,10 @@ import { getOptions, Message, prisma } from '../db.js'
 import { logger } from '../logger.js'
 import { openAI } from './openAI.js'
 
-const options = await getOptions()
 const log = logger.extend('moderation')
 
 export async function moderate(msg: Message) {
+  const options = await getOptions()
   const input = `${msg.nick}: ${msg.text}`
   const result = await openAI.moderation(input)
 

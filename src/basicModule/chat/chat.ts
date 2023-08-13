@@ -4,15 +4,14 @@ import { logger } from '../logger.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 
-// TODO determine current nick more accurately
-const IRC_NICK = process.argv[3]
-// TODO make this a dynamic option
-const chatTrigger = new RegExp(`^\\s*${IRC_NICK}[^\\w]`, 'i')
-
 const log = logger.extend('chat')
-const options = await getOptions()
 
 export async function chat(msg: Message) {
+  // TODO context
+  const options = await getOptions()
+  const IRC_NICK = process.argv[3]
+  const chatTrigger = new RegExp(`^\\s*${IRC_NICK}[^\\w]`, 'i')
+
   if (!chatTrigger.test(msg.text)) return
 
   log('chat: %s: %s', msg.nick, msg.text)

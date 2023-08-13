@@ -7,11 +7,11 @@ const send = (message: CommandMessage) => {
 }
 
 export const command = {
-  say: (target: string, message: string) => {
-    send({ say: [target, outputFilter(message)] })
+  say: async (target: string, message: string) => {
+    send({ say: [target, await outputFilter(message)] })
   },
-  action: (target: string, message: string) => {
-    send({ action: [target, outputFilter(message)] })
+  action: async (target: string, message: string) => {
+    send({ action: [target, await outputFilter(message)] })
   },
   join: (target: string) => {
     send({ join: target })
