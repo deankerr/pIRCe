@@ -1,5 +1,6 @@
 import { command } from '../command.js'
-import { addChatHistory, getChatHistory, getOptions, type Message } from '../db.js'
+import { addChatHistory, getChatHistory, type Message } from '../db.js'
+import { context } from '../index.js'
 import { logger } from '../logger.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
@@ -7,12 +8,10 @@ import { openAI } from './openAI.js'
 const log = logger.extend('chat')
 
 export async function chat(msg: Message) {
-  // TODO context
-  const options = await getOptions()
-  const IRC_NICK = process.argv[3]
-  const chatTrigger = new RegExp(`^\\s*${IRC_NICK}[^\\w]`, 'i')
+  const { self, options } = context
+  const chatTrigger = new RegExp(`^\\s*${self.nick}[^\\w]`, 'i')
 
-  if (!chatTrigger.test(msg.text)) return
+  if (!chatTrigger.test(msg.text)) return log('skipped %O', chatTrigger)
 
   log('chat: %s: %s', msg.nick, msg.text)
 

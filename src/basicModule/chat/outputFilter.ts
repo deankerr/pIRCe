@@ -1,9 +1,9 @@
-import { getOptions } from '../db.js'
+import { context } from '../index.js'
 
 const maxNewlines = 3
 
 export async function outputFilter(text: string) {
-  const options = await getOptions()
+  const { options } = context
   // remove excess newlines, concat to one line if above max
   const split = text.split('\n').filter((t) => t !== '')
   const joined = split.length > maxNewlines ? split.join(' ') : split.join('\n')

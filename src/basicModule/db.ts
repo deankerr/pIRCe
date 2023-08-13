@@ -3,13 +3,10 @@ import { PrismaClient } from '@prisma/client'
 
 import { BasicModuleOptions, EventMessage } from '../types.js'
 import type { OAIChatMessages } from './chat/openAI.js'
-import { logger } from './logger.js'
 
 export type { Message } from '@prisma/client'
 
 export const prisma = new PrismaClient()
-
-const log = logger.extend('db')
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({
@@ -49,34 +46,26 @@ export async function getChatHistory(target: string, limit: number): Promise<OAI
   return history as OAIChatMessages
 }
 
-// TODO ensure only runs once
-let optionsInitialized = false
-export async function initializeOptions() {
-  log('init options')
-  const defaultOptions = await config().get<BasicModuleOptions>('basicModuleOptions')
-  const currentOptions = await prisma.basicModuleOptions.findMany()
+export async function initOptions() {
+  const defaults = await config().get<BasicModuleOptions>('basicModuleOptions')
+  const previous = await prisma.basicModuleOptions.findMany()
 
-  const keys = Object.keys(defaultOptions) as (keyof typeof defaultOptions)[]
+  const options = { ...defaults }
 
-  for (const key of keys) {
-    const dbOption = currentOptions.find((item) => item.key === key)
-
-    // if not found, initialize with default value
-    if (!dbOption) {
-      const value = defaultOptions[key]
-      log('adding default option [%s] => %O', key, value)
-      await prisma.basicModuleOptions.create({ data: { key, value: JSON.stringify(value) } })
-    }
+  // merge stored option records with default
+  for (const opt of previous) {
+    const obj = { [opt.key]: JSON.parse(opt.value) }
+    Object.assign(options, obj)
   }
 
-  optionsInitialized = true
-}
+  // store the result in the db
+  for (const [key, value] of Object.entries(options)) {
+    await prisma.basicModuleOptions.upsert({
+      where: { key },
+      create: { key, value: JSON.stringify(value) },
+      update: { value: JSON.stringify(value) },
+    })
+  }
 
-export async function getOptions() {
-  if (!optionsInitialized) await initializeOptions()
-  const record = await prisma.basicModuleOptions.findMany()
-  const options = record.reduce<BasicModuleOptions>((acc, cur) => {
-    return { ...acc, [cur.key]: JSON.parse(cur.value) }
-  }, {} as BasicModuleOptions)
   return options
 }
