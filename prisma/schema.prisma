@@ -11,33 +11,33 @@ datasource db {
 }
 
 model Message {
-  id Int @id @default(autoincrement())
+  id   Int      @id @default(autoincrement())
   time DateTime @default(now())
 
   target String // channel, or origin nick in pm
-  nick String
-  text String
-  type String // message | action
+  nick   String
+  text   String
+  type   String // message | action
 
   checked Boolean @default(false)
   allowed Boolean @default(false)
-  
-  user String?
-  host String?
+
+  user   String?
+  host   String?
   server String
 }
 
 // JSON record store for arbitrary module data, ie. options/settings
 model OptionData {
-  key String @id
+  key   String @id
   value String
 }
 
 model ChatHistory {
-  id Int @id @default(autoincrement())
-  target String
-  role String
-  name String?
+  id      Int     @id @default(autoincrement())
+  target  String
+  role    String
+  name    String?
   content String
 }
 
@@ -46,17 +46,21 @@ model ChatHistory {
 
 // match channel to route/profile
 model Routes {
-  server String // * = any
-  target String // #* any channel, #* any query (ie. pm)
-  matcher String // regexp to trigger
-  route String // function name/id
+  server          String // * = any
+  target          String // #* any channel, #* any query (ie. pm)
+  matcher         String // regexp to trigger
+  route           String // function name/id
+  systemProfile   SystemProfile? @relation(fields: [systemProfileID], references: [id])
+  systemProfileID Int?
+
   @@id([server, target, matcher, route])
 }
 
 // used by route to set system prompt etc
-model AIProfile {
-  id Int @id @default(autoincrement()) // eventually for history
-  prompt String // support functions in the future
+model SystemProfile {
+  id           Int      @id @default(autoincrement()) // eventually for history
+  prompt       String // support functions in the future
   memoryLength Int
-  maxTokens Int
+  maxTokens    Int
+  Routes       Routes[]
 }

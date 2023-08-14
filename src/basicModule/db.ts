@@ -10,7 +10,7 @@ export const prisma = new PrismaClient()
 
 export async function getRoutes(server: string, target: string) {
   console.log('getroutes', server, target)
-  const targetList = [target, '*', target.startsWith('#') ? '#*' : '?*']
+  const targetList = [target, '*', target.startsWith('#') ? '##' : '??']
 
   const routes = await prisma.routes.findMany({
     where: { server: { in: [server, '*'] }, target: { in: targetList } },
@@ -20,6 +20,10 @@ export async function getRoutes(server: string, target: string) {
 
 export async function getAllRoutes() {
   return await prisma.routes.findMany()
+}
+
+export async function getProfile() {
+  ///
 }
 
 export async function createMessage(ircMessage: EventMessage) {

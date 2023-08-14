@@ -13,6 +13,8 @@ export async function chat(msg: Message) {
 
   if (!moderatedMsg || !moderatedMsg.allowed) return
 
+  // const profile =
+
   const history = await getChatHistory(msg.target, options.chatMemoryLength)
 
   const system = { role: 'system', content: options.chatSystemPrompt } as const
