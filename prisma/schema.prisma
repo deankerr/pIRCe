@@ -47,7 +47,7 @@ model ChatHistory {
 // match channel to route/profile
 model Routes {
   server          String // * = any
-  target          String // #* any channel, #* any query (ie. pm)
+  target          String // ## any channel, ?? any query (ie. pm)
   matcher         String // regexp to trigger
   route           String // function name/id
   systemProfile   SystemProfile? @relation(fields: [systemProfileID], references: [id])

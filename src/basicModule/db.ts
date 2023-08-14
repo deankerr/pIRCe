@@ -8,7 +8,7 @@ export type { Message } from '@prisma/client'
 
 export const prisma = new PrismaClient()
 
-export async function getRoutes(server: string, target: string) {
+export async function getRoutesForTarget(server: string, target: string) {
   console.log('getroutes', server, target)
   const targetList = [target, '*', target.startsWith('#') ? '##' : '??']
 
@@ -22,7 +22,7 @@ export async function getAllRoutes() {
   return await prisma.routes.findMany()
 }
 
-export async function getSystemProfile(id: number) {
+export async function getSystemProfileByID(id: number) {
   return await prisma.systemProfile.findUniqueOrThrow({ where: { id } })
 }
 

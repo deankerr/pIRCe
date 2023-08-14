@@ -1,5 +1,5 @@
 import { EventMessage } from '../types.js'
-import { createMessage, getAllRoutes, getRoutes, Message } from './db.js'
+import { createMessage, getAllRoutes, getRoutesForTarget, Message } from './db.js'
 import { context, dbug } from './index.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
@@ -15,7 +15,7 @@ log(
 )
 
 // create dynamic/context specific matchers
-function match(ctx: typeof context, msg: Message) {
+function createMatchers(ctx: typeof context, msg: Message) {
   const matchers = {
     toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i').test(msg.text),
     adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i').test(msg.text),
@@ -27,18 +27,24 @@ function match(ctx: typeof context, msg: Message) {
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
-  const routes = await getRoutes(msg.server, msg.target)
+  const routes = await getRoutesForTarget(msg.server, msg.target)
+  const matchers = createMatchers(context, msg)
 
-  const matchers = match(context, msg)
+  const matchedRoutes = routes
+    .map((route) => (matchers[route.matcher] ? route : null))
+    .filter(Boolean)
 
-  const matched = routes.map((route) => (matchers[route.matcher] ? route : null)).filter(Boolean)
+  if (!matchedRoutes.length) return log('no match')
+  else log('matched: %O', matchedRoutes)
 
-  if (!matched.length) return log('no match')
-  else log('matched: %O', matched)
+  // sort by target char length for very approximate specificity
+  const [match] = matchedRoutes.sort(
+    (a, b) => b.target.length + b.server.length - (a.target.length + a.server.length),
+  )
 
-  const route = routeList.find((r) => r.name === matched[0].route) //? handle multiple
+  const route = routeList.find((r) => r.name === match.route)
 
-  if (typeof route === 'function') route(msg)
+  if (typeof route === 'function') route(msg, match.systemProfileID ?? 0)
   else {
     log('matched: %o', route)
     throw new Error('Invalid route')
