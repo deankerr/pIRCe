@@ -35,7 +35,7 @@ export async function chat(msg: Message, profileID: number, matcher: RegExp) {
   if (!result) return log('chat failed')
 
   log(
-    '>%m {%s %d/%d/%d}',
+    '%m {%s %d/%d/%d}',
     result.message,
     result.finishReason,
     result.usage?.prompt_tokens,

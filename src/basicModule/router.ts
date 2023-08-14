@@ -29,7 +29,7 @@ export async function router(message: EventMessage) {
   const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
 
   if (!matchedRoutes.length) return
-  else log('matched: %O', matchedRoutes)
+  else log(matchedRoutes.map((r) => `${r.route}/${r.systemProfileID}`))
 
   // sort by target char length for very approximate specificity
   const [match] = matchedRoutes.sort(
