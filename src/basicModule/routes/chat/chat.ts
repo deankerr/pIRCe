@@ -1,5 +1,5 @@
 import { addChatHistory, getChatHistory, getSystemProfileByID, type Message } from '../../db.js'
-import { command, dbug } from '../../index.js'
+import { command, context, dbug } from '../../index.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 
@@ -23,7 +23,7 @@ export async function chat(msg: Message, profileID: number, matcher: RegExp) {
   const user = {
     role: 'user',
     name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
-    content: stripMatcher(msg.text, matcher), //? handle better - record matcher used?
+    content: stripMatcher(msg.text, matcher), //? handle better - remember matcher used?
   } as const
 
   const conversation = [system, ...history, user]
@@ -44,7 +44,7 @@ export async function chat(msg: Message, profileID: number, matcher: RegExp) {
   )
 
   const response = { role: 'assistant', content: result.message } as const
-  addChatHistory(msg.target, user, response)
+  addChatHistory(context.server, msg.target, user, response)
 
   command.say(msg.target, result.message)
 }

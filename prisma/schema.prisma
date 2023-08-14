@@ -34,8 +34,11 @@ model OptionData {
 }
 
 model ChatHistory {
-  id      Int     @id @default(autoincrement())
-  target  String
+  id Int @id @default(autoincrement())
+
+  server String @default("missing") // TODO remove after migrate
+  target String
+
   role    String
   name    String?
   content String

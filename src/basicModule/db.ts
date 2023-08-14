@@ -34,10 +34,11 @@ export async function createMessage(ircMessage: EventMessage) {
   return msg
 }
 
-export async function addChatHistory(target: string, ...items: OAIChatMessages) {
+export async function addChatHistory(server: string, target: string, ...items: OAIChatMessages) {
   for (const item of items) {
     await prisma.chatHistory.create({
       data: {
+        server,
         target: target,
         role: item.role,
         name: item.name,
