@@ -7,7 +7,7 @@ const log = dbug('chat')
 const outputConvoLog = false
 // TODO uniform interface for routes, ie name, params
 
-export async function chat(msg: Message, profileID: number) {
+export async function chat(msg: Message, profileID: number, matcher: RegExp) {
   log('start: %m', msg)
 
   const moderatedMsg = await moderate(msg)
@@ -23,7 +23,7 @@ export async function chat(msg: Message, profileID: number) {
   const user = {
     role: 'user',
     name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
-    content: msg.text,
+    content: stripMatcher(msg.text, matcher), //? handle better - record matcher used?
   } as const
 
   const conversation = [system, ...history, user]
@@ -47,4 +47,8 @@ export async function chat(msg: Message, profileID: number) {
   addChatHistory(msg.target, user, response)
 
   command.say(msg.target, result.message)
+}
+
+function stripMatcher(text: string, matcher: RegExp) {
+  return text.replace(matcher, '')
 }

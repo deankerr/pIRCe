@@ -1,40 +1,34 @@
 import { EventMessage } from '../types.js'
-import { createMessage, getAllRoutes, getRoutesForTarget, Message } from './db.js'
+import { createMessage, getRoutesForTarget } from './db.js'
 import { context, dbug } from './index.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
 
-log('routes table: %O', await getAllRoutes())
-
 const routeList = [admin, chat]
-log(
-  'route functions: %o',
-  routeList.map((r) => r.name),
-)
 
-// create dynamic/context specific matchers
-function createMatchers(ctx: typeof context, msg: Message) {
-  const matchers = {
-    toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i').test(msg.text),
-    adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i').test(msg.text),
+// create dynamic matcher tester for this context, return expressions that match
+function createContextualMatcher(ctx: typeof context) {
+  const matchers: Record<string, RegExp> = {
+    toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i'),
+    adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i'),
   }
 
-  return matchers as Record<string, boolean>
+  return matchers
 }
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
+  // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
-  const matchers = createMatchers(context, msg)
+  // regexp tester
+  const contextMatcher = createContextualMatcher(context)
+  // message matches regexp
+  const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
 
-  const matchedRoutes = routes
-    .map((route) => (matchers[route.matcher] ? route : null))
-    .filter(Boolean)
-
-  if (!matchedRoutes.length) return log('no match')
+  if (!matchedRoutes.length) return
   else log('matched: %O', matchedRoutes)
 
   // sort by target char length for very approximate specificity
@@ -42,9 +36,11 @@ export async function router(message: EventMessage) {
     (a, b) => b.target.length + b.server.length - (a.target.length + a.server.length),
   )
 
+  // match name to function in list
   const route = routeList.find((r) => r.name === match.route)
 
-  if (typeof route === 'function') route(msg, match.systemProfileID ?? 0)
+  if (typeof route === 'function')
+    route(msg, match.systemProfileID ?? 0, contextMatcher[match.matcher])
   else {
     log('matched: %o', route)
     throw new Error('Invalid route')
