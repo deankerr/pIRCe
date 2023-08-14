@@ -1,23 +1,25 @@
-import { addChatHistory, getChatHistory, type Message } from '../../db.js'
-import { command, context, dbug } from '../../index.js'
+import { addChatHistory, getChatHistory, getSystemProfile, type Message } from '../../db.js'
+import { command, dbug } from '../../index.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 
 const log = dbug('chat')
+const _debug_log_memory = false
+// TODO uniform interface for routes, ie name, params
 
-export async function chat(msg: Message) {
-  const { options } = context
+export async function chat(msg: Message, profileID = 0) {
   log('start: %m', msg)
 
   const moderatedMsg = await moderate(msg)
 
   if (!moderatedMsg || !moderatedMsg.allowed) return
 
-  // const profile =
+  const profile = await getSystemProfile(profileID)
+  const system = { role: 'system', content: profile.prompt } as const
 
-  const history = await getChatHistory(msg.target, options.chatMemoryLength)
+  //? wipe history, store per profile?
+  const history = await getChatHistory(msg.target, profile.memoryLength)
 
-  const system = { role: 'system', content: options.chatSystemPrompt } as const
   const user = {
     role: 'user',
     name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
@@ -25,9 +27,11 @@ export async function chat(msg: Message) {
   } as const
 
   const conversation = [system, ...history, user]
-  // conversation.forEach((m) => log('%m', m))
 
-  const result = await openAI.chat(conversation, options.chatMaxTokens)
+  if (_debug_log_memory) conversation.forEach((m) => log('%m', m))
+  else log('%m %m', system, user)
+
+  const result = await openAI.chat(conversation, profile.maxTokens)
   if (!result) return log('chat failed')
 
   log(

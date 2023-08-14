@@ -31,12 +31,12 @@ export async function router(message: EventMessage) {
 
   const matchers = match(context, msg)
 
-  const matched = routes.map((r) => (matchers[r.matcher] ? r.route : null)).filter(Boolean)
+  const matched = routes.map((route) => (matchers[route.matcher] ? route : null)).filter(Boolean)
 
   if (!matched.length) return log('no match')
   else log('matched: %O', matched)
 
-  const route = routeList.find((r) => r.name === matched[0]) //? handle multiple
+  const route = routeList.find((r) => r.name === matched[0].route) //? handle multiple
 
   if (typeof route === 'function') route(msg)
   else {

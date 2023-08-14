@@ -22,8 +22,8 @@ export async function getAllRoutes() {
   return await prisma.routes.findMany()
 }
 
-export async function getProfile() {
-  ///
+export async function getSystemProfile(id: number) {
+  return await prisma.systemProfile.findUniqueOrThrow({ where: { id } })
 }
 
 export async function createMessage(ircMessage: EventMessage) {
