@@ -32,7 +32,7 @@ export class IRCClient extends IrcClient {
 
     // add irc events to foward to bot
     this.on('message', (nick, to, text, message) => {
-      if (text === reloadKeyword && !to.startsWith('#')) {
+      if (text === reloadKeyword) {
         this.reloadBot()
       } else {
         const packet = {

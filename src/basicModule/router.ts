@@ -5,7 +5,9 @@ import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
+
 const verbose = dbug('router:v')
+verbose.enabled = false
 
 const routeList = [admin, chat]
 
@@ -25,13 +27,13 @@ export async function router(message: EventMessage) {
 
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
-  verbose(routes)
+  verbose('%o', routes)
   // regexp tester
   const contextMatcher = createContextualMatcher(context)
-  verbose(contextMatcher)
+  verbose('%o', contextMatcher)
   // message matches regexp
   const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
-  verbose(matchedRoutes)
+  verbose('%o', matchedRoutes)
   if (!matchedRoutes.length) return
   else log(matchedRoutes.map((r) => `${r.route}/${r.systemProfileID}`))
 
