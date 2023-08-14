@@ -7,7 +7,10 @@ import { chat } from './routes/chat/chat.js'
 const log = dbug('router')
 
 const routeList = [admin, chat]
-log('routes: %o', routeList)
+log(
+  'available: %o',
+  routeList.map((r) => r.name),
+)
 
 // create dynamic/context specific matchers
 function match(ctx: typeof context, msg: Message) {
@@ -26,7 +29,9 @@ export async function router(message: EventMessage) {
   const matchers = match(context, msg)
 
   const matched = routes.map((r) => (matchers[r.match] ? r.route : null)).filter(Boolean)
-  log('matched: %O', matched)
+
+  if (!matched.length) return log('no match')
+  else log('matched: %O', matched)
 
   const route = routeList.find((r) => r.name === matched[0]) //? handle multiple
 

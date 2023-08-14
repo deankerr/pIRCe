@@ -6,11 +6,7 @@ import { openAI } from './openAI.js'
 const log = dbug('chat')
 
 export async function chat(msg: Message) {
-  const { self, options } = context
-  const chatTrigger = new RegExp(`^\\s*${self.nick}[^\\w]`, 'i')
-
-  if (!chatTrigger.test(msg.text)) return log('skipped %O', chatTrigger)
-
+  const { options } = context
   log('start: %m', msg)
 
   const moderatedMsg = await moderate(msg)
