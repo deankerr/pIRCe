@@ -10,10 +10,16 @@ export const prisma = new PrismaClient()
 
 export async function getRoutes(server: string, target: string) {
   console.log('getroutes', server, target)
-  const routes = await prisma.basicModuleRoutes.findMany({
-    where: { server: { in: [server, '*'] }, target: { in: [target, '*'] } },
+  const targetList = [target, '*', target.startsWith('#') ? '#*' : '?*']
+
+  const routes = await prisma.routes.findMany({
+    where: { server: { in: [server, '*'] }, target: { in: targetList } },
   })
   return routes
+}
+
+export async function getAllRoutes() {
+  return await prisma.routes.findMany()
 }
 
 export async function createMessage(ircMessage: EventMessage) {
@@ -26,7 +32,7 @@ export async function createMessage(ircMessage: EventMessage) {
 
 export async function addChatHistory(target: string, ...items: OAIChatMessages) {
   for (const item of items) {
-    await prisma.basicModuleChatHistory.create({
+    await prisma.chatHistory.create({
       data: {
         target: target,
         role: item.role,
@@ -38,7 +44,7 @@ export async function addChatHistory(target: string, ...items: OAIChatMessages) 
 }
 
 export async function getChatHistory(target: string, limit: number): Promise<OAIChatMessages> {
-  const raw = await prisma.basicModuleChatHistory.findMany({
+  const raw = await prisma.chatHistory.findMany({
     where: { target },
     select: { role: true, name: true, content: true },
     take: -limit,
@@ -56,7 +62,7 @@ export async function getChatHistory(target: string, limit: number): Promise<OAI
 
 export async function initOptions() {
   const defaults = await config().get<BasicModuleOptions>('basicModuleOptions')
-  const previous = await prisma.basicModuleOptions.findMany()
+  const previous = await prisma.optionData.findMany()
 
   const options = { ...defaults }
 
@@ -68,7 +74,7 @@ export async function initOptions() {
 
   // store the result in the db
   for (const [key, value] of Object.entries(options)) {
-    await prisma.basicModuleOptions.upsert({
+    await prisma.optionData.upsert({
       where: { key },
       create: { key, value: JSON.stringify(value) },
       update: { value: JSON.stringify(value) },

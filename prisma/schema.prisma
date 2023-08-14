@@ -28,12 +28,12 @@ model Message {
 }
 
 // JSON record store for arbitrary module data, ie. options/settings
-model BasicModuleOptions {
+model OptionData {
   key String @id
   value String
 }
 
-model BasicModuleChatHistory {
+model ChatHistory {
   id Int @id @default(autoincrement())
   target String
   role String
@@ -45,16 +45,16 @@ model BasicModuleChatHistory {
 // Profile: Data used by the route, ie. prompt with history
 
 // match channel to route/profile
-model BasicModuleRoutes {
-  server String
-  target String // PM support?
-  match String // regexp to trigger
+model Routes {
+  server String // * = any
+  target String // #* any channel, #* any query (ie. pm)
+  matcher String // regexp to trigger
   route String // function name/id
-  @@id([server, target, match, route])
+  @@id([server, target, matcher, route])
 }
 
-
-model BasicModuleRouteProfile {
+// used by route to set system prompt etc
+model AIProfile {
   id Int @id @default(autoincrement()) // eventually for history
   prompt String // support functions in the future
   memoryLength Int

@@ -1,14 +1,16 @@
 import { EventMessage } from '../types.js'
-import { createMessage, getRoutes, Message } from './db.js'
+import { createMessage, getAllRoutes, getRoutes, Message } from './db.js'
 import { context, dbug } from './index.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
 
+log('routes table: %O', await getAllRoutes())
+
 const routeList = [admin, chat]
 log(
-  'available: %o',
+  'route functions: %o',
   routeList.map((r) => r.name),
 )
 
@@ -26,9 +28,10 @@ export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
   const routes = await getRoutes(msg.server, msg.target)
+
   const matchers = match(context, msg)
 
-  const matched = routes.map((r) => (matchers[r.match] ? r.route : null)).filter(Boolean)
+  const matched = routes.map((r) => (matchers[r.matcher] ? r.route : null)).filter(Boolean)
 
   if (!matched.length) return log('no match')
   else log('matched: %O', matched)
