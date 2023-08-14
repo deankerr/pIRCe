@@ -22,8 +22,5 @@ export const module = {
 export const basicModuleOptions: BasicModuleOptions = {
   allowedModerationCategories: [''],
   adminKeyword: '!!admin!!',
-  chatSystemPrompt: 'You are a robot. You respond with a short sentence.',
-  chatMemoryLength: 10,
-  chatMaxTokens: 40,
   outputWordFilterList: ['badword'],
 }

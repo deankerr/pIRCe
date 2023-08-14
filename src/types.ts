@@ -26,8 +26,5 @@ export type IRCConfig = Partial<IrcOptions> &
 export type BasicModuleOptions = {
   allowedModerationCategories: string[]
   adminKeyword: string
-  chatSystemPrompt: string
-  chatMemoryLength: number
-  chatMaxTokens: number
   outputWordFilterList: string[]
 }

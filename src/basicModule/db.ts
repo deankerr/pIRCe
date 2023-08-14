@@ -64,6 +64,7 @@ export async function getChatHistory(target: string, limit: number): Promise<OAI
   return history as OAIChatMessages
 }
 
+// ? Switch to seeded data
 export async function initOptions() {
   const defaults = await config().get<BasicModuleOptions>('basicModuleOptions')
   const previous = await prisma.optionData.findMany()
