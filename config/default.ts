@@ -1,7 +1,7 @@
 import type { BasicModuleOptions, IRCConfig } from '../src/types.js'
 
 export const irc: IRCConfig = {
-  host: 'irc.libera.chat',
+  host: 'irc.server.addr',
   port: 6667,
 
   nick: 'pIRCebot',

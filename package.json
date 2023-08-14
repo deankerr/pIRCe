@@ -5,10 +5,12 @@
   "exports": "./src/server.js",
   "type": "module",
   "scripts": {
+    "start": "NODE_ENV=production DEBUG=pIRCe:* ts-node src/server.ts",
     "dev": "DEBUG=pIRCe:* ts-node src/server.ts",
     "check": "tsc --noEmit",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "studio": "prisma studio -port 5557"
   },
   "keywords": [],
   "author": "",
