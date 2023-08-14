@@ -5,13 +5,15 @@ import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
+const verbose = dbug('router:v')
 
 const routeList = [admin, chat]
 
 // create dynamic matcher tester for this context, return expressions that match
 function createContextualMatcher(ctx: typeof context) {
   const matchers: Record<string, RegExp> = {
-    toNick: new RegExp(`^\\s*${ctx.self.nick}[^\\w]`, 'i'),
+    firstWordIsOurNick: new RegExp(`^\\s*${ctx.self.nick}\\W`, 'i'),
+    saidOurNick: new RegExp(`\\W${ctx.self.nick}\\W`, 'i'),
     adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i'),
   }
 
@@ -23,11 +25,13 @@ export async function router(message: EventMessage) {
 
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
+  verbose(routes)
   // regexp tester
   const contextMatcher = createContextualMatcher(context)
+  verbose(contextMatcher)
   // message matches regexp
   const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
-
+  verbose(matchedRoutes)
   if (!matchedRoutes.length) return
   else log(matchedRoutes.map((r) => `${r.route}/${r.systemProfileID}`))
 
