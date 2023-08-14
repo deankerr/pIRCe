@@ -9,7 +9,6 @@ export type { Message } from '@prisma/client'
 export const prisma = new PrismaClient()
 
 export async function getRoutesForTarget(server: string, target: string) {
-  console.log('getroutes', server, target)
   const targetList = [target, '*', target.startsWith('#') ? '##' : '??']
 
   const routes = await prisma.routes.findMany({
