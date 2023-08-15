@@ -33,3 +33,6 @@ function watchReload() {
 const watch = chokidar.watch(moduleInfo.path, { ignoreInitial: true })
 watch.on('add', watchReload)
 watch.on('change', watchReload)
+
+const ircRaw = debug('pIRCeIRC')
+irc.on('raw', (message) => ircRaw(message))
