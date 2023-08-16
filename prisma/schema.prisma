@@ -30,6 +30,8 @@ model Message {
   user   String?
   host   String?
   server String
+
+  @@map("messages")
 }
 
 // JSON record store for arbitrary module data, ie. options/settings
@@ -39,9 +41,10 @@ model OptionData {
 }
 
 model ChatHistory {
-  id Int @id @default(autoincrement())
+  id      Int      @id @default(autoincrement())
+  created DateTime @default(now())
 
-  server String @default("missing") // TODO remove after migrate
+  server String 
   target String
 
   role    String
@@ -53,22 +56,27 @@ model ChatHistory {
 // Profile: Data used by the route, ie. prompt with history
 
 // match channel to route/profile
-model Routes {
-  server          String // * = any
-  target          String // ## any channel, ?? any query (ie. pm)
-  matcher         String // regexp to trigger
-  route           String // function name/id
-  systemProfile   SystemProfile? @relation(fields: [systemProfileID], references: [id])
-  systemProfileID Int?
+model Route {
+  id Int @id @default(autoincrement())
 
-  @@id([server, target, matcher, route])
+  server  String // * = any
+  target  String // ## any channel, ?? any query (ie. pm)
+  matcher String // regexp to trigger
+
+  handler   String // function name/id
+  profile   Profile @relation(fields: [profileID], references: [id])
+  profileID Int
+
+  @@unique([server, target, matcher])
 }
 
-// used by route to set system prompt etc
-model SystemProfile {
-  id           Int      @id @default(autoincrement()) // eventually for history
-  prompt       String // support functions in the future
+model Profile {
+  id           Int    @id @default(autoincrement())
+  
+  label        String // info only
+  text         String
   memoryLength Int
   maxTokens    Int
-  Routes       Routes[]
+
+  route        Route[]
 }

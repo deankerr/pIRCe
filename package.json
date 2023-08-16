@@ -10,7 +10,8 @@
     "check": "tsc --noEmit",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "studio": "prisma studio -port 5557"
+    "db": "prisma db",
+    "studio": "prisma studio --browser none"
   },
   "keywords": [],
   "author": "",

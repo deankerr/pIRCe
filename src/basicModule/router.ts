@@ -7,7 +7,7 @@ import { chat } from './routes/chat/chat.js'
 const log = dbug('router')
 
 const verbose = dbug('router:v')
-verbose.enabled = true
+verbose.enabled = false
 
 const routeList = [admin, chat]
 
