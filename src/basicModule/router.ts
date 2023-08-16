@@ -7,15 +7,15 @@ import { chat } from './routes/chat/chat.js'
 const log = dbug('router')
 
 const verbose = dbug('router:v')
-verbose.enabled = true
+verbose.enabled = false
 
 const routeList = [admin, chat]
 
 // create dynamic matcher tester for this context, return expressions that match
 function createContextualMatcher(ctx: typeof context) {
   const matchers: Record<string, RegExp> = {
-    firstWordIsOurNick: new RegExp(`^\\s*${ctx.self.nick}\\W`, 'i'),
-    saidOurNick: new RegExp(`\\b${ctx.self.nick}\\b`, 'i'),
+    firstWordIsOurNick: new RegExp(`^\\s*${ctx.self.nick}\\W`),
+    saidOurNick: new RegExp(`\\b${ctx.self.nick}\\b`),
     adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i'),
   }
 
