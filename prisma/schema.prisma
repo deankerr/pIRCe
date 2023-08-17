@@ -54,7 +54,7 @@ model AIProfile {
   // OAI options
   maxTokens   Int
   temperature Float    @default(0.9)
-  choices     Int      @default(1)
+  choices     Int      @default(1) // TODO rename?
   stop        String[] // ? can this just be empty
 
   // our opts
@@ -62,6 +62,8 @@ model AIProfile {
   maxHistorySize Int @default(-1) // -1 = no max?
 
   route Route[]
+
+  @@map("aiProfile")
 }
 
 // A prompt element, may refer (in content) to other items it is composed of
@@ -93,7 +95,8 @@ model Moderation {
 // Options
 model Options {
   options            String   @id @default("options")
-  replaceWith     String
+  adminKeyword       String   @default("!!admin!!")
+  replaceWith        String
   requireModeration  Boolean
   allowModCategories String[]
 }

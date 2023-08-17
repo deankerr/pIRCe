@@ -38,10 +38,9 @@ export class IRCClient extends IrcClient {
         const packet = {
           target: to,
           nick,
-          text: text.trim(),
+          content: text.trim(),
           type: 'message',
-          user: message.user,
-          host: message.host,
+          mask: `${message.user}@${message.host}`,
           server: this.opt.host,
         }
         this.bot.send(packet)
@@ -52,10 +51,9 @@ export class IRCClient extends IrcClient {
       const packet = {
         target: to,
         nick: from,
-        text: text.trim(),
+        content: text.trim(),
         type: 'action',
-        user: message.user,
-        host: message.host,
+        mask: `${message.user}@${message.host}`,
         server: this.opt.host,
       }
       this.bot.send(packet)

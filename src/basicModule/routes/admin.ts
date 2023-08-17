@@ -6,7 +6,7 @@ const log = dbug('admin')
 
 // admin commands
 export async function admin(msg: Message) {
-  const [_trigger, cmd, arg, ...rest] = msg.text.split(' ')
+  const [_trigger, cmd, arg, ...rest] = msg.content.split(' ')
   log('%s %s', cmd, arg)
 
   if (cmd === 'join') command.join(arg)

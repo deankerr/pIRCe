@@ -12,11 +12,11 @@ export type CommandMessage = {
 export type EventMessage = {
   target: string
   nick: string
-  text: string
-  type: 'message' | 'action'
 
-  user?: string
-  host?: string
+  type: 'message' | 'action'
+  content: string
+
+  mask: string
   server: string
 }
 

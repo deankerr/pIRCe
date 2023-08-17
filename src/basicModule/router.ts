@@ -9,14 +9,15 @@ const log = dbug('router')
 const verbose = dbug('router:v')
 verbose.enabled = false
 
-const routeList = [admin, chat]
+const handlers = [admin, chat]
+const TEMP_adminKeyword = '!!admin!!' // TODO pull from options
 
 // create dynamic matcher tester for this context, return expressions that match
 function createContextualMatcher(ctx: typeof context) {
   const matchers: Record<string, RegExp> = {
     firstWordIsOurNick: new RegExp(`^\\s*${ctx.self.nick}\\W`, 'i'),
     saidOurNick: new RegExp(`\\b${ctx.self.nick}\\b`, 'i'),
-    adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i'),
+    adminKeyword: new RegExp(`^${TEMP_adminKeyword} `, 'i'),
   }
 
   return matchers
@@ -32,10 +33,10 @@ export async function router(message: EventMessage) {
   const contextMatcher = createContextualMatcher(context)
   verbose('%o', contextMatcher)
   // message matches regexp
-  const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
+  const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.content))
   verbose('%o', matchedRoutes)
   if (!matchedRoutes.length) return
-  else log(matchedRoutes.map((r) => `${r.route}/${r.systemProfileID}`))
+  else log(matchedRoutes.map((r) => `${r.handler}/${r.aiProfileID}`))
 
   // sort by target char length for very approximate specificity
   const [match] = matchedRoutes.sort(
@@ -43,10 +44,9 @@ export async function router(message: EventMessage) {
   )
 
   // match name to function in list
-  const route = routeList.find((r) => r.name === match.route)
+  const route = handlers.find((r) => r.name === match.handler)
 
-  if (typeof route === 'function')
-    route(msg, match.systemProfileID ?? 0, contextMatcher[match.matcher])
+  if (typeof route === 'function') route(msg, match.aiProfileID ?? 0, contextMatcher[match.matcher])
   else {
     log('matched: %o', route)
     throw new Error('Invalid route')

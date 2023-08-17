@@ -2,6 +2,13 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+if (process.env.NODE_ENV === 'development') {
+  await prisma.route.deleteMany({})
+  await prisma.aIProfile.deleteMany({})
+  await prisma.promptItem.deleteMany({})
+  await prisma.options.deleteMany({})
+}
+
 await prisma.route.create({
   data: {
     server: '*',
@@ -26,7 +33,7 @@ await prisma.route.create({
 
         promptItem: {
           create: {
-            label: 'bart',
+            label: 'bart prompt',
             role: 'system',
             content: 'Your responses must sound like they are dialogue from Bart Simpson.',
           },
@@ -41,6 +48,7 @@ await prisma.route.create({
 
 await prisma.options.create({
   data: {
+    options: 'options',
     replaceWith: '***',
     requireModeration: false,
     allowModCategories: [],
