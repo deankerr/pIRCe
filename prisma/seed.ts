@@ -4,8 +4,8 @@ const prisma = new PrismaClient()
 
 if (process.env.NODE_ENV === 'development') {
   await prisma.route.deleteMany({})
-  await prisma.aIProfile.deleteMany({})
-  await prisma.promptItem.deleteMany({})
+  await prisma.chatProfile.deleteMany({})
+  await prisma.chatItem.deleteMany({})
   await prisma.options.deleteMany({})
 }
 
@@ -27,11 +27,11 @@ await prisma.route.create({
 
     handler: 'chat',
 
-    aiProfile: {
+    chatProfile: {
       create: {
         label: 'bart',
 
-        promptItem: {
+        chatItem: {
           create: {
             label: 'bart prompt',
             role: 'system',
@@ -49,7 +49,7 @@ await prisma.route.create({
 await prisma.options.create({
   data: {
     options: 'options',
-    replaceWith: '***',
+    wordListReplacer: '***',
     requireModeration: false,
     allowModCategories: [],
   },

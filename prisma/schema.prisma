@@ -17,7 +17,8 @@ model Message {
   type    String // irc command, e.g. 'message' 'action'
   content String // msg text value, but could be whatever if other cmds added
 
-  self String? // tag something we did, tie to AIProfile label. not a relation for flexibility
+  self Boolean // we did this
+  tags String[] // tag something we did, tie to AIProfile label. not a relation for flexibility
 
   time   DateTime @default(now())
   mask   String // just user@host
@@ -39,17 +40,17 @@ model Route {
   // TODO!! input/outputs
 
   // the ai profile data to send to handler along with message
-  aiProfile   AIProfile? @relation(fields: [aiProfileID], references: [id])
-  aiProfileID Int?
+  chatProfile   ChatProfile? @relation(fields: [chatProfileID], references: [id])
+  chatProfileID Int?
 }
 
 // Prompt set up, options and values
-model AIProfile {
+model ChatProfile {
   id    Int    @id @default(autoincrement())
   label String @unique // BART
 
-  promptItem   PromptItem @relation(fields: [promptItemID], references: [id])
-  promptItemID Int
+  chatItem   ChatItem @relation(fields: [chatItemID], references: [id])
+  chatItemID Int
 
   // OAI options
   maxTokens   Int
@@ -62,12 +63,11 @@ model AIProfile {
   maxHistorySize Int @default(-1) // -1 = no max?
 
   route Route[]
-
-  @@map("aiProfile")
 }
 
 // A prompt element, may refer (in content) to other items it is composed of
-model PromptItem {
+// ContentItem ContentBlock ChatItem
+model ChatItem {
   id    Int    @id @default(autoincrement())
   label String @unique // [sys-] / bart
 
@@ -75,11 +75,11 @@ model PromptItem {
   name    String?
   content String // content + meta tags that link to other items
 
-  aiProfile AIProfile[]
+  chatProfile ChatProfile[]
 }
 
 // output filter
-model StringReplace {
+model WordList {
   item String @id // the word/phrase
 }
 
@@ -96,7 +96,7 @@ model Moderation {
 model Options {
   options            String   @id @default("options")
   adminKeyword       String   @default("!!admin!!")
-  replaceWith        String
+  wordListReplacer        String
   requireModeration  Boolean
   allowModCategories String[]
 }

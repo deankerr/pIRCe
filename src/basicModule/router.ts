@@ -36,7 +36,7 @@ export async function router(message: EventMessage) {
   const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.content))
   verbose('%o', matchedRoutes)
   if (!matchedRoutes.length) return
-  else log(matchedRoutes.map((r) => `${r.handler}/${r.aiProfileID}`))
+  else log(matchedRoutes.map((r) => `${r.handler}/${r.chatProfileID}`))
 
   // sort by target char length for very approximate specificity
   const [match] = matchedRoutes.sort(
@@ -46,7 +46,8 @@ export async function router(message: EventMessage) {
   // match name to function in list
   const route = handlers.find((r) => r.name === match.handler)
 
-  if (typeof route === 'function') route(msg, match.aiProfileID ?? 0, contextMatcher[match.matcher])
+  if (typeof route === 'function')
+    route(msg, match.chatProfileID ?? 0, contextMatcher[match.matcher])
   else {
     log('matched: %o', route)
     throw new Error('Invalid route')
