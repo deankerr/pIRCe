@@ -1,82 +1,108 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
-
-// datasource db {
-//   provider = "sqlite"
-//   url      = env("DATABASE_URL")
-// }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// Messages (IRC events, could be things like join/quit etc)
 model Message {
-  id   Int      @id @default(autoincrement())
-  time DateTime @default(now())
+  id Int @id @default(autoincrement())
 
-  target String // channel, or origin nick in pm
+  target String // channel, or origin user if direct message
   nick   String
-  text   String
-  type   String // message | action
 
-  checked Boolean @default(false)
-  allowed Boolean @default(false)
+  type    String // irc command, e.g. 'message' 'action'
+  content String // msg text value, but could be whatever if other cmds added
 
-  user   String?
-  host   String?
+  self String? // tag something we did, tie to AIProfile label. not a relation for flexibility
+
+  time   DateTime @default(now())
+  mask   String // just user@host
   server String
 
-  @@map("messages")
+  moderation Moderation?
+  // conversation Conversation[]
 }
 
-// JSON record store for arbitrary module data, ie. options/settings
-model OptionData {
-  key   String @id
-  value String
-}
-
-model ChatHistory {
-  id      Int      @id @default(autoincrement())
-  created DateTime @default(now())
-
-  server String 
-  target String
-
-  role    String
-  name    String?
-  content String
-}
-
-// Route: handling function/component group msg is sent to
-// Profile: Data used by the route, ie. prompt with history
-
-// match channel to route/profile
+// Describes the conditions under which a message is sent to a handler/profile
 model Route {
   id Int @id @default(autoincrement())
 
-  server  String // * = any
-  target  String // ## any channel, ?? any query (ie. pm)
-  matcher String // regexp to trigger
+  server  String // * = any or irc.server.org
+  target  String // # = any channel, ? = any query (ie. pm), * = any target
+  matcher String // triggers this route, name of regex trigger PLEASE TYPE THESE
 
-  handler   String // function name/id
-  profile   Profile @relation(fields: [profileID], references: [id])
-  profileID Int
+  handler String // name of actual function message is sent to TYPE
+  // TODO!! input/outputs
 
-  @@unique([server, target, matcher])
+  // the ai profile data to send to handler along with message
+  aiProfile   AIProfile? @relation(fields: [aiProfileID], references: [id])
+  aiProfileID Int?
 }
 
-model Profile {
-  id           Int    @id @default(autoincrement())
-  
-  label        String // info only
-  text         String
-  memoryLength Int
-  maxTokens    Int
+// Prompt set up, options and values
+model AIProfile {
+  id    Int    @id @default(autoincrement())
+  label String @unique // BART
 
-  route        Route[]
+  promptItem   PromptItem @relation(fields: [promptItemID], references: [id])
+  promptItemID Int
+
+  // OAI options
+  maxTokens   Int
+  temperature Float    @default(0.9)
+  choices     Int      @default(1)
+  stop        String[] // ? can this just be empty
+
+  // our opts
+  startsAt DateTime @default(now()) // earliest time to look back for history
+  maxHistorySize Int @default(-1) // -1 = no max?
+
+  route Route[]
 }
+
+// A prompt element, may refer (in content) to other items it is composed of
+model PromptItem {
+  id    Int    @id @default(autoincrement())
+  label String @unique // [sys-] / bart
+
+  role    String
+  name    String?
+  content String // content + meta tags that link to other items
+
+  aiProfile AIProfile[]
+}
+
+// output filter
+model StringReplace {
+  item String @id // the word/phrase
+}
+
+// mod results
+model Moderation {
+  id        Int     @id @default(autoincrement())
+  message   Message @relation(fields: [messageID], references: [id])
+  messageID Int     @unique
+
+  result String // Just the JSON response data? Routes/AIProfiles can decide what to do?
+}
+
+// Options
+model Options {
+  options            String   @id @default("options")
+  replaceWith     String
+  requireModeration  Boolean
+  allowModCategories String[]
+}
+
+// Try not to use
+// Identifies which messages below to which instance of a profile.
+// model Conversation {
+//   id           Int    @id @default(autoincrement()) // indiv msg id, ie a chatblock
+//   created DateTime @default(now())
+
+//   messages Message[] 
+// }

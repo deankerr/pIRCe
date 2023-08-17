@@ -11,7 +11,8 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db": "prisma db",
-    "studio": "prisma studio --browser none"
+    "studiop": "prisma studio --port 5557 --browser none",
+    "studiod": "prisma studio --port 5556 --browser none"
   },
   "keywords": [],
   "author": "",
