@@ -26,6 +26,9 @@ function createContextualMatcher(ctx: typeof context) {
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
+  // don't route our own messages
+  if (msg.self) return
+
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
   verbose('%o', routes)

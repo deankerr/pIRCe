@@ -18,7 +18,7 @@ log('reload keyword: %s', moduleInfo.reloadKeyword)
 const irc = new IRCClient(ircConfig, moduleInfo.path, moduleInfo.reloadKeyword)
 
 // add some feedback messages
-irc.on('notice', (from, _, text) => log(`notice: %s %s`, from ?? '(server)', text))
+// irc.on('notice', (from, _, text) => log(`notice: %s %s`, from ?? '(server)', text))
 irc.on('error', (err) => log('error: %o', err))
 irc.on('netError', (err) => log('error: %o', err))
 
@@ -34,5 +34,9 @@ const watch = chokidar.watch(moduleInfo.path, { ignoreInitial: true })
 watch.on('add', watchReload)
 watch.on('change', watchReload)
 
-const ircRaw = debug('pIRCeIRC')
-irc.on('raw', (message) => ircRaw(message))
+const ircRaw = debug('pIRCe:raw')
+irc.on('raw', (message) => {
+  if (['PING', 'PONG', 'rpl_motd'].some((c) => message.command.startsWith(c))) return
+  const data = message.nick ? [message.nick, ...message.args] : message.args
+  ircRaw('%s: %s', message.command, data.join('/'))
+})

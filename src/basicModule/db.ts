@@ -25,7 +25,7 @@ export async function getAIProfile(id: number) {
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({
-    data: { ...ircMessage, self: false },
+    data: { ...ircMessage, content: ircMessage.content.trim() },
   })
   return msg
 }

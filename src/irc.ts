@@ -38,8 +38,9 @@ export class IRCClient extends IrcClient {
         const packet = {
           target: to,
           nick,
-          content: text.trim(),
+          content: text,
           type: 'message',
+          self: false,
           mask: `${message.user}@${message.host}`,
           server: this.opt.host,
         }
@@ -51,11 +52,34 @@ export class IRCClient extends IrcClient {
       const packet = {
         target: to,
         nick: from,
-        content: text.trim(),
+        content: text,
         type: 'action',
+        self: false,
         mask: `${message.user}@${message.host}`,
         server: this.opt.host,
       }
+      this.bot.send(packet)
+    })
+
+    this.on('selfMessage', (to, text) => {
+      if (to === 'nickserv') return // ignore our nickserv messages
+
+      const packet = {
+        target: to,
+        nick: this.nick,
+        content: text,
+        type: 'message',
+        self: true,
+        mask: `${this.hostMask}`,
+        server: this.opt.host,
+      }
+
+      if (text.startsWith('\u0001ACTION')) {
+        const content = text.slice(8, -1)
+        packet.content = content
+        packet.type = 'action'
+      }
+
       this.bot.send(packet)
     })
   }

@@ -7,6 +7,8 @@ if (process.env.NODE_ENV === 'development') {
   await prisma.route.deleteMany({})
   await prisma.chatProfile.deleteMany({})
   await prisma.options.deleteMany({})
+  await prisma.message.deleteMany({})
+  await prisma.moderation.deleteMany({})
 }
 
 const testPrompt = fs.readFileSync('prisma/test-prompt.txt', 'utf8')
