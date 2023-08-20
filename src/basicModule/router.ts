@@ -1,54 +1,70 @@
 import { EventMessage } from '../types.js'
-import { createMessage, getRoutesForTarget } from './db.js'
+import { createMessage, getOptions, getRoutesForTarget } from './db.js'
 import { context, dbug } from './index.js'
+import { moderate } from './moderate.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
 
-const verbose = dbug('router:v')
-verbose.enabled = false
-
-const routeList = [admin, chat]
-
-// create dynamic matcher tester for this context, return expressions that match
-function createContextualMatcher(ctx: typeof context) {
-  const matchers: Record<string, RegExp> = {
-    firstWordIsOurNick: new RegExp(`^\\s*${ctx.self.nick}\\W`),
-    saidOurNick: new RegExp(`\\b${ctx.self.nick}\\b`),
-    adminKeyword: new RegExp(`^${ctx.options.adminKeyword} `, 'i'),
-  }
-
-  return matchers
-}
+const handlers = [admin, chat]
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
 
+  // don't route our own messages
+  if (msg.self) return
+
+  const options = await getOptions()
+
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
-  verbose('%o', routes)
-  // regexp tester
-  const contextMatcher = createContextualMatcher(context)
-  verbose('%o', contextMatcher)
-  // message matches regexp
-  const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.text))
-  verbose('%o', matchedRoutes)
-  if (!matchedRoutes.length) return
-  else log(matchedRoutes.map((r) => `${r.route}/${r.systemProfileID}`))
 
-  // sort by target char length for very approximate specificity
-  const [match] = matchedRoutes.sort(
-    (a, b) => b.target.length + b.server.length - (a.target.length + a.server.length),
+  const keywords = { '{{nick}}': context.self.nick, '{{admin}}': options.adminKeyword }
+
+  const validRoutes = routes.filter((route) => {
+    if (route.startsWith !== null) {
+      const keyword = substituteKeywords(route.startsWith, keywords)
+      if (msg.content.startsWith(keyword + ' ')) return true
+    }
+
+    if (route.contains !== null) {
+      const keyword = substituteKeywords(route.contains, keywords)
+      const tests = [
+        new RegExp(`^${keyword}[.,!?:;\\s]`), // starts with
+        new RegExp(`\\s${keyword}[.,!?:;\\s]`), // includes
+        new RegExp(`\\s${keyword}$`), // ends with
+        new RegExp(`^${keyword}$`), // is only
+      ]
+
+      if (tests.some((t) => t.test(msg.content))) return true
+    }
+
+    return false
+  })
+
+  log(
+    'matched: %O',
+    validRoutes.map((r) => `${r.handler}/${r.profileID}`),
   )
 
-  // match name to function in list
-  const route = routeList.find((r) => r.name === match.route)
-
-  if (typeof route === 'function')
-    route(msg, match.systemProfileID ?? 0, contextMatcher[match.matcher])
-  else {
-    log('matched: %o', route)
-    throw new Error('Invalid route')
+  if (validRoutes.length > 0) {
+    if (!(await moderate(msg, options))) return log('aborted - moderation')
   }
+
+  for (const route of validRoutes) {
+    const handler = handlers.find((h) => h.name === route.handler)
+    if (typeof handler === 'function') handler(msg, route.profile, route.redirectOutput)
+    else log('invalid handler: %O', handler)
+  }
+}
+
+function substituteKeywords(content: string, replacers: Record<string, string>) {
+  let result = content
+  for (const key of Object.keys(replacers)) {
+    const k = key as keyof typeof replacers
+    result = result.replaceAll(k, replacers[k])
+  }
+
+  return result
 }

@@ -1,90 +1,85 @@
-import { config } from '@creditkarma/dynamic-config'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, type Message as _Message, type Profile as _Profile } from '@prisma/client'
 
-import { BasicModuleOptions, EventMessage } from '../types.js'
-import type { OAIChatMessages } from './routes/chat/openAI.js'
+import { EventMessage } from '../types.js'
 
-export type { Message } from '@prisma/client'
+export type { Message, Profile, Route } from '@prisma/client'
 
 export const prisma = new PrismaClient()
 
 export async function getRoutesForTarget(server: string, target: string) {
-  const targetList = [target, '*', target.startsWith('#') ? '##' : '??']
+  const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
 
-  const routes = await prisma.routes.findMany({
+  const routes = await prisma.route.findMany({
     where: { server: { in: [server, '*'] }, target: { in: targetList } },
+    include: { profile: true },
   })
   return routes
 }
 
 export async function getAllRoutes() {
-  return await prisma.routes.findMany()
-}
-
-export async function getSystemProfileByID(id: number) {
-  return await prisma.systemProfile.findUniqueOrThrow({ where: { id } })
+  return await prisma.route.findMany()
 }
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({
-    data: ircMessage,
+    data: { ...ircMessage, content: ircMessage.content.trim() },
   })
-
   return msg
 }
 
-export async function addChatHistory(server: string, target: string, ...items: OAIChatMessages) {
-  for (const item of items) {
-    await prisma.chatHistory.create({
-      data: {
-        server,
-        target: target,
-        role: item.role,
-        name: item.name,
-        content: item.content || '',
+export async function createTag(message: _Message, key: string, value?: string) {
+  const msg = await prisma.tag.create({
+    data: {
+      message: {
+        connect: { id: message.id },
       },
-    })
-  }
+      key,
+      value,
+    },
+  })
+  return msg
 }
 
-export async function getChatHistory(target: string, limit: number): Promise<OAIChatMessages> {
-  const raw = await prisma.chatHistory.findMany({
-    where: { target },
-    select: { role: true, name: true, content: true },
-    take: -limit,
+export async function getMessageTag(message: _Message, key: string) {
+  const tag = await prisma.tag.findFirst({
+    where: {
+      messageID: message.id,
+      key,
+    },
   })
 
-  // remove null names
-  const history = raw.map((item) => {
-    const { role, name, content } = item
-    if (name === null) return { role, content }
-    else return { role, name, content }
-  })
-
-  return history as OAIChatMessages
+  return tag
 }
 
-// ? Switch to seeded data
-export async function initOptions() {
-  const defaults = await config().get<BasicModuleOptions>('basicModuleOptions')
-  const previous = await prisma.optionData.findMany()
+export async function getChatHistory(profile: _Profile, msg: _Message) {
+  const chatHistory = await prisma.tag.findMany({
+    select: {
+      message: {
+        select: {
+          nick: true,
+          content: true,
+        },
+      },
+      value: true,
+    },
+    where: {
+      key: profile.id,
+      message: {
+        server: msg.server,
+        target: msg.target,
+        self: false,
+      },
+    },
+    take: -profile.maxHistorySize,
+  })
 
-  const options = { ...defaults }
+  return chatHistory
+}
 
-  // merge stored option records with default
-  for (const opt of previous) {
-    const obj = { [opt.key]: JSON.parse(opt.value) }
-    Object.assign(options, obj)
-  }
+export async function getOptions() {
+  return await prisma.options.findFirstOrThrow({ where: { options: 'options' } })
+}
 
-  // store the result in the db
-  for (const [key, value] of Object.entries(options)) {
-    await prisma.optionData.upsert({
-      where: { key },
-      create: { key, value: JSON.stringify(value) },
-      update: { value: JSON.stringify(value) },
-    })
-  }
-
-  return options
+export async function getWordList() {
+  return await prisma.wordList.findMany({})
 }

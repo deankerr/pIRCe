@@ -1,74 +1,89 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
-
-// datasource db {
-//   provider = "sqlite"
-//   url      = env("DATABASE_URL")
-// }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// Messages (IRC events, could be things like join/quit etc)
 model Message {
-  id   Int      @id @default(autoincrement())
-  time DateTime @default(now())
-
-  target String // channel, or origin nick in pm
-  nick   String
-  text   String
-  type   String // message | action
-
-  checked Boolean @default(false)
-  allowed Boolean @default(false)
-
-  user   String?
-  host   String?
-  server String
-}
-
-// JSON record store for arbitrary module data, ie. options/settings
-model OptionData {
-  key   String @id
-  value String
-}
-
-model ChatHistory {
   id Int @id @default(autoincrement())
 
-  server String @default("missing") // TODO remove after migrate
-  target String
+  target String // channel, or origin user if direct message
+  nick   String
 
-  role    String
-  name    String?
-  content String
+  type    String // irc command, e.g. 'message' 'action'
+  content String // msg text value, but could be whatever if other cmds added
+
+  self Boolean // we did this
+
+  time   DateTime @default(now())
+  mask   String // just user@host
+  server String
+
+  tag Tag[]
 }
 
-// Route: handling function/component group msg is sent to
-// Profile: Data used by the route, ie. prompt with history
+// Describes the conditions under which a message is sent to a handler/profile
+model Route {
+  id Int @id @default(autoincrement())
 
-// match channel to route/profile
-model Routes {
-  server          String // * = any
-  target          String // ## any channel, ?? any query (ie. pm)
-  matcher         String // regexp to trigger
-  route           String // function name/id
-  systemProfile   SystemProfile? @relation(fields: [systemProfileID], references: [id])
-  systemProfileID Int?
+  server String // * = any or irc.server.org
+  target String // # = any channel, ? = any query (ie. pm), * = any target
 
-  @@id([server, target, matcher, route])
+  startsWith String? // triggers
+  contains   String?
+
+  handler String // name of actual function message is sent to TYPE
+  
+  redirectOutput String?
+
+  // the ai profile data to send to handler along with message
+  profile   Profile? @relation(fields: [profileID], references: [id])
+  profileID String?
 }
 
-// used by route to set system prompt etc
-model SystemProfile {
-  id           Int      @id @default(autoincrement()) // eventually for history
-  prompt       String // support functions in the future
-  memoryLength Int
-  maxTokens    Int
-  Routes       Routes[]
+// Prompt set up, options and values
+model Profile {
+  id     String @id // 'bart', 'eee'
+  prompt String // in "promptScript"
+  promptTail String?
+
+  // OAI options
+  maxTokens   Int
+  temperature Float    @default(0.9)
+  choices     Int      @default(1) // TODO rename?
+  stop        String[] // ? can this just be empty
+
+  // our opts
+  maxHistorySize Int
+  replaceNick String?
+
+  route Route[]
+}
+
+model Tag {
+  id        Int     @id @default(autoincrement())
+  message   Message @relation(fields: [messageID], references: [id])
+  messageID Int    
+
+  key   String
+  value String?
+
+  @@unique([messageID, key])
+}
+
+// Options
+model Options {
+  options            String   @id @default("options")
+  adminKeyword       String   @default("!!admin!!")
+  requireModeration  Boolean
+  allowModCategories String @default("") // comma delimetered
+}
+
+// output filter
+model WordList {
+  word String @id // the word/phrase
 }

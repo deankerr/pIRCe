@@ -1,41 +1,25 @@
-import { addChatHistory, getChatHistory, getSystemProfileByID, type Message } from '../../db.js'
-import { command, context, dbug } from '../../index.js'
-import { moderate } from './moderate.js'
+import { createTag, getChatHistory, type Message, type Profile } from '../../db.js'
+import { command, dbug } from '../../index.js'
 import { openAI } from './openAI.js'
+import { constructProfilePrompt } from './prompt.js'
 
 const log = dbug('chat')
-const outputConvoLog = false
-// TODO uniform interface for routes, ie name, params
 
-export async function chat(msg: Message, profileID: number, matcher: RegExp) {
+export async function chat(msg: Message, profile: Profile | null, redirectOutput?: string | null) {
   log('start: %m', msg)
 
-  const moderatedMsg = await moderate(msg)
+  if (!profile) return log('aborted - invalid profile')
 
-  if (!moderatedMsg || !moderatedMsg.allowed) return
+  const chatHistory = await getChatHistory(profile, msg)
 
-  const profile = await getSystemProfileByID(profileID)
-  const system = { role: 'system', content: profile.prompt } as const
-
-  //? wipe history, store per profile?
-  const history = await getChatHistory(msg.target, profile.memoryLength)
-
-  const user = {
-    role: 'user',
-    name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
-    content: stripMatcher(msg.text, matcher), //? handle better - remember matcher used?
-  } as const
-
-  const conversation = [system, ...history, user]
-
-  if (outputConvoLog) conversation.forEach((m) => log('%m', m))
-  else log('%m %m', system, user)
+  const conversation = constructProfilePrompt(profile, chatHistory, msg)
+  log('built prompt %O', conversation)
 
   const result = await openAI.chat(conversation, profile.maxTokens)
   if (!result) return log('chat failed')
 
   log(
-    '%m {%s %d/%d/%d}',
+    '%s {%s %d/%d/%d}',
     result.message,
     result.finishReason,
     result.usage?.prompt_tokens,
@@ -43,12 +27,8 @@ export async function chat(msg: Message, profileID: number, matcher: RegExp) {
     result.usage?.total_tokens,
   )
 
-  const response = { role: 'assistant', content: result.message } as const
-  addChatHistory(context.server, msg.target, user, response)
+  const target = redirectOutput ? redirectOutput : msg.target
+  command.say(target, result.message)
 
-  command.say(msg.target, result.message)
-}
-
-function stripMatcher(text: string, matcher: RegExp) {
-  return text.replace(matcher, '')
+  createTag(msg, profile.id, result.message)
 }

@@ -1,18 +1,18 @@
-import { context } from './index.js'
+import { getWordList } from './db.js'
 
 const maxNewlines = 3
 
 export async function outputFilter(text: string) {
-  const { options } = context
   // remove excess newlines, concat to one line if above max
   const split = text.split('\n').filter((t) => t !== '')
   const joined = split.length > maxNewlines ? split.join(' ') : split.join('\n')
 
   let filtered = joined
 
-  for (const word of options.outputWordFilterList) {
+  const words = await getWordList()
+  for (const { word } of words) {
     const regex = new RegExp(`${word}`, 'gi')
-    filtered = filtered.replace(regex, '****')
+    filtered = filtered.replaceAll(regex, '****')
   }
 
   return filtered

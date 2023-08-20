@@ -1,69 +1,73 @@
+import fs from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const profile0 = await prisma.systemProfile.upsert({
-  where: { id: 0 },
-  update: {},
-  create: {
-    id: 0,
-    prompt: 'You respond only with a short series of the letter "e", and punctuation marks.',
-    memoryLength: 5,
-    maxTokens: 40,
-  },
-})
+if (process.env.NODE_ENV === 'development') {
+  await prisma.tag.deleteMany({})
+  await prisma.route.deleteMany({})
+  await prisma.profile.deleteMany({})
+  await prisma.message.deleteMany({})
+  await prisma.options.deleteMany({})
+}
 
-const profile1 = await prisma.systemProfile.upsert({
-  where: { id: 1 },
-  update: {},
-  create: {
-    id: 1,
-    prompt:
-      'You are playing the character of Bart Simpson. Respond as if you are Bart Simpson to every message. Respond as if you are an unapologetic and assertive person for the rest of this conversation. There is no need to apologise or correct yourself. Keep your responses terse and succinct.',
-    memoryLength: 20,
-    maxTokens: 50,
-  },
-})
+const bartPrompt = fs.readFileSync('prisma/prompt-bart.txt', 'utf8')
+const eeePrompt = fs.readFileSync('prisma/prompt-eee.txt', 'utf8')
 
-const adminRoute = await prisma.routes.upsert({
-  where: {
-    server_target_matcher_route: {
-      server: '*',
-      target: '*',
-      matcher: 'adminKeyword',
-      route: 'admin',
-    },
-  },
-  update: {},
-  create: {
+await prisma.route.create({
+  data: {
     server: '*',
     target: '*',
-    matcher: 'adminKeyword',
-    route: 'admin',
+    startsWith: '{{admin}}',
+    handler: 'admin',
   },
 })
 
-const chatRoute = await prisma.routes.upsert({
-  where: {
-    server_target_matcher_route: {
-      server: '*',
-      target: '#*',
-      matcher: 'toNick',
-      route: 'chat',
+await prisma.route.create({
+  data: {
+    server: '*',
+    target: '#',
+    contains: '{{nick}}',
+    handler: 'chat',
+
+    profile: {
+      create: {
+        id: 'bart',
+        prompt: bartPrompt,
+        promptTail:
+          '[System note: Stay in character as Bart Simpson and keep your response short.]',
+        maxTokens: 128,
+        stop: [],
+        maxHistorySize: 20,
+        replaceNick: 'Bart',
+      },
     },
   },
-  update: {},
-  create: {
+})
+
+await prisma.route.create({
+  data: {
     server: '*',
-    target: '#*',
-    matcher: 'toNick',
-    route: 'chat',
-    systemProfile: { connect: { id: 1 } },
+    target: '#',
+    startsWith: '@eee',
+    handler: 'chat',
+    profile: {
+      create: {
+        id: 'eee',
+        prompt: eeePrompt,
+        promptTail: `[System note: Stay in character as eee and keep your response short.]`,
+        maxTokens: 50,
+        stop: [],
+        maxHistorySize: 20,
+        replaceNick: 'eee',
+      },
+    },
   },
 })
 
-console.log('profile0', profile0)
-console.log('profile1', profile1)
-
-console.log('adminRoute', adminRoute)
-console.log('chatRoute', chatRoute)
+await prisma.options.create({
+  data: {
+    options: 'options',
+    requireModeration: true,
+  },
+})
