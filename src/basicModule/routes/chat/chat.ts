@@ -1,16 +1,20 @@
+import { type Options } from '@prisma/client'
+
 import { createTag, prisma, type Message, type Profile } from '../../db.js'
 import { command, dbug } from '../../index.js'
+import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
 import { constructProfilePrompt } from './prompt.js'
 
 const log = dbug('chat')
 
-export async function chat(msg: Message, profile: Profile | null) {
+export async function chat(msg: Message, profile: Profile | null, options: Options) {
   log('start: %m', msg)
 
-  // TODO replace mod check
-  // const moderatedMsg = await moderate(msg)
-  // if (!moderatedMsg || !moderatedMsg.allowed) return
+  if (options.requireModeration) {
+    const modResult = await moderate(msg, options.allowModCategories)
+    if (!modResult) return log('aborted - moderation')
+  }
 
   if (!profile) return log('aborted - invalid profile')
 

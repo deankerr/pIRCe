@@ -49,7 +49,7 @@ export async function router(message: EventMessage) {
 
   for (const route of validRoutes) {
     const handler = handlers.find((h) => h.name === route.handler)
-    if (typeof handler === 'function') handler(msg, route.profile)
+    if (typeof handler === 'function') handler(msg, route.profile, options)
     else log('invalid handler: %O', handler)
   }
 }

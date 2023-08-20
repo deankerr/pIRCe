@@ -64,7 +64,6 @@ await prisma.options.create({
   data: {
     options: 'options',
     wordListReplacer: '***',
-    requireModeration: false,
-    allowModCategories: [],
+    requireModeration: true,
   },
 })
