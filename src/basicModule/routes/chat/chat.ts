@@ -1,6 +1,6 @@
 import { type Options } from '@prisma/client'
 
-import { createTag, prisma, type Message, type Profile } from '../../db.js'
+import { createTag, getChatHistory, type Message, type Profile } from '../../db.js'
 import { command, dbug } from '../../index.js'
 import { moderate } from './moderate.js'
 import { openAI } from './openAI.js'
@@ -18,26 +18,7 @@ export async function chat(msg: Message, profile: Profile | null, options: Optio
 
   if (!profile) return log('aborted - invalid profile')
 
-  const chatHistory = await prisma.tag.findMany({
-    select: {
-      message: {
-        select: {
-          nick: true,
-          content: true,
-        },
-      },
-      value: true,
-    },
-    where: {
-      key: profile.id,
-      message: {
-        server: msg.server,
-        target: msg.target,
-        self: false,
-      },
-    },
-    take: -profile.maxHistorySize,
-  })
+  const chatHistory = await getChatHistory(profile, msg)
 
   const conversation = constructProfilePrompt(profile, chatHistory, msg)
   log('built prompt %O', conversation)

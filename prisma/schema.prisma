@@ -23,7 +23,7 @@ model Message {
   mask   String // just user@host
   server String
 
-  tag Tag?
+  tag Tag[]
 }
 
 // Describes the conditions under which a message is sent to a handler/profile
@@ -65,10 +65,12 @@ model Profile {
 model Tag {
   id        Int     @id @default(autoincrement())
   message   Message @relation(fields: [messageID], references: [id])
-  messageID Int     @unique
+  messageID Int    
 
   key   String
   value String?
+
+  @@unique([messageID, key])
 }
 
 // Options

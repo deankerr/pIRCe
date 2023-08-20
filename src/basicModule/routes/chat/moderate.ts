@@ -1,10 +1,13 @@
-import { createTag, type Message } from '../../db.js'
+import { createTag, getMessageTag, type Message } from '../../db.js'
 import { dbug } from '../../index.js'
 import { openAI } from './openAI.js'
 
 const log = dbug('moderation')
 
 export async function moderate(msg: Message, allowedCategories = '') {
+  const existingResult = await getMessageTag(msg, 'moderation')
+  if (existingResult) return existingResult.value === 'allow'
+
   const input = `${msg.nick}: ${msg.content}`
   log('mod: %s', input)
   const result = await openAI.moderation(input)
@@ -20,11 +23,11 @@ export async function moderate(msg: Message, allowedCategories = '') {
   const allowedResult = filtered.length === 0
 
   if (allowedResult) {
-    log('allowed %s', ignored.length > 0 ? `(ignoring categories)` : '')
+    log('allow %s', ignored.length > 0 ? `(ignoring categories)` : '')
   } else {
-    log('rejected %o', filtered)
+    log('reject %o', filtered)
   }
 
-  createTag(msg, 'moderation', `${allowedResult}`)
+  createTag(msg, 'moderation', `${allowedResult ? 'allow' : 'reject'}`)
   return allowedResult
 }

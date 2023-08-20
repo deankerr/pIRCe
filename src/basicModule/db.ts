@@ -1,4 +1,4 @@
-import { PrismaClient, type Message as _Message } from '@prisma/client'
+import { PrismaClient, type Message as _Message, type Profile as _Profile } from '@prisma/client'
 
 import { EventMessage } from '../types.js'
 
@@ -38,6 +38,42 @@ export async function createTag(message: _Message, key: string, value?: string) 
     },
   })
   return msg
+}
+
+export async function getMessageTag(message: _Message, key: string) {
+  const tag = await prisma.tag.findFirst({
+    where: {
+      messageID: message.id,
+      key,
+    },
+  })
+
+  return tag
+}
+
+export async function getChatHistory(profile: _Profile, msg: _Message) {
+  const chatHistory = await prisma.tag.findMany({
+    select: {
+      message: {
+        select: {
+          nick: true,
+          content: true,
+        },
+      },
+      value: true,
+    },
+    where: {
+      key: profile.id,
+      message: {
+        server: msg.server,
+        target: msg.target,
+        self: false,
+      },
+    },
+    take: -profile.maxHistorySize,
+  })
+
+  return chatHistory
 }
 
 export async function getOptions() {
