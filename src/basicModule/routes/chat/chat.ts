@@ -7,13 +7,13 @@ const log = dbug('chat')
 // const outputConvoLog = false
 // TODO uniform interface for routes, ie name, params
 
-export async function chat(msg: Message, aiProfileID: number, matcher: RegExp) {
+export async function chat(msg: Message, aiProfileID: number | null) {
   log('start: %m', msg)
 
   // TODO replace mod check
   // const moderatedMsg = await moderate(msg)
   // if (!moderatedMsg || !moderatedMsg.allowed) return
-
+  if (!aiProfileID) return log('aborted - invalid profile ID: %s', aiProfileID)
   const profile = await getAIProfile(aiProfileID) // TODO move responsibility to router
 
   //! could result in wrong message being last if multiple sent at once
@@ -37,9 +37,6 @@ export async function chat(msg: Message, aiProfileID: number, matcher: RegExp) {
     result.usage?.completion_tokens,
     result.usage?.total_tokens,
   )
-
-  //// const response = { role: 'assistant', content: result.message } as const
-  //// addChatHistory(context.server, msg.target, user, response)
 
   command.say(msg.target, result.message)
 }

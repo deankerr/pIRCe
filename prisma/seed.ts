@@ -11,14 +11,14 @@ if (process.env.NODE_ENV === 'development') {
   await prisma.moderation.deleteMany({})
 }
 
-const testPrompt = fs.readFileSync('prisma/test-prompt.txt', 'utf8')
+const bartPrompt = fs.readFileSync('prisma/prompt-bart.txt', 'utf8')
+const eeePrompt = fs.readFileSync('prisma/prompt-eee.txt', 'utf8')
 
 await prisma.route.create({
   data: {
     server: '*',
     target: '*',
-    matcher: 'adminKeyword',
-
+    startsWith: '{{admin}}',
     handler: 'admin',
   },
 })
@@ -27,19 +27,33 @@ await prisma.route.create({
   data: {
     server: '*',
     target: '#',
-    matcher: 'firstWordIsOurNick',
-
+    contains: '{{nick}}',
     handler: 'chat',
 
     chatProfile: {
       create: {
         label: 'bart',
-
-        prompt: testPrompt,
-
-        maxTokens: 128,
+        prompt: bartPrompt,
+        maxTokens: 50,
         stop: [],
+        maxHistorySize: 20,
+      },
+    },
+  },
+})
 
+await prisma.route.create({
+  data: {
+    server: '*',
+    target: '#',
+    startsWith: '@eee',
+    handler: 'chat',
+    chatProfile: {
+      create: {
+        label: 'eee',
+        prompt: eeePrompt,
+        maxTokens: 50,
+        stop: [],
         maxHistorySize: 20,
       },
     },

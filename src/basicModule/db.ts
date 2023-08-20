@@ -30,6 +30,10 @@ export async function createMessage(ircMessage: EventMessage) {
   return msg
 }
 
+export async function getOptions() {
+  return await prisma.options.findFirstOrThrow({ where: { options: 'options' } })
+}
+
 // export async function getChatItem(id: number) {
 //   return await prisma.chatItem.findUniqueOrThrow({ where: { id } })
 // }

@@ -35,7 +35,9 @@ model Route {
 
   server  String // * = any or irc.server.org
   target  String // # = any channel, ? = any query (ie. pm), * = any target
-  matcher String // triggers this route, name of regex trigger PLEASE TYPE THESE
+
+  startsWith String? // triggers
+  contains String?
 
   handler String // name of actual function message is sent to TYPE
   // TODO!! input/outputs
