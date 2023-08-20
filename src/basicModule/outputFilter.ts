@@ -1,18 +1,19 @@
-// const maxNewlines = 3
+import { getWordList } from './db.js'
+
+const maxNewlines = 3
 
 export async function outputFilter(text: string) {
-  return text // TODO:
-  // const { options } = context
-  // // remove excess newlines, concat to one line if above max
-  // const split = text.split('\n').filter((t) => t !== '')
-  // const joined = split.length > maxNewlines ? split.join(' ') : split.join('\n')
+  // remove excess newlines, concat to one line if above max
+  const split = text.split('\n').filter((t) => t !== '')
+  const joined = split.length > maxNewlines ? split.join(' ') : split.join('\n')
 
-  // let filtered = joined
+  let filtered = joined
 
-  // for (const word of options.outputWordFilterList) {
-  //   const regex = new RegExp(`${word}`, 'gi')
-  //   filtered = filtered.replace(regex, '****')
-  // }
+  const words = await getWordList()
+  for (const { word } of words) {
+    const regex = new RegExp(`${word}`, 'gi')
+    filtered = filtered.replaceAll(regex, '****')
+  }
 
-  // return filtered
+  return filtered
 }

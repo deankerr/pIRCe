@@ -77,12 +77,11 @@ model Tag {
 model Options {
   options            String   @id @default("options")
   adminKeyword       String   @default("!!admin!!")
-  wordListReplacer   String
   requireModeration  Boolean
   allowModCategories String @default("") // comma delimetered
 }
 
 // output filter
 model WordList {
-  item String @id // the word/phrase
+  word String @id // the word/phrase
 }

@@ -63,7 +63,6 @@ await prisma.route.create({
 await prisma.options.create({
   data: {
     options: 'options',
-    wordListReplacer: '***',
     requireModeration: true,
   },
 })

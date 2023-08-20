@@ -79,3 +79,7 @@ export async function getChatHistory(profile: _Profile, msg: _Message) {
 export async function getOptions() {
   return await prisma.options.findFirstOrThrow({ where: { options: 'options' } })
 }
+
+export async function getWordList() {
+  return await prisma.wordList.findMany({})
+}
