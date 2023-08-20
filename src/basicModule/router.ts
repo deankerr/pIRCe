@@ -1,6 +1,7 @@
 import { EventMessage } from '../types.js'
 import { createMessage, getOptions, getRoutesForTarget } from './db.js'
 import { context, dbug } from './index.js'
+import { moderate } from './moderate.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat/chat.js'
 
@@ -47,9 +48,13 @@ export async function router(message: EventMessage) {
     validRoutes.map((r) => `${r.handler}/${r.profileID}`),
   )
 
+  if (validRoutes.length > 0) {
+    if (!(await moderate(msg, options))) return log('aborted - moderation')
+  }
+
   for (const route of validRoutes) {
     const handler = handlers.find((h) => h.name === route.handler)
-    if (typeof handler === 'function') handler(msg, route.profile, options)
+    if (typeof handler === 'function') handler(msg, route.profile)
     else log('invalid handler: %O', handler)
   }
 }
