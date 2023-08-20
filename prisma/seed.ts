@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -5,9 +6,10 @@ const prisma = new PrismaClient()
 if (process.env.NODE_ENV === 'development') {
   await prisma.route.deleteMany({})
   await prisma.chatProfile.deleteMany({})
-  await prisma.chatItem.deleteMany({})
   await prisma.options.deleteMany({})
 }
+
+const testPrompt = fs.readFileSync('prisma/test-prompt.txt', 'utf8')
 
 await prisma.route.create({
   data: {
@@ -31,16 +33,12 @@ await prisma.route.create({
       create: {
         label: 'bart',
 
-        chatItem: {
-          create: {
-            label: 'bart prompt',
-            role: 'system',
-            content: 'Your responses must sound like they are dialogue from Bart Simpson.',
-          },
-        },
+        prompt: testPrompt,
 
-        maxTokens: 40,
+        maxTokens: 128,
         stop: [],
+
+        maxHistorySize: 20,
       },
     },
   },

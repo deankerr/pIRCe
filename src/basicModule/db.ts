@@ -20,16 +20,19 @@ export async function getAllRoutes() {
 }
 
 export async function getAIProfile(id: number) {
-  return await prisma.chatProfile.findUniqueOrThrow({ where: { id }, include: { chatItem: true } })
+  return await prisma.chatProfile.findUniqueOrThrow({ where: { id } })
 }
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({
     data: { ...ircMessage, self: false },
   })
-
   return msg
 }
+
+// export async function getChatItem(id: number) {
+//   return await prisma.chatItem.findUniqueOrThrow({ where: { id } })
+// }
 
 // TODO refactor to target tagged history query
 // export async function getChatHistory(target: string, limit: number): Promise<OAIChatMessages> {

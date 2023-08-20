@@ -19,7 +19,6 @@ model Message {
 
   self Boolean // we did this
   tags String[] // tag something we did, tie to AIProfile label. not a relation for flexibility
-  // ? probably should be seperate table
 
   time   DateTime @default(now())
   mask   String // just user@host
@@ -50,7 +49,8 @@ model ChatProfile {
   id    Int    @id @default(autoincrement())
   label String @unique // BART
 
-  prompt String // in "promptScript"
+  chatItem   ChatItem @relation(fields: [chatItemID], references: [id])
+  chatItemID Int
 
   // OAI options
   maxTokens   Int
@@ -60,9 +60,22 @@ model ChatProfile {
 
   // our opts
   startsAt DateTime @default(now()) // earliest time to look back for history
-  maxHistorySize Int 
+  maxHistorySize Int @default(-1) // -1 = no max?
 
   route Route[]
+}
+
+// A prompt element, may refer (in content) to other items it is composed of
+// ContentItem ContentBlock ChatItem
+model ChatItem {
+  id    Int    @id @default(autoincrement())
+  label String @unique // [sys-] / bart
+
+  role    String
+  name    String?
+  content String // content + meta tags that link to other items
+
+  chatProfile ChatProfile[]
 }
 
 // output filter
