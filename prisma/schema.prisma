@@ -37,7 +37,8 @@ model Route {
   contains   String?
 
   handler String // name of actual function message is sent to TYPE
-  // TODO!! input/outputs
+  
+  redirectOutput String?
 
   // the ai profile data to send to handler along with message
   profile   Profile? @relation(fields: [profileID], references: [id])

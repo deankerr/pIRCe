@@ -5,7 +5,7 @@ import { constructProfilePrompt } from './prompt.js'
 
 const log = dbug('chat')
 
-export async function chat(msg: Message, profile: Profile | null) {
+export async function chat(msg: Message, profile: Profile | null, redirectOutput?: string | null) {
   log('start: %m', msg)
 
   if (!profile) return log('aborted - invalid profile')
@@ -27,7 +27,8 @@ export async function chat(msg: Message, profile: Profile | null) {
     result.usage?.total_tokens,
   )
 
-  command.say(msg.target, result.message)
+  const target = redirectOutput ? redirectOutput : msg.target
+  command.say(target, result.message)
 
   createTag(msg, profile.id, result.message)
 }
