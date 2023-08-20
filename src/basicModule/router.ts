@@ -6,57 +6,7 @@ import { chat } from './routes/chat/chat.js'
 
 const log = dbug('router')
 
-const verbose = dbug('router:v')
-verbose.enabled = false
-
 const handlers = [admin, chat]
-const TEMP_adminKeyword = '!!admin!!' // TODO pull from options
-
-// create dynamic matcher tester for this context, return expressions that match
-function createContextualMatcher(nick: string) {
-  const matchers: Record<string, RegExp> = {
-    adminKeyword: new RegExp(`^${TEMP_adminKeyword} `),
-    startsWithNick: new RegExp(`^${nick}\\W`),
-    includesNick: new RegExp(`\\s${nick}\\W`),
-    endsWithNick: new RegExp(`\\s${nick}$`),
-  }
-
-  return matchers
-}
-
-// export async function router(message: EventMessage) {
-//   const msg = await createMessage(message)
-
-//   // don't route our own messages
-//   if (msg.self) return
-
-//   // relevant routes
-//   const routes = await getRoutesForTarget(msg.server, msg.target)
-//   verbose('%o', routes)
-//   // regexp tester
-//   const contextMatcher = createContextualMatcher(context.self.nick)
-//   verbose('%o', contextMatcher)
-//   // message matches regexp
-//   const matchedRoutes = routes.filter((route) => contextMatcher[route.matcher].test(msg.content))
-//   verbose('%o', matchedRoutes)
-//   if (!matchedRoutes.length) return
-//   else log(matchedRoutes.map((r) => `${r.handler}/${r.chatProfileID}`))
-
-//   // sort by target char length for very approximate specificity
-//   const [match] = matchedRoutes.sort(
-//     (a, b) => b.target.length + b.server.length - (a.target.length + a.server.length),
-//   )
-
-//   // match name to function in list
-//   const route = handlers.find((r) => r.name === match.handler)
-
-//   if (typeof route === 'function')
-//     route(msg, match.chatProfileID ?? 0, contextMatcher[match.matcher])
-//   else {
-//     log('matched: %o', route)
-//     throw new Error('Invalid route')
-//   }
-// }
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
@@ -94,19 +44,15 @@ export async function router(message: EventMessage) {
 
   log(
     'matched: %O',
-    validRoutes.map((r) => `${r.handler}/${r.chatProfileID}`),
+    validRoutes.map((r) => `${r.handler}/${r.profileID}`),
   )
 
   for (const route of validRoutes) {
     const handler = handlers.find((h) => h.name === route.handler)
-    if (typeof handler === 'function') handler(msg, route.chatProfileID)
+    if (typeof handler === 'function') handler(msg, route.profile)
     else log('invalid handler: %O', handler)
   }
 }
-
-// startsWithNick: new RegExp(`^${nick}\\W`),
-// includesNick: new RegExp(`\\s${nick}\\W`),
-//   endsWithNick: new RegExp(`\\s${nick}$`),
 
 function substituteKeywords(content: string, replacers: Record<string, string>) {
   let result = content

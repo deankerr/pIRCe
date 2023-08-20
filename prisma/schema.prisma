@@ -18,40 +18,35 @@ model Message {
   content String // msg text value, but could be whatever if other cmds added
 
   self Boolean // we did this
-  tags String[] // tag something we did, tie to AIProfile label. not a relation for flexibility
-  // ? probably should be seperate table
 
   time   DateTime @default(now())
   mask   String // just user@host
   server String
 
-  moderation Moderation?
-  // conversation Conversation[]
+  tag Tag?
 }
 
 // Describes the conditions under which a message is sent to a handler/profile
 model Route {
   id Int @id @default(autoincrement())
 
-  server  String // * = any or irc.server.org
-  target  String // # = any channel, ? = any query (ie. pm), * = any target
+  server String // * = any or irc.server.org
+  target String // # = any channel, ? = any query (ie. pm), * = any target
 
   startsWith String? // triggers
-  contains String?
+  contains   String?
 
   handler String // name of actual function message is sent to TYPE
   // TODO!! input/outputs
 
   // the ai profile data to send to handler along with message
-  chatProfile   ChatProfile? @relation(fields: [chatProfileID], references: [id])
-  chatProfileID Int?
+  profile   Profile? @relation(fields: [profileID], references: [id])
+  profileID String?
 }
 
 // Prompt set up, options and values
-model ChatProfile {
-  id    Int    @id @default(autoincrement())
-  label String @unique // BART
-
+model Profile {
+  id     String @id // 'bart', 'eee'
   prompt String // in "promptScript"
 
   // OAI options
@@ -61,40 +56,31 @@ model ChatProfile {
   stop        String[] // ? can this just be empty
 
   // our opts
-  startsAt DateTime @default(now()) // earliest time to look back for history
-  maxHistorySize Int 
+  startsAt       DateTime @default(now()) // earliest time to look back for history
+  maxHistorySize Int
 
   route Route[]
 }
 
-// output filter
-model WordList {
-  item String @id // the word/phrase
-}
-
-// mod results
-model Moderation {
+model Tag {
   id        Int     @id @default(autoincrement())
   message   Message @relation(fields: [messageID], references: [id])
   messageID Int     @unique
 
-  result String // Just the JSON response data? Routes/AIProfiles can decide what to do?
+  key   String
+  value String?
 }
 
 // Options
 model Options {
   options            String   @id @default("options")
   adminKeyword       String   @default("!!admin!!")
-  wordListReplacer        String
+  wordListReplacer   String
   requireModeration  Boolean
   allowModCategories String[]
 }
 
-// Try not to use
-// Identifies which messages below to which instance of a profile.
-// model Conversation {
-//   id           Int    @id @default(autoincrement()) // indiv msg id, ie a chatblock
-//   created DateTime @default(now())
-
-//   messages Message[] 
-// }
+// output filter
+model WordList {
+  item String @id // the word/phrase
+}

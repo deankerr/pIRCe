@@ -4,11 +4,11 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 if (process.env.NODE_ENV === 'development') {
+  await prisma.tag.deleteMany({})
   await prisma.route.deleteMany({})
-  await prisma.chatProfile.deleteMany({})
-  await prisma.options.deleteMany({})
+  await prisma.profile.deleteMany({})
   await prisma.message.deleteMany({})
-  await prisma.moderation.deleteMany({})
+  await prisma.options.deleteMany({})
 }
 
 const bartPrompt = fs.readFileSync('prisma/prompt-bart.txt', 'utf8')
@@ -30,11 +30,11 @@ await prisma.route.create({
     contains: '{{nick}}',
     handler: 'chat',
 
-    chatProfile: {
+    profile: {
       create: {
-        label: 'bart',
+        id: 'bart',
         prompt: bartPrompt,
-        maxTokens: 50,
+        maxTokens: 128,
         stop: [],
         maxHistorySize: 20,
       },
@@ -48,9 +48,9 @@ await prisma.route.create({
     target: '#',
     startsWith: '@eee',
     handler: 'chat',
-    chatProfile: {
+    profile: {
       create: {
-        label: 'eee',
+        id: 'eee',
         prompt: eeePrompt,
         maxTokens: 50,
         stop: [],

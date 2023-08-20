@@ -1,32 +1,44 @@
-import { getAIProfile, prisma, type Message } from '../../db.js'
+import { createTag, prisma, type Message, type Profile } from '../../db.js'
 import { command, dbug } from '../../index.js'
 import { openAI } from './openAI.js'
-import { buildPromptMessages } from './prompt.js'
+import { constructProfilePrompt } from './prompt.js'
 
 const log = dbug('chat')
-// const outputConvoLog = false
-// TODO uniform interface for routes, ie name, params
 
-export async function chat(msg: Message, aiProfileID: number | null) {
+export async function chat(msg: Message, profile: Profile | null) {
   log('start: %m', msg)
 
   // TODO replace mod check
   // const moderatedMsg = await moderate(msg)
   // if (!moderatedMsg || !moderatedMsg.allowed) return
-  if (!aiProfileID) return log('aborted - invalid profile ID: %s', aiProfileID)
-  const profile = await getAIProfile(aiProfileID) // TODO move responsibility to router
 
-  //! could result in wrong message being last if multiple sent at once
-  const userM = await prisma.message.findMany({
-    where: { target: msg.target },
+  if (!profile) return log('aborted - invalid profile')
+
+  const chatHistory = await prisma.tag.findMany({
+    select: {
+      message: {
+        select: {
+          nick: true,
+          content: true,
+        },
+      },
+      value: true,
+    },
+    where: {
+      key: profile.id,
+      message: {
+        server: msg.server,
+        target: msg.target,
+        self: false,
+      },
+    },
     take: -profile.maxHistorySize,
-    select: { nick: true, content: true, self: true },
   })
 
-  const convo = buildPromptMessages(profile.prompt, userM)
-  log('built prompt %O', convo)
+  const conversation = constructProfilePrompt(profile, chatHistory, msg)
+  log('built prompt %O', conversation)
 
-  const result = await openAI.chat(convo, profile.maxTokens)
+  const result = await openAI.chat(conversation, profile.maxTokens)
   if (!result) return log('chat failed')
 
   log(
@@ -39,8 +51,6 @@ export async function chat(msg: Message, aiProfileID: number | null) {
   )
 
   command.say(msg.target, result.message)
-}
 
-function stripMatcher(text: string, matcher: RegExp) {
-  return text.replace(matcher, '')
+  createTag(msg, profile.id, result.message)
 }
