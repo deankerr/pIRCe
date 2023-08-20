@@ -14,23 +14,6 @@ type MessageItem = {
   content: string
 }
 
-function createBlock(role: string): MessageItem {
-  switch (role) {
-    case '::system':
-      return { role: roles.system, content: '' }
-    case '::assistant':
-      return { role: roles.assistant, content: '' }
-    case '::user':
-      return { role: roles.user, content: '' }
-    case '::example_user':
-      return { role: roles.system, name: 'example_user', content: '' }
-    case '::example_asst':
-      return { role: roles.system, name: 'example_asst', content: '' }
-    default:
-      throw new Error('Invalid role')
-  }
-}
-
 type historyItem = { message: { nick: string; content: string }; value: string | null }
 
 export function constructProfilePrompt(profile: Profile, history: historyItem[], latest: Message) {
@@ -67,7 +50,31 @@ export function constructProfilePrompt(profile: Profile, history: historyItem[],
     content: adaptKeywords(latest.content, profile),
   })
 
+  if (profile.promptTail) {
+    messages.push({
+      role: roles.system,
+      content: profile.promptTail,
+    })
+  }
+
   return messages
+}
+
+function createBlock(role: string): MessageItem {
+  switch (role) {
+    case '::system':
+      return { role: roles.system, content: '' }
+    case '::assistant':
+      return { role: roles.assistant, content: '' }
+    case '::user':
+      return { role: roles.user, content: '' }
+    case '::example_user':
+      return { role: roles.system, name: 'example_user', content: '' }
+    case '::example_asst':
+      return { role: roles.system, name: 'example_asst', content: '' }
+    default:
+      throw new Error('Invalid role')
+  }
 }
 
 function substitute(content: string, word: string, withWord: string | null) {

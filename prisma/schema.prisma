@@ -49,6 +49,7 @@ model Route {
 model Profile {
   id     String @id // 'bart', 'eee'
   prompt String // in "promptScript"
+  promptTail String?
 
   // OAI options
   maxTokens   Int

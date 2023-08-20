@@ -34,6 +34,8 @@ await prisma.route.create({
       create: {
         id: 'bart',
         prompt: bartPrompt,
+        promptTail:
+          '[System note: Stay in character as Bart Simpson and keep your response short.]',
         maxTokens: 128,
         stop: [],
         maxHistorySize: 20,
@@ -53,6 +55,7 @@ await prisma.route.create({
       create: {
         id: 'eee',
         prompt: eeePrompt,
+        promptTail: `[System note: Stay in character as eee and keep your response short.]`,
         maxTokens: 50,
         stop: [],
         maxHistorySize: 20,
