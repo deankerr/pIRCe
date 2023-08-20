@@ -56,8 +56,8 @@ model Profile {
   stop        String[] // ? can this just be empty
 
   // our opts
-  startsAt       DateTime @default(now()) // earliest time to look back for history
   maxHistorySize Int
+  replaceNick String?
 
   route Route[]
 }

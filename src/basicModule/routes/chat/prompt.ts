@@ -1,5 +1,7 @@
 import type { Message, Profile } from '@prisma/client'
 
+import { context } from '../../index.js'
+
 const roles = {
   system: 'system',
   assistant: 'assistant',
@@ -51,7 +53,7 @@ export function constructProfilePrompt(profile: Profile, history: historyItem[],
     messages.push({
       role: roles.user,
       name: message.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
-      content: message.content,
+      content: adaptKeywords(message.content, profile),
     })
 
     if (value) {
@@ -62,8 +64,19 @@ export function constructProfilePrompt(profile: Profile, history: historyItem[],
   messages.push({
     role: roles.user,
     name: latest.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
-    content: latest.content,
+    content: adaptKeywords(latest.content, profile),
   })
 
   return messages
+}
+
+function substitute(content: string, word: string, withWord: string | null) {
+  if (withWord === null) return content
+  const replacer = new RegExp(`\\b${word}\\b`, 'g')
+  return content.replaceAll(replacer, withWord)
+}
+
+function adaptKeywords(content: string, profile: Profile) {
+  // TODO remove @trigger hardcode
+  return substitute(content, context.self.nick, profile.replaceNick).replace(/^@\w*\s/, '')
 }
