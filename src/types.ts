@@ -23,9 +23,3 @@ export type EventMessage = {
 
 export type IRCConfig = Partial<IrcOptions> &
   Pick<IrcOptions, 'host' | 'nick'> & { nickservPassword?: string }
-
-export type BasicModuleOptions = {
-  allowedModerationCategories: string[]
-  adminKeyword: string
-  outputWordFilterList: string[]
-}

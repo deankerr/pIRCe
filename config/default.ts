@@ -1,4 +1,4 @@
-import type { BasicModuleOptions, IRCConfig } from '../src/types.js'
+import type { IRCConfig } from '../src/types.js'
 
 export const irc: IRCConfig = {
   host: 'irc.server.addr',
@@ -17,10 +17,4 @@ export const module = {
   name: 'basicModule',
   path: 'src/basicModule',
   reloadKeyword: '!!reload!!',
-}
-
-export const basicModuleOptions: BasicModuleOptions = {
-  allowedModerationCategories: [''],
-  adminKeyword: '!!admin!!',
-  outputWordFilterList: ['badword'],
 }
