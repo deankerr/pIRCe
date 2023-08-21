@@ -77,13 +77,16 @@ function createBlock(role: string): MessageItem {
   }
 }
 
+// remove @command + nick if the text starts with either, replace remaining nicks with character name
+function adaptKeywords(content: string, profile: Profile) {
+  // TODO remove @trigger hardcode
+  const nickTrigger = new RegExp(`^${context.self.nick}\\b`)
+  const stripTrigger = content.replace(/^@\w*\s/, '').replace(nickTrigger, '')
+  return substitute(stripTrigger, context.self.nick, profile.replaceNick)
+}
+
 function substitute(content: string, word: string, withWord: string | null) {
   if (withWord === null) return content
   const replacer = new RegExp(`\\b${word}\\b`, 'g')
   return content.replaceAll(replacer, withWord)
-}
-
-function adaptKeywords(content: string, profile: Profile) {
-  // TODO remove @trigger hardcode
-  return substitute(content, context.self.nick, profile.replaceNick).replace(/^@\w*\s/, '')
 }
