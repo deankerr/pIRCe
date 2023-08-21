@@ -43,12 +43,6 @@ async function chat(messages: OAIChatMessages, max_tokens: number) {
 export const openAI = { moderation, chat }
 
 function handleError(error: unknown) {
-  // if (isAxiosError(error) && error.response) {
-  //   const { status, statusText } = error.response
-  //   log(status, statusText)
-  //   return null
-  // }
-
   log(error)
   return null
 }

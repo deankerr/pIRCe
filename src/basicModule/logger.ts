@@ -19,13 +19,13 @@ debug.formatters.m = (v) => {
     let result = ''
     if (role) result += `|${role.slice(0, 1).toUpperCase()}|`
     if (nick) result += `<${nick}>`
-    if (text) result += text.slice(0, 50)
+    if (text) result += text.slice(0, 80)
 
     return result
   }
 
   if (typeof v === 'string') {
-    return v.slice(0, 50)
+    return v.slice(0, 80)
   }
 
   return v
