@@ -43,12 +43,11 @@ export async function router(message: EventMessage) {
     return false
   })
 
-  log(
-    'matched: %O',
-    validRoutes.map((r) => `${r.handler}/${r.profileID}`),
-  )
-
   if (validRoutes.length > 0) {
+    log(
+      'matched: %O',
+      validRoutes.map((r) => `${r.handler}/${r.profileID}`),
+    )
     if (!(await moderate(msg, options))) return log('aborted - moderation')
   }
 
