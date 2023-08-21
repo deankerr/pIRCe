@@ -81,6 +81,7 @@ model Options {
   adminKeyword       String   @default("!!admin!!")
   requireModeration  Boolean
   allowModCategories String @default("") // comma delimetered
+  outputMaxCharsPerLine Int @default(150)
 }
 
 // output filter

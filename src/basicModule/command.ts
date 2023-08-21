@@ -1,5 +1,5 @@
 import type { CommandMessage } from '../types.js'
-import { outputFilter } from './outputFilter.js'
+import { formatOutput } from './formatOutput.js'
 
 const send = (message: CommandMessage) => {
   if (!process.send) throw new Error('process.send is unavailable')
@@ -8,10 +8,10 @@ const send = (message: CommandMessage) => {
 
 export const command = {
   say: async (target: string, message: string) => {
-    send({ say: [target, await outputFilter(message)] })
+    send({ say: [target, await formatOutput(message)] })
   },
   action: async (target: string, message: string) => {
-    send({ action: [target, await outputFilter(message)] })
+    send({ action: [target, await formatOutput(message)] })
   },
   join: (target: string) => {
     send({ join: target })
