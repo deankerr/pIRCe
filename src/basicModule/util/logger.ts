@@ -34,4 +34,4 @@ debug.formatters.m = (v) => {
 export const log = debug('pIRCe:bot')
 
 const extLog = debug('pIRCe')
-export const dbug = extLog.extend.bind(extLog)
+export const create = extLog.extend.bind(extLog)

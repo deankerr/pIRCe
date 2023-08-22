@@ -1,8 +1,8 @@
+import type { Message } from '../api/db.js'
 import { command } from '../command.js'
-import type { Message } from '../db.js'
-import { dbug } from '../logger.js'
+import { logger } from '../util.js'
 
-const log = dbug('admin')
+const log = logger.create('admin')
 
 // admin commands
 export async function admin(msg: Message) {

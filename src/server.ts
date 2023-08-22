@@ -34,9 +34,9 @@ const watch = chokidar.watch(moduleInfo.path, { ignoreInitial: true })
 watch.on('add', watchReload)
 watch.on('change', watchReload)
 
-const ircRaw = debug('pIRCe:raw')
+const ircRaw = debug('pIRCe:irc')
 irc.on('raw', (message) => {
-  if (['PING', 'PONG', 'rpl_motd'].some((c) => message.command.startsWith(c))) return
+  if (['PING', 'PONG', 'rpl_'].some((c) => message.command.startsWith(c))) return
   const data = message.nick ? [message.nick, ...message.args] : message.args
   ircRaw('%s: %s', message.command, data.join('/'))
 })

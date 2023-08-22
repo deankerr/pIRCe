@@ -1,4 +1,4 @@
-import { getOptions, getWordList } from './db.js'
+import { getOptions, getWordList } from '../api/db.js'
 
 export async function formatOutput(text: string) {
   let filtered = text

@@ -1,11 +1,11 @@
 import { EventMessage } from '../types.js'
-import { createMessage, getOptions, getRoutesForTarget } from './db.js'
-import { context, dbug } from './index.js'
-import { moderate } from './moderate.js'
+import { createMessage, getOptions, getRoutesForTarget } from './api/db.js'
 import { admin } from './routes/admin.js'
-import { chat } from './routes/chat/chat.js'
+import { chat } from './routes/chat.js'
+import { moderate } from './routes/moderate.js'
+import { context, logger } from './util.js'
 
-const log = dbug('router')
+const log = logger.create('router')
 
 const handlers = [admin, chat]
 
@@ -20,7 +20,7 @@ export async function router(message: EventMessage) {
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
 
-  const keywords = { '{{nick}}': context.self.nick, '{{admin}}': options.adminKeyword }
+  const keywords = { '{{nick}}': context.me, '{{admin}}': options.adminKeyword }
 
   const validRoutes = routes.filter((route) => {
     if (route.startsWith !== null) {

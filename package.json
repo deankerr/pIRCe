@@ -7,12 +7,12 @@
   "scripts": {
     "start": "DEBUG=pIRCe:* ts-node src/server.ts",
     "dev": "DEBUG=pIRCe:* ts-node src/server.ts",
-    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "check": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db": "prisma db",
-    "studiop": "prisma studio --port 5557 --browser none",
-    "studiod": "prisma studio --port 5556 --browser none"
+    "studio": "prisma studio"
   },
   "keywords": [],
   "author": "",

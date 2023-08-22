@@ -1,6 +1,6 @@
 import { PrismaClient, type Message as _Message, type Profile as _Profile } from '@prisma/client'
 
-import { EventMessage } from '../types.js'
+import { EventMessage } from '../../types.js'
 
 export type { Message, Profile, Route } from '@prisma/client'
 

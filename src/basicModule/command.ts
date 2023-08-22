@@ -1,5 +1,5 @@
 import type { CommandMessage } from '../types.js'
-import { formatOutput } from './formatOutput.js'
+import { formatOutput } from './util/formatOutput.js'
 
 const send = (message: CommandMessage) => {
   if (!process.send) throw new Error('process.send is unavailable')

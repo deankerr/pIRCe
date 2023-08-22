@@ -1,9 +1,8 @@
-import { log } from './logger.js'
+import { db } from './api.js'
 import { router } from './router.js'
+import { logger } from './util.js'
 
-export * from './logger.js'
-export * from './context.js'
-export * from './command.js'
+logger.log('basicModule loaded')
+logger.log(await db.getOptions())
 
-log('basicModule loaded')
 process.on('message', router)

@@ -1,17 +1,17 @@
 import { Options } from '@prisma/client'
 
-import { createTag, type Message } from './db.js'
-import { dbug } from './index.js'
-import { openAI } from './routes/chat/openAI.js'
+import { ai } from '../api.js'
+import { createTag, type Message } from '../api/db.js'
+import { logger } from '../util.js'
 
-const log = dbug('moderation')
+const log = logger.create('moderation')
 
 export async function moderate(msg: Message, options: Options) {
   if (options.requireModeration === false) return true
 
   const input = `${msg.nick}: ${msg.content}`
   log('mod: %s', input)
-  const result = await openAI.moderation(input)
+  const result = await ai.moderation(input)
 
   if (result === null) {
     log('moderation failed: no result')

@@ -1,6 +1,6 @@
 import type { Message, Profile } from '@prisma/client'
 
-import { context } from '../../index.js'
+import { context } from '../util.js'
 
 const roles = {
   system: 'system',
@@ -80,9 +80,9 @@ function createBlock(role: string): MessageItem {
 // remove @command + nick if the text starts with either, replace remaining nicks with character name
 function adaptKeywords(content: string, profile: Profile) {
   // TODO remove @trigger hardcode
-  const nickTrigger = new RegExp(`^${context.self.nick}\\b`)
+  const nickTrigger = new RegExp(`^${context.me}\\b`)
   const stripTrigger = content.replace(/^@\w*\s/, '').replace(nickTrigger, '')
-  return substitute(stripTrigger, context.self.nick, profile.replaceNick)
+  return substitute(stripTrigger, context.me, profile.replaceNick)
 }
 
 function substitute(content: string, word: string, withWord: string | null) {
