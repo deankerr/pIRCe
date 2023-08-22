@@ -1,4 +1,7 @@
 import { config } from '@creditkarma/dynamic-config'
+
+import 'dotenv/config'
+
 import chokidar from 'chokidar'
 import debug from 'debug'
 
@@ -10,6 +13,7 @@ export const log = debug('pIRCe:server')
 const ircConfig = await config().get<IRCConfig>('irc')
 const moduleInfo = await config().get<Record<string, string>>('module')
 
+log('NODE_ENV: %s', process.env.NODE_ENV)
 log(`server: %s nick: %s`, ircConfig.host, ircConfig.nick)
 log('module: %s / %s', moduleInfo.name, moduleInfo.path)
 log('reload keyword: %s', moduleInfo.reloadKeyword)
