@@ -64,6 +64,7 @@ export async function moderation(input: string) {
 export async function chat(messages: OAIChatMessages, max_tokens: number) {
   try {
     log(backendProvider, model)
+    // log(messages)
     const result = await api.createChatCompletion(
       {
         model,
@@ -90,7 +91,6 @@ function handleError(error: unknown) {
     if (error.response) {
       const { status, statusText, data } = error.response
       log('Error Response:', status, statusText, data)
-      log(Object.keys(error))
       return null
     }
   }

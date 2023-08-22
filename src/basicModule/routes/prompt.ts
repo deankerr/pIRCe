@@ -73,7 +73,7 @@ function createBlock(role: string): MessageItem {
     case '::example_asst':
       return { role: roles.system, name: 'example_asst', content: '' }
     default:
-      throw new Error('Invalid role')
+      throw new Error(`Invalid role: ${role}`)
   }
 }
 
