@@ -26,12 +26,11 @@ export async function formatOutput(text: string) {
     line += sentence
 
     if (line.length > options.outputMaxCharsPerLine) {
-      lines.push(line)
+      lines.push(line.trim())
       line = ''
     }
   }
 
-  if (line !== '') lines.push(line)
-
+  if (line !== '') lines.push(line.trim())
   return lines.join('\n')
 }

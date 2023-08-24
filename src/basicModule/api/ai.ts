@@ -53,6 +53,7 @@ const { api, model, headers, backendProvider } = createBackend()
 
 export async function moderation(input: string) {
   try {
+    if (backendProvider === 'OpenRouter') throw new Error('OpenRouter does not support moderation')
     log(backendProvider, 'moderation')
     const response = await api.createModeration({ input }, { headers })
     return response.data.results[0]
@@ -63,8 +64,8 @@ export async function moderation(input: string) {
 
 export async function chat(messages: OAIChatMessages, max_tokens: number) {
   try {
-    log(backendProvider, model)
-    // log(messages)
+    log('%s/%s messages: %d', backendProvider, model, messages.length)
+    // log('%o', messages)
     const result = await api.createChatCompletion(
       {
         model,

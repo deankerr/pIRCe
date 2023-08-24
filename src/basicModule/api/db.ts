@@ -83,3 +83,96 @@ export async function getOptions() {
 export async function getWordList() {
   return await prisma.wordList.findMany({})
 }
+
+type ProfileMessage = {
+  profile: _Profile
+  message: _Message
+}
+
+export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
+  const { message, profile } = pMsg
+  const { server, target } = message
+
+  const { maxHistorySize: minProfile, numIncludeContextual: maxContextual } = profile
+  const max = minProfile + maxContextual
+
+  const pMsgs = await getProfileMessages(pMsg, max)
+  // get any recent messages that aren't part of another profile
+  const rMsgs = (
+    await prisma.message.findMany({
+      where: {
+        server,
+        target,
+        tag: {
+          none: {},
+        },
+      },
+      take: -maxContextual,
+    })
+  )
+    // remove any that are already included in profile messages
+    .filter((m) => !pMsgs.some((p) => p.id === m.id))
+
+  // combine list, sort into id order, remove any from the front that put us over the max
+  const msgs = [...pMsgs, ...rMsgs].sort((a, b) => a.id - b.id).slice(-max)
+
+  return msgs
+}
+
+// limit each OR to different take count?
+// await prisma.message.findMany({
+//   where: {
+//     server,
+//     target,
+//     OR: [
+//       {
+//         tag: {
+//           some: {
+//             key,
+//           },
+//         },
+//       },
+//       {
+//         tag: {
+//           none: {},
+//         },
+//       },
+//     ],
+//   },
+// })
+
+export async function getProfileMessages(pMsg: ProfileMessage, amount: number) {
+  const { profile, message } = pMsg
+  const { server, target } = message
+  const { id: key } = profile
+
+  return await prisma.message.findMany({
+    where: {
+      server,
+      target,
+      tag: {
+        some: {
+          key,
+        },
+      },
+    },
+    take: -amount,
+  })
+}
+
+export async function getMessages(pMsg: ProfileMessage, amount: number) {
+  const { message } = pMsg
+  const { server, target } = message
+
+  const msgs = await prisma.message.findMany({
+    where: {
+      server,
+      target,
+      self: false,
+    },
+
+    take: -amount,
+  })
+
+  return msgs
+}

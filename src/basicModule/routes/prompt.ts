@@ -71,10 +71,52 @@ function createBlock(role: string): MessageItem {
     case '::example_user':
       return { role: roles.system, name: 'example_user', content: '' }
     case '::example_asst':
-      return { role: roles.system, name: 'example_asst', content: '' }
+      return { role: roles.system, name: 'example_assistant', content: '' }
     default:
+      console.log(`Invalid role: ${role}`)
       throw new Error(`Invalid role: ${role}`)
   }
+}
+
+export function buildMessages(profile: Profile, messages: Message[]) {
+  const result: MessageItem[] = []
+
+  // parse profile system prompt
+  const lines = profile.prompt.split('\n')
+  for (const line of lines) {
+    if (line.startsWith('::')) {
+      // create new msg block
+      result.push(createBlock(line))
+    } else {
+      // add text
+      result[result.length - 1].content += line
+    }
+  }
+
+  // parse history messages
+  for (const { nick, content, self } of messages) {
+    if (self) {
+      result.push({
+        role: roles.assistant,
+        content,
+      })
+    } else {
+      result.push({
+        role: roles.user,
+        name: nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
+        content: adaptKeywords(content, profile),
+      })
+    }
+  }
+
+  if (profile.promptTail) {
+    result.push({
+      role: roles.system,
+      content: profile.promptTail,
+    })
+  }
+
+  return result
 }
 
 // remove @command + nick if the text starts with either, replace remaining nicks with character name

@@ -59,6 +59,7 @@ model Profile {
 
   // our opts
   maxHistorySize Int
+  numIncludeContextual Int @default(0)
   replaceNick String?
 
   route Route[]
@@ -81,7 +82,7 @@ model Options {
   adminKeyword       String   @default("!!admin!!")
   requireModeration  Boolean
   allowModCategories String @default("") // comma delimetered
-  outputMaxCharsPerLine Int @default(150)
+  outputMaxCharsPerLine Int @default(100)
 }
 
 // output filter
