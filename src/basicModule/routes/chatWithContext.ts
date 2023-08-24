@@ -12,6 +12,7 @@ export async function chatWithContext(
   redirectOutput?: string | null,
 ) {
   if (!profile) return log('aborted - invalid profile')
+  await createTag(msg, profile.id)
 
   const history = await getProfileAndContextMessages({ profile, message: msg })
 
@@ -20,7 +21,6 @@ export async function chatWithContext(
   }
   const conversation = buildMessages(profile, history)
 
-  log('%m', conversation.at(-2))
   const result = await ai.chat(conversation, profile.maxTokens)
   if (!result) return log('chat failed')
 
@@ -34,7 +34,5 @@ export async function chatWithContext(
   )
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, result.message)
-
-  createTag(msg, profile.id, result.message)
+  command.say(target, result.message, profile.id)
 }
