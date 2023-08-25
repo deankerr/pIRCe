@@ -4,49 +4,6 @@ import { create } from './logger.js'
 
 const log = create('output')
 
-const maxNewlinesPerResponse = 3
-
-export async function formatOutputO(text: string) {
-  const fileID = outputToIDFile(text)
-  let filtered = text
-
-  const words = await getWordList()
-  const options = await getOptions()
-
-  for (const { word } of words) {
-    const regex = new RegExp(`${word}`, 'gi')
-    filtered = filtered.replaceAll(regex, '****')
-  }
-
-  // remove newlines
-  filtered = filtered.replaceAll('\n', ' ')
-  // remove excess whitespace
-  filtered = filtered.replaceAll(/\s\s*/g, ' ')
-
-  const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)
-  if (!sentenceChunks) return filtered
-
-  const lines: string[] = []
-  let line = ''
-
-  for (const sentence of sentenceChunks) {
-    line += sentence
-
-    if (line.length > options.outputMaxCharsPerLine) {
-      lines.push(line.trim())
-      line = ''
-    }
-  }
-
-  if (line !== '') lines.push(line.trim())
-
-  log(lines)
-
-  if (lines.length > 2)
-    return lines.slice(0, 2).join('\n') + ` ${options.outputFileBaseURL}${fileID}`
-  else return lines.join('\n')
-}
-
 export async function formatOutput(text: string) {
   let filtered = text
 
@@ -58,15 +15,29 @@ export async function formatOutput(text: string) {
     filtered = filtered.replaceAll(regex, '****')
   }
 
-  // split any newlines, remove blanks
-  const nsplit = filtered.split('\n').filter((l) => l !== '')
+  // split any newlines, remove blanks, trim
+  const nsplit = filtered
+    .split('\n')
+    .filter((l) => l !== '')
+    .map((l) => l.trim())
 
-  const output = nsplit.slice(0, maxNewlinesPerResponse).join('\n')
+  const { outputIRCMaxNewlines, outputFileURLTemplate } = options
 
-  if (nsplit.length > maxNewlinesPerResponse) {
+  if (nsplit.length > outputIRCMaxNewlines) {
     const fileID = outputToIDFile(text)
-    return `${output} ${options.outputFileBaseURL}${fileID}`
+    // concat up to four lines together, join with /
+    const output = nsplit.slice(0, outputIRCMaxNewlines).join(' / ')
+    if (!outputFileURLTemplate) {
+      log(
+        'add a outputFileURLTemplate option with a % char to replace with filename to enable file URL output',
+      )
+      return output
+    } else {
+      return `${output} ${outputFileURLTemplate.replace('%', fileID)}`
+    }
   } else {
-    return output
+    return nsplit.slice(0, outputIRCMaxNewlines).join('\n')
   }
 }
+
+// const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)

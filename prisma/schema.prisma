@@ -82,8 +82,10 @@ model Options {
   adminKeyword       String   @default("!!admin!!")
   requireModeration  Boolean
   allowModCategories String @default("") // comma delimetered
-  outputMaxCharsPerLine Int @default(100)
-  outputFileBaseURL String @default("") // prepend to output fileid message
+
+  outputFileURLTemplate String @default("") // eg "web.site/%.txt"
+  outputFileDir String @default("output")
+  outputIRCMaxNewlines Int @default(4)
 }
 
 // output filter
