@@ -24,7 +24,7 @@ export async function formatOutput(text: string) {
   const { outputIRCMaxNewlines, outputFileURLTemplate } = options
 
   if (nsplit.length > outputIRCMaxNewlines) {
-    const fileID = outputToIDFile(text)
+    const fileID = await outputToIDFile(text)
     // concat up to four lines together, join with /
     const output = nsplit.slice(0, outputIRCMaxNewlines).join(' / ')
     if (!outputFileURLTemplate) {

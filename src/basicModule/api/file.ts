@@ -1,19 +1,22 @@
 import fs from 'node:fs'
 import { nanoid } from 'nanoid'
 
-// save AI output to .txt file, return file path
-const dirName = 'output'
+import { getOptions } from './db.js'
 
-function getOutputPath(filename: string) {
+async function getOutputPath(filename: string) {
+  const options = await getOptions()
+  const dirName = options.outputFileDir
+
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName)
   }
   return `${dirName}/${filename}`
 }
 
-export function outputToIDFile(content: string) {
+export async function outputToIDFile(content: string) {
   const id = nanoid(3)
-  fs.writeFile(getOutputPath(`${id}.txt`), content, (err) => {
+  const filepath = await getOutputPath(`${id}.txt`)
+  fs.writeFile(filepath, content, (err) => {
     if (err) throw err
   })
   return id
