@@ -24,12 +24,12 @@ export async function router(message: EventMessage) {
   const keywords = { '{{nick}}': context.me, '{{admin}}': options.adminKeyword }
 
   const validRoutes = routes.filter((route) => {
-    if (route.startsWith !== null) {
+    if (route.startsWith !== null && route.startsWith !== '') {
       const keyword = substituteKeywords(route.startsWith, keywords)
       if (msg.content.startsWith(keyword + ' ')) return true
     }
 
-    if (route.contains !== null) {
+    if (route.contains !== null && route.contains !== '') {
       const keyword = substituteKeywords(route.contains, keywords)
       const tests = [
         new RegExp(`^${keyword}[.,!?:;\\s]`), // starts with
