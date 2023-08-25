@@ -87,9 +87,8 @@ export async function chat(messages: OAIChatMessages, max_tokens: number) {
   }
 }
 
-export async function testORLlamaChat(messages: OAIChatMessages, max_tokens: number) {
+export async function chatLlama(messages: OAIChatMessages, max_tokens: number, model: string) {
   try {
-    const model = 'nousresearch/nous-hermes-llama2-13b'
     log('%s/%s messages: %d', backendProvider, model, messages.length)
     log('%o', messages)
     const result = await api.createChatCompletion(
@@ -97,6 +96,12 @@ export async function testORLlamaChat(messages: OAIChatMessages, max_tokens: num
         model,
         max_tokens,
         messages,
+        temperature: 1,
+        presence_penalty: 1,
+        frequency_penalty: 0.7,
+        top_p: 0.3,
+        // @ts-expect-error Llama models support
+        top_k: 0.6,
       },
       { headers },
     )

@@ -18,7 +18,7 @@ export async function chatLlama(
 
   // log('%m', conversation.at(-2))
 
-  const result = await ai.testORLlamaChat(conversation, 128)
+  const result = await ai.chatLlama(conversation, 128, 'gryphe/mythomax-L2-13b')
   if (!result) return log('chat failed')
 
   // nous adds this to the ends of messages (sometimes?)
