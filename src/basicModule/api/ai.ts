@@ -87,6 +87,32 @@ export async function chat(messages: OAIChatMessages, max_tokens: number) {
   }
 }
 
+export async function testORLlamaChat(messages: OAIChatMessages, max_tokens: number) {
+  try {
+    const model = 'nousresearch/nous-hermes-llama2-13b'
+    log('%s/%s messages: %d', backendProvider, model, messages.length)
+    log('%o', messages)
+    const result = await api.createChatCompletion(
+      {
+        model,
+        max_tokens,
+        messages,
+      },
+      { headers },
+    )
+
+    const message = result.data.choices[0].message?.content
+    const finishReason = result.data.choices[0].finish_reason
+    const usage = result.data.usage
+
+    if (!message) throw new Error('Response missing expected data')
+
+    return { message, finishReason, usage }
+  } catch (error) {
+    return handleError(error)
+  }
+}
+
 function handleError(error: unknown) {
   if (isAxiosError(error)) {
     if (error.response) {
