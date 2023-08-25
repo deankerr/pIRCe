@@ -12,7 +12,9 @@
     "check": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db": "prisma db",
-    "studio": "prisma studio"
+    "migrate": "prisma migrate",
+    "studio": "prisma studio",
+    "liveDeploy": "git reset --hard HEAD && git pull && prisma migrate deploy && prisma generate && echo \"say reload keyword to trigger reload\""
   },
   "keywords": [],
   "author": "",
