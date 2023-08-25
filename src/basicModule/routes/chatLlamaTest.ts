@@ -1,8 +1,8 @@
 import { ai } from '../api.js'
-import { createTag, getChatHistory, type Message, type Profile } from '../api/db.js'
+import { createTag, getProfileAndContextMessages, type Message, type Profile } from '../api/db.js'
 import { command } from '../command.js'
 import { logger } from '../util.js'
-import { constructProfilePrompt } from './prompt.js'
+import { buildMessages } from './prompt.js'
 
 const log = logger.create('chatLlama')
 
@@ -12,20 +12,21 @@ export async function chatLlama(
   redirectOutput?: string | null,
 ) {
   if (!profile) return log('aborted - invalid profile')
+  await createTag(msg, profile.id)
 
-  const chatHistory = await getChatHistory(profile, msg)
-  const conversation = constructProfilePrompt(profile, chatHistory, msg)
+  const history = await getProfileAndContextMessages({ profile, message: msg })
 
-  // log('%m', conversation.at(-2))
+  for (const h of history) {
+    log('%m', h)
+  }
+  const conversation = buildMessages(profile, history)
 
-  const result = await ai.chatLlama(conversation, 128, 'gryphe/mythomax-L2-13b')
+  const result = await ai.chat(conversation, profile.maxTokens)
   if (!result) return log('chat failed')
 
-  // nous adds this to the ends of messages (sometimes?)
-  const response = result.message.replace(/\n\n<\w+>:/, '')
   log(
     '%s {%s %d/%d/%d}',
-    response,
+    result.message,
     result.finishReason,
     result.usage?.prompt_tokens,
     result.usage?.completion_tokens,
@@ -33,7 +34,5 @@ export async function chatLlama(
   )
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, response, profile.id)
-
-  createTag(msg, profile.id, response)
+  command.say(target, result.message, profile.id)
 }
