@@ -21,7 +21,7 @@ export async function chatLlama(
   }
   const conversation = buildMessages(profile, history)
 
-  const result = await ai.chat(conversation, profile.maxTokens)
+  const result = await ai.chatLlama(conversation, profile.maxTokens, 'gryphe/mythomax-L2-13b')
   if (!result) return log('chat failed')
 
   log(
