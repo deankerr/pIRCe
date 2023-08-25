@@ -26,7 +26,7 @@ export async function chat(msg: Message, profile: Profile | null, redirectOutput
   )
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, result.message)
+  command.say(target, result.message, profile.id)
 
   createTag(msg, profile.id, result.message)
 }

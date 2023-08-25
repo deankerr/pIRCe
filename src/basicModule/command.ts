@@ -9,7 +9,7 @@ const send = (message: CommandMessage) => {
 }
 
 export const command = {
-  say: async (target: string, message: string, tag?: string) => {
+  say: async (target: string, message: string, tag: string | null) => {
     const msg = await createMessage({
       server: context.server,
       target,
@@ -24,7 +24,7 @@ export const command = {
 
     send({ say: [target, await formatOutput(message)] })
   },
-  action: async (target: string, message: string, tag?: string) => {
+  action: async (target: string, message: string, tag: string | null) => {
     const msg = await createMessage({
       server: context.server,
       target,
