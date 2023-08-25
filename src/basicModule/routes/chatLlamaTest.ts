@@ -21,9 +21,11 @@ export async function chatLlama(
   const result = await ai.testORLlamaChat(conversation, 128)
   if (!result) return log('chat failed')
 
+  // nous adds this to the ends of messages (sometimes?)
+  const response = result.message.replace(/\n\n<\w+>:/, '')
   log(
     '%s {%s %d/%d/%d}',
-    result.message,
+    response,
     result.finishReason,
     result.usage?.prompt_tokens,
     result.usage?.completion_tokens,
@@ -31,7 +33,7 @@ export async function chatLlama(
   )
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, result.message, profile.id)
+  command.say(target, response, profile.id)
 
-  createTag(msg, profile.id, result.message)
+  createTag(msg, profile.id, response)
 }
