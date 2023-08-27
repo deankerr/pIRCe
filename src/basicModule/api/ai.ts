@@ -97,9 +97,9 @@ export async function chatLlama(messages: OAIChatMessages, max_tokens: number, m
         max_tokens,
         messages,
         temperature: 0.8,
-        presence_penalty: 1,
+        presence_penalty: 1.2,
         frequency_penalty: 0.7,
-        top_p: 0.3,
+        top_p: 0.4,
         // @ts-dexpect-error Llama models support
         // top_k: 0.6,
       },
@@ -119,7 +119,6 @@ export async function chatLlama(messages: OAIChatMessages, max_tokens: number, m
     }
 
     const message = result.data.choices[0].message?.content
-    log(message)
     if (!message) throw new Error('Response missing expected data')
 
     return { message }
