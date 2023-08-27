@@ -24,15 +24,13 @@ export async function chatLlama(
   const result = await ai.chatLlama(conversation, profile.maxTokens, 'gryphe/mythomax-L2-13b')
   if (!result) return log('chat failed')
 
-  log(
-    '%s {%s %d/%d/%d}',
-    result.message,
-    result.finishReason,
-    result.usage?.prompt_tokens,
-    result.usage?.completion_tokens,
-    result.usage?.total_tokens,
-  )
+  log('%s', result)
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, result.message, profile.id)
+
+  if (result.error) {
+    command.say(target, result.error, null)
+  } else if (result.message) {
+    command.say(target, result.message, profile.id)
+  }
 }

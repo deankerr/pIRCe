@@ -90,13 +90,13 @@ export async function chat(messages: OAIChatMessages, max_tokens: number) {
 export async function chatLlama(messages: OAIChatMessages, max_tokens: number, model: string) {
   try {
     log('%s/%s messages: %d', backendProvider, model, messages.length)
-    log('%o', messages)
+    // log('%o', messages)
     const result = await api.createChatCompletion(
       {
         model,
         max_tokens,
         messages,
-        temperature: 1,
+        temperature: 0.8,
         presence_penalty: 1,
         frequency_penalty: 0.7,
         top_p: 0.3,
@@ -106,14 +106,23 @@ export async function chatLlama(messages: OAIChatMessages, max_tokens: number, m
       { headers },
     )
 
-    log(result.data)
-    const message = result.data.choices[0].message?.content
-    const finishReason = result.data.choices[0].finish_reason
-    const usage = result.data.usage
+    // TODO Proper OpenRouter support errors/options
+    // @ts-expect-error stop using this library
+    if (result.data?.error) {
+      // @ts-expect-error stop using this library
+      const { error } = result.data
+      log(error)
+      const code = error.code
+      const errMsg = (error.message as string).replaceAll('\n', '')
+      const message = `Received the following garbage: ${code} ${errMsg}`
+      return { error: message }
+    }
 
+    const message = result.data.choices[0].message?.content
+    log(message)
     if (!message) throw new Error('Response missing expected data')
 
-    return { message, finishReason, usage }
+    return { message }
   } catch (error) {
     return handleError(error)
   }
