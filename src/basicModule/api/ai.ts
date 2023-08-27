@@ -100,12 +100,13 @@ export async function chatLlama(messages: OAIChatMessages, max_tokens: number, m
         presence_penalty: 1,
         frequency_penalty: 0.7,
         top_p: 0.3,
-        // @ts-expect-error Llama models support
-        top_k: 0.6,
+        // @ts-dexpect-error Llama models support
+        // top_k: 0.6,
       },
       { headers },
     )
 
+    log(result.data)
     const message = result.data.choices[0].message?.content
     const finishReason = result.data.choices[0].finish_reason
     const usage = result.data.usage

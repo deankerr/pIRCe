@@ -37,8 +37,8 @@ model Route {
   contains   String?
 
   handler String // name of actual function message is sent to TYPE
-  
-  redirectOutput String?
+
+  redirectOutput String? // output to this target instead
 
   // the ai profile data to send to handler along with message
   profile   Profile? @relation(fields: [profileID], references: [id])
@@ -47,8 +47,8 @@ model Route {
 
 // Prompt set up, options and values
 model Profile {
-  id     String @id // 'bart', 'eee'
-  prompt String // in "promptScript"
+  id         String  @id // 'bart', 'eee'
+  prompt     String // in "promptScript"
   promptTail String?
 
   // OAI options
@@ -58,9 +58,9 @@ model Profile {
   stop        String[] // ? can this just be empty
 
   // our opts
-  maxHistorySize Int
-  numIncludeContextual Int @default(0)
-  replaceNick String?
+  maxHistorySize       Int
+  numIncludeContextual Int     @default(0)
+  replaceNick          String?
 
   route Route[]
 }
@@ -68,7 +68,7 @@ model Profile {
 model Tag {
   id        Int     @id @default(autoincrement())
   message   Message @relation(fields: [messageID], references: [id])
-  messageID Int    
+  messageID Int
 
   key   String
   value String?
@@ -78,14 +78,15 @@ model Tag {
 
 // Options
 model Options {
-  options            String   @id @default("options")
-  adminKeyword       String   @default("!!admin!!")
+  options            String  @id @default("options")
+  adminKeyword       String  @default("!!admin!!")
   requireModeration  Boolean
-  allowModCategories String @default("") // comma delimetered
+  allowModCategories String  @default("") // comma delimetered
 
   outputFileURLTemplate String @default("") // eg "web.site/%.txt"
-  outputFileDir String @default("output")
-  outputIRCMaxNewlines Int @default(4)
+  outputFileDir         String @default("output")
+  outputIRCMaxNewlines  Int    @default(4)
+  outputIRCMaxChars     Int    @default(440)
 }
 
 // output filter

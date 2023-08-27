@@ -21,12 +21,15 @@ export async function formatOutput(text: string) {
     .filter((l) => l !== '')
     .map((l) => l.trim())
 
-  const { outputIRCMaxNewlines, outputFileURLTemplate } = options
+  const { outputIRCMaxNewlines, outputFileURLTemplate, outputIRCMaxChars } = options
 
-  if (nsplit.length > outputIRCMaxNewlines) {
+  if (nsplit.length > outputIRCMaxNewlines || text.length > outputIRCMaxChars) {
     const fileID = await outputToIDFile(text)
-    // concat up to four lines together, join with /
-    const output = nsplit.slice(0, outputIRCMaxNewlines).join(' / ')
+
+    // assume response is something like song lyrics if first line doesn't end with punctuation
+    const joinWith = /.*[.!?:;"]$/.test(nsplit[0]) ? ' ' : ' / '
+
+    const output = nsplit.slice(0, outputIRCMaxNewlines).join(joinWith).slice(0, outputIRCMaxChars)
     if (!outputFileURLTemplate) {
       log(
         'add a outputFileURLTemplate option with a % char to replace with filename to enable file URL output',
