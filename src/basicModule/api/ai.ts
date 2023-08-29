@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios'
 import OpenAI from 'openai'
 
 import type { OpenAIMessage } from '../../types.js'
@@ -127,13 +126,15 @@ export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, m
 }
 
 function handleError(error: unknown) {
-  if (isAxiosError(error)) {
-    if (error.response) {
-      const { status, statusText, data } = error.response
-      log('Error Response:', status, statusText, data)
-      return null
-    }
+  if (error instanceof OpenAI.APIError) {
+    log(error.status) // e.g. 401
+    log(error.message) // e.g. The authentication token you passed was invalid...
+    log(error.code) // e.g. 'invalid_api_key'
+    log(error.type) // e.g. 'invalid_request_error'
+    return null
+  } else {
+    // Non-API error
+    log(error)
+    return null
   }
-  log(error)
-  return null
 }
