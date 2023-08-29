@@ -23,3 +23,13 @@ export async function outputToIDFile(content: string) {
   })
   return id
 }
+
+export async function outputBase64ToImage(content: string) {
+  const id = nanoid(4)
+  const filepath = await getOutputPath(`${id}.png`)
+  fs.writeFile(filepath, content, { encoding: 'base64' }, () => {
+    console.log('File created.')
+  })
+
+  return id
+}

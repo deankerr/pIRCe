@@ -3,6 +3,8 @@ import OpenAI from 'openai'
 import type { OpenAIMessage } from '../../types.js'
 import { logger } from '../util.js'
 
+// TODO standardized result/error response object
+
 const log = logger.create('openAI')
 
 function createBackend() {
@@ -106,9 +108,9 @@ export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, m
 
     // TODO Proper OpenRouter support errors/options
     // @ts-expect-error stop using this library
-    if (result.data?.error) {
+    if (result.error) {
       // @ts-expect-error stop using this library
-      const { error } = result.data
+      const { error } = result
       log(error)
       const code = error.code
       const errMsg = (error.message as string).replaceAll('\n', '')
@@ -122,6 +124,35 @@ export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, m
     return { message }
   } catch (error) {
     return handleError(error)
+  }
+}
+
+export async function image(prompt: string, format: 'url' | 'b64_json') {
+  try {
+    log('image: %s', prompt)
+    const response = await api.images.generate({
+      prompt,
+      n: 1,
+      size: '1024x1024',
+      response_format: format,
+    })
+
+    const result = response.data[0].b64_json
+    if (!result) throw new Error('Result missing?')
+
+    return { content: result }
+  } catch (error) {
+    if (error instanceof OpenAI.APIError) {
+      log(error.status) // e.g. 401
+      log(error.message) // e.g. The authentication token you passed was invalid...
+      log(error.code) // e.g. 'invalid_api_key'
+      log(error.type) // e.g. 'invalid_request_error'
+      return { error: error.message }
+    } else {
+      // Non-API error
+      log(error)
+      return { error: 'Unknown error' }
+    }
   }
 }
 
