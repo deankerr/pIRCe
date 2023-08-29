@@ -83,10 +83,11 @@ model Options {
   requireModeration  Boolean
   allowModCategories String  @default("") // comma delimetered
 
-  outputFileURLTemplate String @default("") // eg "web.site/%.txt"
-  outputFileDir         String @default("output")
-  outputIRCMaxNewlines  Int    @default(4)
-  outputIRCMaxChars     Int    @default(440)
+  outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
+  outputFileDir          String @default("output")
+  outputFilenameIDLength Int    @default(3) // i.e. 3 = abc.txt
+  outputIRCMaxNewlines   Int    @default(4)
+  outputIRCMaxChars      Int    @default(440)
 }
 
 // output filter

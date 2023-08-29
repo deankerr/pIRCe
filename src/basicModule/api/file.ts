@@ -14,8 +14,10 @@ async function getOutputPath(filename: string) {
 }
 
 export async function outputToIDFile(content: string) {
-  const id = nanoid(3)
+  const options = await getOptions()
+  const id = nanoid(options.outputFilenameIDLength)
   const filepath = await getOutputPath(`${id}.txt`)
+
   fs.writeFile(filepath, content, (err) => {
     if (err) throw err
   })
