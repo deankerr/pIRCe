@@ -1,9 +1,8 @@
 import { isAxiosError } from 'axios'
-import { Configuration, OpenAIApi, type CreateChatCompletionRequest } from 'openai'
+import OpenAI from 'openai'
 
+import type { OpenAIMessage } from '../../types.js'
 import { logger } from '../util.js'
-
-export type OAIChatMessages = CreateChatCompletionRequest['messages']
 
 const log = logger.create('openAI')
 
@@ -11,7 +10,7 @@ function createBackend() {
   if (process.env.OPENROUTER_API_KEY) {
     log('using OpenRouter API')
     const apiKey = process.env.OPENROUTER_API_KEY
-    const basePath = 'https://openrouter.ai/api/v1'
+    const baseURL = 'https://openrouter.ai/api/v1'
 
     const model = process.env.OPENROUTER_API_MODEL
     const referer = process.env.OPENROUTER_YOUR_SITE_URL
@@ -27,7 +26,7 @@ function createBackend() {
     }
 
     return {
-      api: new OpenAIApi(new Configuration({ apiKey, basePath })),
+      api: new OpenAI({ apiKey, baseURL }),
       model,
       headers,
       backendProvider: 'OpenRouter',
@@ -39,7 +38,7 @@ function createBackend() {
     if (!model) throw new Error('OPENAI_API_MODEL not set')
 
     return {
-      api: new OpenAIApi(new Configuration({ apiKey })),
+      api: new OpenAI({ apiKey }),
       model,
       headers: {},
       backendProvider: 'OpenAI',
@@ -55,18 +54,18 @@ export async function moderation(input: string) {
   try {
     if (backendProvider === 'OpenRouter') throw new Error('OpenRouter does not support moderation')
     log(backendProvider, 'moderation')
-    const response = await api.createModeration({ input }, { headers })
-    return response.data.results[0]
+    const response = await api.moderations.create({ input }, { headers })
+    return response.results[0]
   } catch (error) {
     return handleError(error)
   }
 }
 
-export async function chat(messages: OAIChatMessages, max_tokens: number) {
+export async function chat(messages: OpenAIMessage[], max_tokens: number) {
   try {
     log('%s/%s messages: %d', backendProvider, model, messages.length)
     // log('%o', messages)
-    const result = await api.createChatCompletion(
+    const result = await api.chat.completions.create(
       {
         model,
         max_tokens,
@@ -75,9 +74,9 @@ export async function chat(messages: OAIChatMessages, max_tokens: number) {
       { headers },
     )
 
-    const message = result.data.choices[0].message?.content
-    const finishReason = result.data.choices[0].finish_reason
-    const usage = result.data.usage
+    const message = result.choices[0].message?.content
+    const finishReason = result.choices[0].finish_reason
+    const usage = result.usage
 
     if (!message || !finishReason || !usage) throw new Error('Response missing expected data')
 
@@ -87,11 +86,11 @@ export async function chat(messages: OAIChatMessages, max_tokens: number) {
   }
 }
 
-export async function chatLlama(messages: OAIChatMessages, max_tokens: number, model: string) {
+export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, model: string) {
   try {
     log('%s/%s messages: %d', backendProvider, model, messages.length)
     // log('%o', messages)
-    const result = await api.createChatCompletion(
+    const result = await api.chat.completions.create(
       {
         model,
         max_tokens,
@@ -118,7 +117,7 @@ export async function chatLlama(messages: OAIChatMessages, max_tokens: number, m
       return { error: message }
     }
 
-    const message = result.data.choices[0].message?.content
+    const message = result.choices[0].message?.content
     if (!message) throw new Error('Response missing expected data')
 
     return { message }

@@ -23,3 +23,9 @@ export type EventMessage = {
 
 export type IRCConfig = Partial<IrcOptions> &
   Pick<IrcOptions, 'host' | 'nick'> & { nickservPassword?: string }
+
+export type OpenAIMessage = {
+  role: 'system' | 'assistant' | 'user'
+  name?: string
+  content: string
+}
