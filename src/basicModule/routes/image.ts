@@ -10,7 +10,7 @@ export async function image(msg: Message, profile: Profile | null, redirectOutpu
   if (!profile) return log('aborted - invalid profile')
   await createTag(msg, profile.id)
 
-  const result = await ai.image(msg.content, 'b64_json')
+  const result = await ai.image(msg.content.replace(/^@\w*\s/, ''), 'b64_json')
   if (!result) return log('dall-e failed')
 
   if (result.error || !result.content) {
