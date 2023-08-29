@@ -4,6 +4,7 @@ import type { OpenAIMessage } from '../../types.js'
 import { logger } from '../util.js'
 
 // TODO standardized result/error response object
+// TODO handle backend specific functions (image, Llama prompt etc.)
 
 const log = logger.create('openAI')
 
@@ -127,10 +128,14 @@ export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, m
   }
 }
 
+// * image gen is OpenAI only
+
 export async function image(prompt: string, format: 'url' | 'b64_json') {
   try {
     log('image: %s', prompt)
-    const response = await api.images.generate({
+
+    const openAI = new OpenAI()
+    const response = await openAI.images.generate({
       prompt,
       n: 1,
       size: '1024x1024',
