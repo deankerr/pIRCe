@@ -39,5 +39,5 @@ export async function image(msg: Message, profile: Profile | null, redirectOutpu
     fileID,
   }
 
-  prisma.tag.update({ where: { id: tag.id }, data: { value: JSON.stringify(tagLog) } })
+  await prisma.tag.update({ where: { id: tag.id }, data: { value: JSON.stringify(tagLog) } })
 }
