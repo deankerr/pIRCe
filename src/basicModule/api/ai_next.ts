@@ -49,18 +49,29 @@ function normalizeParameters(model: Awaited<ReturnType<typeof getChatModel>>) {
     : null
   if (!backend) throw new Error('Unrecognised backend type/URL')
 
-  // add api key
-  const apiKey = backend === 'openAI' ? process.env.OPENAI_API_KEY : process.env.OPENROUTER_API_KEY
-  if (!apiKey) throw new Error('No API key found for backend ' + backend)
-  model.headers['Authorization'] = `Bearer ${apiKey}`
-
   if (backend === 'openAI') {
+    // add api key
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set')
+    const headers = {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    }
+
     // strip incompatible params
     const { top_k, transforms, ...params } = model
-    return params
+    return { ...params, headers }
   } else {
+    // add api key + headers required by OpenRouter
+    if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set')
+    if (!process.env.OPENROUTER_YOUR_SITE_URL) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
+    if (!process.env.OPENROUTER_YOUR_APP_NAME) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
+    const headers = {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': process.env.OPENROUTER_YOUR_SITE_URL,
+      'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
+    }
+
     // strip function params when these exist
-    return model
+    return { ...model, headers }
   }
 }
 

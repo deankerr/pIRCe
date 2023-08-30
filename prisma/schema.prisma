@@ -77,12 +77,11 @@ model Tag {
 }
 
 model ChatModel {
-  id      String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
-  url     String // 'https://api.openai.com/v1/chat/completions'
-  headers String @default("{}") // OpenRouter extra info: 'HTTP-Referer' / 'X-Title'
+  id    String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
+  url   String // 'https://api.openai.com/v1/chat/completions' | 'https://openrouter.ai/api/v1/chat/completions'
+  model String // OAI: 'gpt-3.5-turbo' / OR: 'openai/gpt-3.5-turbo'
 
   // Parameters
-  model             String // OAI: 'gpt-3.5-turbo' / OR: 'openai/gpt-3.5-turbo'
   max_tokens        Int    @default(128)
   temperature       Float  @default(1)
   top_p             Int    @default(1)

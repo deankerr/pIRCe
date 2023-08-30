@@ -157,10 +157,9 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
 
 export async function getChatModel(id: string) {
   const model = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
-  const { headers, stop, logit_bias, transforms } = model
+  const { stop, logit_bias, transforms } = model
   return {
     ...model,
-    headers: JSON.parse(headers) as Record<string, string>,
     stop: JSON.parse(stop) as string[],
     logit_bias: JSON.parse(logit_bias) as Record<string, number>,
     transforms: JSON.parse(transforms) as string[],
