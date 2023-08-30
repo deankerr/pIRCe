@@ -9,7 +9,7 @@ const log = debug('pIRCe:ai')
 // TODO count tokens (somewhere)
 async function chat(modelID: string, messages: AIChatMessage[]) {
   try {
-    log('ai.chat %o messages[%d]', modelID, messages.length)
+    log('chat %o messages[%d]', modelID, messages.length)
 
     const model = await getChatModel(modelID)
     const nModel = normalizeParameters(model)
@@ -41,37 +41,30 @@ async function chat(modelID: string, messages: AIChatMessage[]) {
 export const ai = { chat }
 
 function normalizeParameters(model: Awaited<ReturnType<typeof getChatModel>>) {
-  // determine backend provider from url
-  const backend = model.url.includes('openai.com')
-    ? 'openAI'
-    : model.url.includes('openrouter.ai')
-    ? 'openRouter'
-    : null
-  if (!backend) throw new Error('Unrecognised backend type/URL')
-
-  if (backend === 'openAI') {
-    // add api key
+  if (model.backend === 'openAI') {
+    // OpenAI api key
     if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set')
-    const headers = {
+
+    model.headers = {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     }
 
     // strip incompatible params
     const { top_k, transforms, ...params } = model
-    return { ...params, headers }
+    return { ...params }
   } else {
-    // add api key + headers required by OpenRouter
+    // OpenRouter api key + required headers
     if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set')
     if (!process.env.OPENROUTER_YOUR_SITE_URL) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
     if (!process.env.OPENROUTER_YOUR_APP_NAME) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
-    const headers = {
+
+    model.headers = {
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       'HTTP-Referer': process.env.OPENROUTER_YOUR_SITE_URL,
       'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
     }
 
-    // strip function params when these exist
-    return { ...model, headers }
+    return model
   }
 }
 

@@ -112,10 +112,9 @@ model ImageModel {
 
 // Options
 model Options {
-  options            String  @id @default("options")
-  adminKeyword       String  @default("!!admin!!")
-  requireModeration  Boolean // TODO remove option, enforced/only used for OpenAI
-  allowModCategories String  @default("") // TODO => "[]"
+  options           String @id @default("options")
+  adminKeyword      String @default("!!admin!!")
+  moderationProfile String @default("[]") // categories to allow
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
   outputFileDir          String @default("output")

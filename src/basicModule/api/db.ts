@@ -96,9 +96,9 @@ export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
   const { maxHistorySize: minProfile, numIncludeContextual: maxContextual } = profile
   const max = minProfile + maxContextual
 
-  const pMsgs = await getProfileMessages(pMsg, max)
+  const tagProfileMsgs = await getProfileMessages(pMsg, max)
   // get any recent messages that aren't part of another profile
-  const rMsgs = (
+  const contextualMsgs = (
     await prisma.message.findMany({
       where: {
         server,
@@ -111,14 +111,15 @@ export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
     })
   )
     // remove any that are already included in profile messages
-    .filter((m) => !pMsgs.some((p) => p.id === m.id))
+    .filter((m) => !tagProfileMsgs.some((p) => p.id === m.id))
 
   // combine list, sort into id order, remove any from the front that put us over the max
-  const msgs = [...pMsgs, ...rMsgs].sort((a, b) => a.id - b.id).slice(-max)
+  const msgs = [...tagProfileMsgs, ...contextualMsgs].sort((a, b) => a.id - b.id).slice(-max)
 
-  return msgs
+  return [...msgs, message] // add current message to the end
 }
 
+// ? getRecentRelatedTaggedMessages
 export async function getProfileMessages(pMsg: ProfileMessage, amount: number) {
   const { profile, message } = pMsg
   const { server, target } = message
@@ -126,6 +127,7 @@ export async function getProfileMessages(pMsg: ProfileMessage, amount: number) {
 
   return await prisma.message.findMany({
     where: {
+      id: { not: message.id }, // exclude current message
       server,
       target,
       tag: {
@@ -156,12 +158,23 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
 }
 
 export async function getChatModel(id: string) {
-  const model = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
-  const { stop, logit_bias, transforms } = model
+  const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
+  const { stop, logit_bias, transforms, url } = rawModel
+
+  const backend = url.includes('openai.com')
+    ? ('openAI' as const)
+    : url.includes('openrouter.ai')
+    ? ('openRouter' as const)
+    : null
+
+  if (!backend) throw new Error('Unrecognised backend provider/URL: ' + url)
+
   return {
-    ...model,
+    ...rawModel,
     stop: JSON.parse(stop) as string[],
     logit_bias: JSON.parse(logit_bias) as Record<string, number>,
     transforms: JSON.parse(transforms) as string[],
+    headers: {} as Record<string, string>,
+    backend,
   }
 }
