@@ -51,7 +51,7 @@ model Profile {
   prompt     String // in "promptScript"
   promptTail String?
 
-  // OAI options
+  // TODO: remove, moved to ModelChat
   maxTokens   Int
   temperature Float    @default(0.9)
   choices     Int      @default(1) // TODO rename?
@@ -76,18 +76,55 @@ model Tag {
   @@unique([messageID, key])
 }
 
+model ModelChat {
+  id      String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
+  url     String // 'https://api.openai.com/v1/chat/completions'
+  headers String @default("{}") // OpenRouter extra info: 'HTTP-Referer' / 'X-Title'
+
+  // Parameters
+  max_tokens        Int    @default(128)
+  temperature       Float  @default(1)
+  choices           Int    @default(1)
+  top_p             Int    @default(1)
+  n                 Int    @default(1)
+  stop              String @default("[]")
+  presence_penalty  Float  @default(0)
+  frequency_penalty Float  @default(0)
+  logit_bias        String @default("{}")
+
+  // functions (todo)
+
+  // OpenRouter only
+  top_k      Int    @default(0)
+  transforms String @default("['middle-out']")
+
+  // later posibile backends will be different
+  // - data response type
+  // - lets wait til we get there
+}
+
+model ModelImage {
+  id              String @id
+  url             String
+  n               Int    @default(1)
+  size            String @default("1024x1024")
+  response_format String @default("b64_json")
+}
+
 // Options
 model Options {
   options            String  @id @default("options")
   adminKeyword       String  @default("!!admin!!")
-  requireModeration  Boolean
-  allowModCategories String  @default("") // comma delimetered
+  requireModeration  Boolean  // TODO remove option, enforced/only used for OpenAI
+  allowModCategories String  @default("") // TODO => "[]"
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
   outputFileDir          String @default("output")
   outputFilenameIDLength Int    @default(3) // i.e. 3 = abc.txt
   outputIRCMaxNewlines   Int    @default(4)
   outputIRCMaxChars      Int    @default(440)
+
+  apiTimeoutMs Int @default(10000)
 }
 
 // output filter

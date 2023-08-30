@@ -3,6 +3,7 @@ import { createMessage, getOptions, getRoutesForTarget } from './api/db.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat.js'
 import { chatLlama } from './routes/chatLlama.js'
+import { chatNext } from './routes/chatNext.js'
 import { chatWithContext } from './routes/chatWithContext.js'
 import { image } from './routes/image.js'
 import { moderate } from './routes/moderate.js'
@@ -10,7 +11,7 @@ import { context, logger } from './util.js'
 
 const log = logger.create('router')
 
-const handlers = [admin, chat, chatWithContext, chatLlama, image]
+const handlers = [admin, chat, chatWithContext, chatLlama, image, chatNext]
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)

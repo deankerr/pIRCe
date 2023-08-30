@@ -6,7 +6,7 @@ import { logger } from '../util.js'
 // TODO standardized result/error response object
 // TODO handle backend specific functions (image, Llama prompt etc.)
 
-const log = logger.create('openAI')
+const log = logger.create('ai')
 
 function createBackend() {
   if (process.env.OPENROUTER_API_KEY) {
@@ -54,8 +54,9 @@ const { api, model, headers, backendProvider } = createBackend()
 
 export async function moderation(input: string) {
   try {
-    if (backendProvider === 'OpenRouter') throw new Error('OpenRouter does not support moderation')
-    log(backendProvider, 'moderation')
+    // if (backendProvider === 'OpenRouter') throw new Error('OpenRouter does not support moderation')
+    const api = new OpenAI()
+    log('[Moderation API] Input: %o', input)
     const response = await api.moderations.create({ input }, { headers })
     return response.results[0]
   } catch (error) {
@@ -65,17 +66,17 @@ export async function moderation(input: string) {
 
 export async function chat(messages: OpenAIMessage[], max_tokens: number) {
   try {
+    const api = new OpenAI()
     log('%s/%s messages: %d', backendProvider, model, messages.length)
     // log('%o', messages)
     const result = await api.chat.completions.create(
       {
-        model,
+        model: 'gpt-3.5-turbo',
         max_tokens,
         messages,
       },
       { headers },
     )
-
     const message = result.choices[0].message?.content
     const finishReason = result.choices[0].finish_reason
     const usage = result.usage
@@ -101,8 +102,8 @@ export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, m
         presence_penalty: 1.2,
         frequency_penalty: 0.7,
         top_p: 0.4,
-        // @ts-dexpect-error Llama models support
-        // top_k: 0.6,
+        // @ts-expect-error Llama models support
+        top_k: 0.6,
       },
       { headers },
     )
