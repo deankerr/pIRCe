@@ -81,6 +81,17 @@ export async function getMessageTag(message: Message, key: string) {
   return tag
 }
 
+export async function getMessagesTag(message: Message[], key: string) {
+  const tag = await prisma.tag.findMany({
+    where: {
+      messageID: { in: message.map((m) => m.id) },
+      key,
+    },
+  })
+
+  return tag
+}
+
 export async function getChatHistory(profile: Profile, msg: Message) {
   const chatHistory = await prisma.tag.findMany({
     select: {

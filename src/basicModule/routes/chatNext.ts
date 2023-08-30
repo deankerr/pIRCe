@@ -21,7 +21,7 @@ export async function chatNext(botEvent: BotEvent) {
   log('%m', message)
 
   // const result = await ai.chat('openai.gpt-3.5-turbo', conversation)
-  const result = await ai.chat(chatModel, conversation)
+  const result = await ai.chat(botEvent, conversation)
 
   if (result instanceof Error) return log('chat failed')
 

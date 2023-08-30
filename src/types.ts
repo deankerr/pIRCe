@@ -1,5 +1,4 @@
 import type { IrcOptions } from '@ctrl/irc'
-import type { ChatModel, ImageModel, Message, Options, Profile, Route } from '@prisma/client'
 
 export type CommandMessage = {
   join?: string
