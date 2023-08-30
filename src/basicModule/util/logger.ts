@@ -17,9 +17,9 @@ debug.formatters.m = (v) => {
         : null
 
     let result = ''
-    if (role) result += `|${role.slice(0, 1).toUpperCase()}|`
-    if (nick) result += `<${nick}>`
-    if (text) result += text.slice(0, 80)
+    if (role) result += `${role.slice(0, 1).toUpperCase()}|`
+    if (nick) result += `${nick}: `
+    if (text) result += text.slice(0, 80).replaceAll('\n', '/')
 
     return result
   }

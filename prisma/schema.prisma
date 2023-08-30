@@ -124,7 +124,7 @@ model Options {
   outputIRCMaxNewlines   Int    @default(4)
   outputIRCMaxChars      Int    @default(440)
 
-  apiTimeoutMs Int @default(10000)
+  apiTimeoutMs Int @default(20000)
 }
 
 // output filter
