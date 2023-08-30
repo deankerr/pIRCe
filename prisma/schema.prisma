@@ -76,15 +76,15 @@ model Tag {
   @@unique([messageID, key])
 }
 
-model ModelChat {
+model ChatModel {
   id      String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
   url     String // 'https://api.openai.com/v1/chat/completions'
   headers String @default("{}") // OpenRouter extra info: 'HTTP-Referer' / 'X-Title'
 
   // Parameters
+  model             String // OAI: 'gpt-3.5-turbo' / OR: 'openai/gpt-3.5-turbo'
   max_tokens        Int    @default(128)
   temperature       Float  @default(1)
-  choices           Int    @default(1)
   top_p             Int    @default(1)
   n                 Int    @default(1)
   stop              String @default("[]")
@@ -96,14 +96,14 @@ model ModelChat {
 
   // OpenRouter only
   top_k      Int    @default(0)
-  transforms String @default("['middle-out']")
+  transforms String @default("[\"middle-out\"]")
 
   // later posibile backends will be different
   // - data response type
   // - lets wait til we get there
 }
 
-model ModelImage {
+model ImageModel {
   id              String @id
   url             String
   n               Int    @default(1)
@@ -115,7 +115,7 @@ model ModelImage {
 model Options {
   options            String  @id @default("options")
   adminKeyword       String  @default("!!admin!!")
-  requireModeration  Boolean  // TODO remove option, enforced/only used for OpenAI
+  requireModeration  Boolean // TODO remove option, enforced/only used for OpenAI
   allowModCategories String  @default("") // TODO => "[]"
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"

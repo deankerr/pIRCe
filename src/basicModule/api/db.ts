@@ -119,28 +119,6 @@ export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
   return msgs
 }
 
-// limit each OR to different take count?
-// await prisma.message.findMany({
-//   where: {
-//     server,
-//     target,
-//     OR: [
-//       {
-//         tag: {
-//           some: {
-//             key,
-//           },
-//         },
-//       },
-//       {
-//         tag: {
-//           none: {},
-//         },
-//       },
-//     ],
-//   },
-// })
-
 export async function getProfileMessages(pMsg: ProfileMessage, amount: number) {
   const { profile, message } = pMsg
   const { server, target } = message
@@ -175,4 +153,16 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
   })
 
   return msgs
+}
+
+export async function getChatModel(id: string) {
+  const model = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
+  const { headers, stop, logit_bias, transforms } = model
+  return {
+    ...model,
+    headers: JSON.parse(headers) as Record<string, string>,
+    stop: JSON.parse(stop) as string[],
+    logit_bias: JSON.parse(logit_bias) as Record<string, number>,
+    transforms: JSON.parse(transforms) as string[],
+  }
 }

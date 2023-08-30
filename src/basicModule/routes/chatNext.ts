@@ -1,4 +1,4 @@
-import { ai } from '../api.js'
+import { ai } from '../api/ai_next.js'
 import { createTag, getProfileAndContextMessages, type Message, type Profile } from '../api/db.js'
 import { llmTestReq } from '../api/llm.js'
 import { command } from '../command.js'
@@ -14,28 +14,18 @@ export async function chatNext(
 ) {
   if (!profile) return log('aborted - invalid profile')
   // await createTag(msg, profile.id)
+  log('TODO: createTag')
 
   // const history = await getProfileAndContextMessages({ profile, message: msg })
 
   // for (const h of history) {
   //   log('%m', h)
   // }
-  // const conversation = buildMessages(profile, history)
-
-  // const result = await ai.chat(conversation, profile.maxTokens)
-
-  const result = await llmTestReq()
-  if (!result) return log('chat failed')
-
-  log(
-    '%s {%s %d/%d/%d}',
-    result.message,
-    result.finishReason,
-    // result.usage?.prompt_tokens,
-    // result.usage?.completion_tokens,
-    // result.usage?.total_tokens,
-  )
+  const conversation = buildMessages(profile, [msg])
+  const result = await ai.chat('openai.gpt-3.5-turbo', conversation)
+  if (result instanceof Error) return log('chat failed') // TODO Error messages response
+  log('%s {%s}', result.message, result.finish_reason)
 
   const target = redirectOutput ? redirectOutput : msg.target
-  command.say(target, result?.message || 'durr', null)
+  command.say(target, result.message.content || '', null)
 }
