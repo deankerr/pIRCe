@@ -1,25 +1,22 @@
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 
-import { getChatModel, getOptions } from './db.js'
+import { getOptions, type OpenChatModel } from './db.js'
 
 const log = debug('pIRCe:ai')
 
-// ? get model from db earlier, pass model obj in
 // TODO count tokens (somewhere)
-async function chat(modelID: string, messages: AIChatMessage[]) {
+async function chat(model: OpenChatModel, messages: AIChatMessage[]) {
   try {
-    log('chat %o messages[%d]', modelID, messages.length)
-
-    const model = await getChatModel(modelID)
+    log('chat %o messages[%d]', model.id, messages.length)
 
     const { apiTimeoutMs } = await getOptions()
-    const { id, url, ...parameters } = model
+    const { id, url, backend, ...parameters } = model
 
     const response = await axios<AIChatResponse>({
       method: 'post',
       url,
-      headers: getBackendHeaders(model.backend),
+      headers: getBackendHeaders(backend),
 
       timeout: apiTimeoutMs,
       timeoutErrorMessage: 'Error: AI Request Timeout',

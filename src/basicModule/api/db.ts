@@ -1,23 +1,53 @@
-import { PrismaClient, type Message as _Message, type Profile as _Profile } from '@prisma/client'
+import { PrismaClient, type Message, type Options, type Profile, type Route } from '@prisma/client'
 
 import { EventMessage } from '../../types.js'
 
-export type { Message, Profile, Route } from '@prisma/client'
-
 export const prisma = new PrismaClient()
+
+export type BotEvent = {
+  route: Route
+  profile: Profile | null
+  chatModel: OpenChatModel | null
+  message: Message
+  options: Options
+}
+
+export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>
 
 export async function getRoutesForTarget(server: string, target: string) {
   const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
 
   const routes = await prisma.route.findMany({
     where: { server: { in: [server, '*'] }, target: { in: targetList } },
-    include: { profile: true },
+    include: {
+      profile: true,
+    },
   })
   return routes
 }
 
-export async function getAllRoutes() {
-  return await prisma.route.findMany()
+export async function getChatModel(id: string) {
+  const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
+  const { stop, logit_bias, transforms, top_k, url } = rawModel
+
+  const backend = url.includes('openai.com')
+    ? ('openAI' as const)
+    : url.includes('openrouter.ai')
+    ? ('openRouter' as const)
+    : null
+
+  if (!backend) throw new Error('Unrecognised backend provider/URL: ' + url)
+
+  const model = {
+    ...rawModel,
+    backend,
+    stop: JSON.parse(stop) as string[],
+    logit_bias: JSON.parse(logit_bias) as Record<string, number>,
+    transforms: backend === 'openRouter' ? (JSON.parse(transforms) as string[]) : undefined,
+    top_k: backend === 'openRouter' ? top_k : undefined,
+  }
+
+  return model
 }
 
 export async function createMessage(ircMessage: EventMessage) {
@@ -27,7 +57,7 @@ export async function createMessage(ircMessage: EventMessage) {
   return msg
 }
 
-export async function createTag(message: _Message, key: string, value?: string) {
+export async function createTag(message: Message, key: string, value?: string) {
   const msg = await prisma.tag.create({
     data: {
       message: {
@@ -40,7 +70,7 @@ export async function createTag(message: _Message, key: string, value?: string) 
   return msg
 }
 
-export async function getMessageTag(message: _Message, key: string) {
+export async function getMessageTag(message: Message, key: string) {
   const tag = await prisma.tag.findFirst({
     where: {
       messageID: message.id,
@@ -51,7 +81,7 @@ export async function getMessageTag(message: _Message, key: string) {
   return tag
 }
 
-export async function getChatHistory(profile: _Profile, msg: _Message) {
+export async function getChatHistory(profile: Profile, msg: Message) {
   const chatHistory = await prisma.tag.findMany({
     select: {
       message: {
@@ -85,8 +115,8 @@ export async function getWordList() {
 }
 
 type ProfileMessage = {
-  profile: _Profile
-  message: _Message
+  profile: Profile
+  message: Message
 }
 
 export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
@@ -155,34 +185,4 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
   })
 
   return msgs
-}
-
-export async function getChatModel(id: string) {
-  const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
-  const { stop, logit_bias, transforms, top_k, url } = rawModel
-
-  const backend = url.includes('openai.com')
-    ? ('openAI' as const)
-    : url.includes('openrouter.ai')
-    ? ('openRouter' as const)
-    : null
-
-  if (!backend) throw new Error('Unrecognised backend provider/URL: ' + url)
-
-  const model = {
-    ...rawModel,
-    stop: JSON.parse(stop) as string[],
-    logit_bias: JSON.parse(logit_bias) as Record<string, number>,
-    backend,
-  }
-
-  if (backend === 'openRouter') {
-    return {
-      ...model,
-      top_k,
-      transforms: JSON.parse(transforms) as string[],
-    }
-  } else {
-    return model
-  }
 }

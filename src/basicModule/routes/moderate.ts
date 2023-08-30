@@ -1,7 +1,7 @@
-import { Options } from '@prisma/client'
+import type { Message, Options } from '@prisma/client'
 
 import { ai } from '../api.js'
-import { createTag, type Message } from '../api/db.js'
+import { createTag } from '../api/db.js'
 import { logger } from '../util.js'
 
 const log = logger.create('moderation')

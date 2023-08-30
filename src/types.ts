@@ -1,4 +1,5 @@
 import type { IrcOptions } from '@ctrl/irc'
+import type { ChatModel, ImageModel, Message, Options, Profile, Route } from '@prisma/client'
 
 export type CommandMessage = {
   join?: string
@@ -24,6 +25,7 @@ export type EventMessage = {
 export type IRCConfig = Partial<IrcOptions> &
   Pick<IrcOptions, 'host' | 'nick'> & { nickservPassword?: string }
 
+// TODO rm
 export type OpenAIMessage = {
   role: 'system' | 'assistant' | 'user'
   name?: string
