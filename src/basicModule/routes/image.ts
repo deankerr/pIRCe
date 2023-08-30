@@ -1,5 +1,5 @@
 import { ai } from '../api.js'
-import { createTag, getOptions, type Message, type Profile } from '../api/db.js'
+import { createTag, getOptions, prisma, type Message, type Profile } from '../api/db.js'
 import { outputBase64ToImage } from '../api/file.js'
 import { command } from '../command.js'
 import { logger, randomPick } from '../util.js'
@@ -8,7 +8,7 @@ const log = logger.create('image')
 
 export async function image(msg: Message, profile: Profile | null, redirectOutput?: string | null) {
   if (!profile) return log('aborted - invalid profile')
-  await createTag(msg, profile.id)
+  const tag = await createTag(msg, profile.id)
 
   const result = await ai.image(msg.content.replace(/^@\w*\s/, ''), 'b64_json')
   if (!result) return log('dall-e failed')
@@ -31,4 +31,13 @@ export async function image(msg: Message, profile: Profile | null, redirectOutpu
 
   const target = redirectOutput ? redirectOutput : msg.target
   command.say(target, fileURL, profile.id)
+
+  // ! Temp - log image prompts/filenames
+  const tagLog = {
+    nick: msg.nick,
+    prompt: msg.content,
+    fileID,
+  }
+
+  prisma.tag.update({ where: { id: tag.id }, data: { value: JSON.stringify(tagLog) } })
 }
