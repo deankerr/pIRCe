@@ -46,12 +46,16 @@ model Route {
 }
 
 // Prompt set up, options and values
+// 'Character' ? 
 model Profile {
   id         String  @id // 'bart', 'eee'
   prompt     String // in "promptScript"
   promptTail String?
 
-  // TODO: remove, moved to ModelChat
+  chatModel   ChatModel? @relation(fields: [chatModelID], references: [id])
+  chatModelID String?
+
+  // TODO: remove prompt parameters, moved to ModelChat
   maxTokens   Int
   temperature Float    @default(0.9)
   choices     Int      @default(1) // TODO rename?
@@ -97,6 +101,8 @@ model ChatModel {
   top_k      Int    @default(0)
   transforms String @default("[\"middle-out\"]")
 
+  profile Profile[]
+
   // later posibile backends will be different
   // - data response type
   // - lets wait til we get there
@@ -112,9 +118,9 @@ model ImageModel {
 
 // Options
 model Options {
-  options           String @id @default("options")
-  adminKeyword      String @default("!!admin!!")
-  moderationProfile String @default("[]") // categories to allow
+  options                      String @id @default("options")
+  adminKeyword                 String @default("!!admin!!")
+  moderationCategoryExclusions String @default("[]") // categories to allow 
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
   outputFileDir          String @default("output")

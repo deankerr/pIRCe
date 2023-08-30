@@ -12,15 +12,14 @@ async function chat(modelID: string, messages: AIChatMessage[]) {
     log('chat %o messages[%d]', modelID, messages.length)
 
     const model = await getChatModel(modelID)
-    const nModel = normalizeParameters(model)
 
     const { apiTimeoutMs } = await getOptions()
-    const { id, url, headers, ...parameters } = nModel
+    const { id, url, ...parameters } = model
 
     const response = await axios<AIChatResponse>({
       method: 'post',
       url,
-      headers,
+      headers: getBackendHeaders(model.backend),
 
       timeout: apiTimeoutMs,
       timeoutErrorMessage: 'Error: AI Request Timeout',
@@ -40,31 +39,25 @@ async function chat(modelID: string, messages: AIChatMessage[]) {
 
 export const ai = { chat }
 
-function normalizeParameters(model: Awaited<ReturnType<typeof getChatModel>>) {
-  if (model.backend === 'openAI') {
+function getBackendHeaders(backend: 'openAI' | 'openRouter') {
+  if (backend === 'openAI') {
     // OpenAI api key
     if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set')
 
-    model.headers = {
+    return {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     }
-
-    // strip incompatible params
-    const { top_k, transforms, ...params } = model
-    return { ...params }
   } else {
     // OpenRouter api key + required headers
     if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set')
     if (!process.env.OPENROUTER_YOUR_SITE_URL) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
     if (!process.env.OPENROUTER_YOUR_APP_NAME) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
 
-    model.headers = {
+    return {
       Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
       'HTTP-Referer': process.env.OPENROUTER_YOUR_SITE_URL,
       'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
     }
-
-    return model
   }
 }
 

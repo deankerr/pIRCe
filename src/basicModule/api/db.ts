@@ -159,7 +159,7 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
 
 export async function getChatModel(id: string) {
   const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
-  const { stop, logit_bias, transforms, url } = rawModel
+  const { stop, logit_bias, transforms, top_k, url } = rawModel
 
   const backend = url.includes('openai.com')
     ? ('openAI' as const)
@@ -169,12 +169,20 @@ export async function getChatModel(id: string) {
 
   if (!backend) throw new Error('Unrecognised backend provider/URL: ' + url)
 
-  return {
+  const model = {
     ...rawModel,
     stop: JSON.parse(stop) as string[],
     logit_bias: JSON.parse(logit_bias) as Record<string, number>,
-    transforms: JSON.parse(transforms) as string[],
-    headers: {} as Record<string, string>,
     backend,
+  }
+
+  if (backend === 'openRouter') {
+    return {
+      ...model,
+      top_k,
+      transforms: JSON.parse(transforms) as string[],
+    }
+  } else {
+    return model
   }
 }
