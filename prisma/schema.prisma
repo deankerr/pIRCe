@@ -62,8 +62,8 @@ model Profile {
   stop        String[] // ? can this just be empty
 
   // our opts
-  maxHistorySize       Int
-  numIncludeContextual Int     @default(0)
+  maxHistorySize       Int // Profile Tagged
+  numIncludeContextual Int     @default(0) // Local Msgs
   replaceNick          String?
 
   route Route[]
@@ -118,9 +118,9 @@ model ImageModel {
 
 // Options
 model Options {
-  options                      String @id @default("options")
-  adminKeyword                 String @default("!!admin!!")
-  moderationCategoryExclusions String @default("[]") // categories to allow 
+  options           String @id @default("options") // there can only be one
+  adminKeyword      String @default("!!admin!!")
+  moderationProfile String @default("[]") // categories to allow 
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
   outputFileDir          String @default("output")

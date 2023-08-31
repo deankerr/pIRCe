@@ -2,20 +2,28 @@ import type { Message } from '@prisma/client'
 import axios, { AxiosResponse, isAxiosError } from 'axios'
 import debug from 'debug'
 
-import { BotEvent, getMessagesTag, getOptions, type OpenChatModel } from './db.js'
+import type { BotEvent } from './db.js'
 
 const log = debug('pIRCe:ai')
 
 // TODO count tokens (somewhere)
-async function chat(botEvent: BotEvent, messages: AIChatMessage[]) {
+async function chat(botEvent: BotEvent, contexual: Message[]) {
   try {
-    const { chatModel, options } = botEvent
-    if (!chatModel) throw new Error('Missing chat model')
-
-    log('chat %o messages[%d]', chatModel.id, messages.length)
+    const { chatModel, options, profile, message } = botEvent
     const { id, url, backend, ...parameters } = chatModel
 
-    const ms = await moderate(botEvent, messages)
+    log('chat %o', id)
+
+    const moderated = await moderate(botEvent, contexual)
+    if (!moderated.success) return log('moderation failed')
+
+    const prompt = buildOpenChatPrompt(
+      profile.prompt,
+      moderated.contextual,
+      message,
+      profile.promptTail,
+    )
+    log('%O', prompt)
 
     const response = await axios<AIChatRequest, AxiosResponse<AIChatResponse, AIChatRequest>>({
       method: 'post',
@@ -25,7 +33,7 @@ async function chat(botEvent: BotEvent, messages: AIChatMessage[]) {
       timeoutErrorMessage: 'Error: AI Request Timeout',
 
       data: {
-        messages: [],
+        messages: prompt,
         ...parameters,
       },
     })
@@ -37,22 +45,36 @@ async function chat(botEvent: BotEvent, messages: AIChatMessage[]) {
   }
 }
 
-// TODO way to indicate if trigger msg failed
-async function moderate(botEvent: BotEvent, messages: AIChatMessage[]) {
+const moderationCache = {
+  profile: '',
+  message: new Map<number, boolean>(),
+  text: new Map<string, boolean>(),
+}
+
+async function moderate(botEvent: BotEvent, contextual: Message[]) {
   try {
-    const { chatModel, options } = botEvent
-    if (!chatModel) throw new Error('Missing chat model')
+    const { chatModel, options, message, profile } = botEvent
+    const { moderationProfile } = options
+
     // only moderate openAI
     if (chatModel.backend !== 'openAI') {
-      return messages
+      return { success: true, contextual }
     }
 
-    const { moderationCategoryExclusions } = options
-    const excludeList = JSON.parse(moderationCategoryExclusions) as string[]
-    log('moderate! ex:', excludeList)
-    log(messages)
+    const log = debug('pIRCe:moderation')
 
-    const input =  messages.map((m) => `${m.name}: ${m.content}`)
+    // invalidate cache on profile change
+    if (moderationCache.profile !== moderationProfile.join(',')) {
+      moderationCache.profile = moderationProfile.join(',')
+      moderationCache.message.clear()
+      moderationCache.text.clear()
+    }
+
+    // TODO cache
+    const prompts = profile.prompt + profile.promptTail ?? ''
+    const messages = [message, ...contextual].map((m) => `${m.nick}: ${m.content}`)
+
+    const input = [prompts, ...messages]
 
     const response = await axios<
       OpenAIModerationRequest,
@@ -65,68 +87,42 @@ async function moderate(botEvent: BotEvent, messages: AIChatMessage[]) {
       timeoutErrorMessage: 'Error: AI Request Timeout',
 
       data: {
-        input
+        input,
       },
     })
 
-    const { results } = response.data
-
-    function judgeContent(categories: Record<string, boolean>) {
+    const rejectedCategories = response.data.results.map((result) => {
+      // get flagged keys, remove allowed, return remaining objectional keys
+      const categories = result.categories as Record<string, boolean>
       const flaggedKeys = Object.keys(categories).filter((k) => categories[k])
-      return flaggedKeys.filter((k) => !excludeList.includes(k))
+      return flaggedKeys.filter((k) => !moderationProfile.includes(k))
+    })
+
+    const results = {
+      prompts: rejectedCategories[0],
+      message: rejectedCategories[1],
+      contextual: rejectedCategories.slice(2),
     }
 
-    let rejectEvent = false
+    const promptsStatus = results.prompts.length === 0
+    moderationCache.text.set(prompts, promptsStatus)
+    if (!promptsStatus) log('[Rejected] System Prompt %o', results.prompts)
 
-    const filteredMessages = messages.filter((msg, i) => {
-      const rejectKeys = judgeContent(results[i].categories)
-      if (rejectKeys.length > 0) {
-        log('Rejected: %m %o', msg, rejectKeys)
-        if (botEvent.message.id === msg.)
-      }
+    const messageStatus = results.message.length === 0
+    moderationCache.message.set(message.id, messageStatus)
+    if (!messageStatus) log('[Rejected] %m %o', message, results.message)
+
+    const contextualFiltered = contextual.filter((msg, i) => {
+      const status = results.contextual[i].length === 0
+      moderationCache.message.set(msg.id, status)
+      if (!status) log('[Rejected] %m %o', msg, results.contextual[i])
+      return status
     })
 
-    messages.forEach((msg, i) => {
-      const rejectKeys = judgeContent(results[i].categories)
-      if (rejectKeys.length > 0) {
-        log('Rejected: %m %o', msg, rejectKeys)
-        if ()
-      }
-    })
-
-
-    // reduce to list of accepted messages
-    // first result (trigger message) fail rejects all // TODO
-    const resultMsgs = messages.reduceRight<AIChatMessage[]>((acc, msg, i) => {
-      const { categories } = results[i]
-      const flaggedKeys = Object.keys(categories).filter(
-        (k) => categories[k as keyof typeof categories],
-      )
-      const rejectableKeys = flaggedKeys.filter((k) => !excludeList.includes(k))
-
-      // all flagged keys excluded, message accepted
-      if (rejectableKeys.length === 0) {
-        log(
-          'OK: %s %o',
-          msg,
-          flaggedKeys.filter((k) => excludeList.includes(k)),
-        )
-        return [msg, ...acc]
-      }
-
-      // reject vile message of satan
-      log('Mod failed: %s %o', msg, rejectableKeys)
-      return acc
-    }, [])
-
-    // log('results: %o', response.data.results)
-    log('resmsgs: %o', resultMsgs)
-
-    
-    //! temp
-    return messages
+    return { success: promptsStatus && messageStatus, contextual: contextualFiltered }
   } catch (error) {
-    return handleError(error)
+    handleError(error)
+    return { success: false, contextual: [] }
   }
 }
 
@@ -152,6 +148,40 @@ function getBackendHeaders(backend: 'openAI' | 'openRouter') {
       'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
     }
   }
+}
+
+const roles = {
+  system: 'system',
+  user: 'user',
+  assistant: 'assistant',
+} as const
+
+// TODO proper command striping/nick replace
+function buildOpenChatPrompt(
+  system: string,
+  conversation: Message[],
+  message: Message,
+  tail?: string | null,
+) {
+  const messages = [...conversation, message].map((msg) => {
+    if (msg.self) {
+      return { role: roles.assistant, content: msg.content }
+    } else {
+      return {
+        role: roles.user,
+        name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
+        content: msg.content,
+      }
+    }
+  })
+
+  const prompt = [{ role: roles.system, content: system }, ...messages]
+
+  if (tail) {
+    prompt.push({ role: roles.system, content: tail })
+  }
+
+  return prompt
 }
 
 function handleError(error: unknown) {

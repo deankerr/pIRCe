@@ -1,12 +1,13 @@
-import { prisma, type BotEvent } from '../api/db.js'
+import type { Message } from '@prisma/client'
+
+import { prisma } from '../api/db.js'
 import { command } from '../command.js'
 import { logger } from '../util.js'
 
 const log = logger.create('admin')
 
 // admin commands
-export async function admin(botEvent: BotEvent) {
-  const { message } = botEvent
+export async function admin(message: Message) {
   const [_trigger, cmd, arg, ...rest] = message.content.split(' ')
   log('%s %s', cmd, arg || '')
 

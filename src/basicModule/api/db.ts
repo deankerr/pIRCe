@@ -1,4 +1,4 @@
-import { PrismaClient, type Message, type Options, type Profile, type Route } from '@prisma/client'
+import { PrismaClient, type Message, type Profile, type Route } from '@prisma/client'
 
 import { EventMessage } from '../../types.js'
 
@@ -6,13 +6,14 @@ export const prisma = new PrismaClient()
 
 export type BotEvent = {
   route: Route
-  profile: Profile | null
-  chatModel: OpenChatModel | null
+  profile: Profile
+  chatModel: OpenChatModel
   message: Message
   options: Options
 }
 
 export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>
+export type Options = Awaited<ReturnType<typeof getOptions>>
 
 export async function getRoutesForTarget(server: string, target: string) {
   const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
@@ -118,7 +119,9 @@ export async function getChatHistory(profile: Profile, msg: Message) {
 }
 
 export async function getOptions() {
-  return await prisma.options.findFirstOrThrow({ where: { options: 'options' } })
+  const options = await prisma.options.findFirstOrThrow({})
+  const moderationProfile = JSON.parse(options.moderationProfile) as string[]
+  return { ...options, moderationProfile }
 }
 
 export async function getWordList() {
@@ -196,4 +199,48 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
   })
 
   return msgs
+}
+
+// retrieve same profile tagged and/or local messages
+export async function getContextualMessages(botEvent: BotEvent) {
+  const { profile, message } = botEvent
+  const { maxHistorySize, numIncludeContextual } = profile
+  const { server, target } = message
+
+  // get related tagged
+  const related = await prisma.message.findMany({
+    where: {
+      id: { lt: message.id }, // before current message
+      server,
+      target,
+      tag: {
+        some: {
+          key: profile.id,
+        },
+      },
+    },
+    take: -maxHistorySize,
+  })
+  const relatedIDs = related.map((r) => r.id)
+
+  // get local
+  const local = (
+    await prisma.message.findMany({
+      where: {
+        id: { lt: message.id }, // before current message
+        server,
+        target,
+        tag: {
+          none: {}, // not tagged with any other profile
+        },
+      },
+      take: -numIncludeContextual,
+    })
+  ) // filter duplicates
+    .filter((m) => !relatedIDs.includes(m.id))
+
+  // combine list, sort into id order
+  const contextual = [...related, ...local].sort((a, b) => a.id - b.id)
+
+  return contextual
 }

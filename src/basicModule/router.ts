@@ -7,7 +7,7 @@ import { context, logger } from './util.js'
 const log = logger.create('router')
 
 // const handlers = [admin, chat, chatWithContext, chatLlama, image, chatNext]
-const handlers = [admin, chatNext]
+const handlers = [chatNext]
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
@@ -51,12 +51,13 @@ export async function router(message: EventMessage) {
   }
 
   for (const route of validRoutes) {
-    const handler = handlers.find((h) => h.name === route.handler)
-    if (typeof handler === 'function') {
-      // valid route + handler, start bot event
-      const { profile } = route
-      const chatModel = profile?.chatModelID ? await getChatModel(profile.chatModelID) : null
+    if (route.handler === 'admin') return admin(msg)
 
+    const handler = handlers.find((h) => h.name === route.handler)
+    const { profile } = route
+    const chatModel = profile?.chatModelID ? await getChatModel(profile.chatModelID) : null
+
+    if (handler && profile && chatModel) {
       const botEvent = {
         route,
         profile,
@@ -64,9 +65,10 @@ export async function router(message: EventMessage) {
         message: msg,
         options,
       }
-
       handler(botEvent)
-    } else log('invalid handler: %O', handler)
+    } else {
+      log('invalid route: handler %o profile %o chatModel: %o', handler, profile, chatModel)
+    }
   }
 }
 
