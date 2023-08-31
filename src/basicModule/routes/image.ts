@@ -1,10 +1,12 @@
-import { ai } from '../api/ai_next.js'
+import debug from 'debug'
+
+import { ai } from '../api/ai.js'
 import { getImageModel, type BotEvent } from '../api/db.js'
 import { outputBase64ToImage } from '../api/file.js'
 import { command } from '../command.js'
-import { getClown, logger } from '../util.js'
+import { getClown } from '../util.js'
 
-const log = logger.create('image')
+const log = debug('pIRCe:image')
 
 const modelID = 'openai.dalle'
 

@@ -1,14 +1,16 @@
+import debug from 'debug'
+
 import { EventMessage } from '../types.js'
 import { createMessage, getChatModel, getOptions, getRoutesForTarget } from './api/db.js'
 import { admin } from './routes/admin.js'
-import { chatNext } from './routes/chatNext.js'
+import { chat } from './routes/chat.js'
 import { image } from './routes/image.js'
-import { context, logger } from './util.js'
+import { self } from './util.js'
 
-const log = logger.create('router')
+const log = debug('pIRCe:router')
 
 const handlers = {
-  chatNext,
+  chat,
   image,
   admin,
 }
@@ -24,7 +26,7 @@ export async function router(message: EventMessage) {
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target)
 
-  const keywords = { '{{nick}}': context.me, '{{admin}}': options.adminKeyword }
+  const keywords = { '{{nick}}': self.nick, '{{admin}}': options.adminKeyword }
 
   const validRoutes = routes.filter((route) => {
     if (route.startsWith !== null && route.startsWith !== '') {
@@ -70,7 +72,7 @@ export async function router(message: EventMessage) {
         message: msg,
         options,
       }
-      handlers.chatNext(botEvent)
+      handlers.chat(botEvent)
     } else {
       log('invalid route: handler %o profile %o chatModel: %o', route.handler, profile, chatModel)
     }

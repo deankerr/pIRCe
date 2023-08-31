@@ -1,11 +1,12 @@
-import { ai } from '../api/ai_next.js'
+import debug from 'debug'
+
+import { ai } from '../api/ai.js'
 import { createTag, getContextualMessages, type ChatEvent } from '../api/db.js'
 import { command } from '../command.js'
-import { logger } from '../util.js'
 
-const log = logger.create('chatNext')
+const log = debug('pIRCe:chat')
 
-export async function chatNext(botEvent: ChatEvent) {
+export async function chat(botEvent: ChatEvent) {
   const { profile, message, route } = botEvent
 
   const contexual = await getContextualMessages(botEvent)

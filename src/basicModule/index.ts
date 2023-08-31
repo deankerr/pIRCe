@@ -1,6 +1,7 @@
-import { router } from './router.js'
-import { logger } from './util.js'
+import debug from 'debug'
 
-logger.log('basicModule loaded')
+import { router } from './router.js'
+import { getClown } from './util.js'
 
 process.on('message', router)
+debug('pIRCe')(`loaded ${getClown()}`)

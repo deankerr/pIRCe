@@ -1,177 +1,416 @@
-import OpenAI from 'openai'
+import type { Message } from '@prisma/client'
+import axios, { AxiosResponse, isAxiosError } from 'axios'
+import debug from 'debug'
 
-import type { OpenAIMessage } from '../../types.js'
-import { logger } from '../util.js'
+import type { ChatEvent, ImageEvent } from './db.js'
 
-// TODO standardized result/error response object
-// TODO handle backend specific functions (image, Llama prompt etc.)
+const log = debug('pIRCe:ai')
 
-const log = logger.create('ai')
-
-function createBackend() {
-  if (process.env.OPENROUTER_API_KEY) {
-    log('using OpenRouter API')
-    const apiKey = process.env.OPENROUTER_API_KEY
-    const baseURL = 'https://openrouter.ai/api/v1'
-
-    const model = process.env.OPENROUTER_API_MODEL
-    const referer = process.env.OPENROUTER_YOUR_SITE_URL
-    const title = process.env.OPENROUTER_YOUR_APP_NAME
-
-    if (!model) throw new Error('OPENROUTER_API_MODEL not set')
-    if (!referer) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
-    if (!title) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
-
-    const headers = {
-      'HTTP-Referer': referer,
-      'X-Title': title,
-    }
-
-    return {
-      api: new OpenAI({ apiKey, baseURL }),
-      model,
-      headers,
-      backendProvider: 'OpenRouter',
-    }
-  } else if (process.env.OPENAI_API_KEY) {
-    log('using OpenAI API')
-    const apiKey = process.env.OPENAI_API_KEY
-    const model = process.env.OPENAI_API_MODEL
-    if (!model) throw new Error('OPENAI_API_MODEL not set')
-
-    return {
-      api: new OpenAI({ apiKey }),
-      model,
-      headers: {},
-      backendProvider: 'OpenAI',
-    }
-  } else {
-    throw new Error('OPENAI_API_KEY or OPENROUTER_API_KEY not set')
-  }
-}
-
-const { api, model, headers, backendProvider } = createBackend()
-
-export async function moderation(input: string) {
+// TODO count tokens (somewhere)
+async function chat(botEvent: ChatEvent, contexual: Message[]) {
   try {
-    // if (backendProvider === 'OpenRouter') throw new Error('OpenRouter does not support moderation')
-    const api = new OpenAI()
-    log('[Moderation API] Input: %o', input)
-    const response = await api.moderations.create({ input }, { headers })
-    return response.results[0]
-  } catch (error) {
-    return handleError(error)
-  }
-}
+    const { chatModel, options, profile, message } = botEvent
+    const { id, url, backend, ...parameters } = chatModel
 
-export async function chat(messages: OpenAIMessage[], max_tokens: number) {
-  try {
-    const api = new OpenAI()
-    log('%s/%s messages: %d', backendProvider, model, messages.length)
-    // log('%o', messages)
-    const result = await api.chat.completions.create(
-      {
-        model: 'gpt-3.5-turbo',
-        max_tokens,
-        messages,
-      },
-      { headers },
+    log('chat %o', id)
+
+    const moderated = await moderate(botEvent, contexual)
+    if (!moderated.success) return log('moderation failed')
+
+    const prompt = buildOpenChatPrompt(
+      profile.prompt,
+      moderated.contextual,
+      message,
+      profile.promptTail,
     )
-    const message = result.choices[0].message?.content
-    const finishReason = result.choices[0].finish_reason
-    const usage = result.usage
+    log('%O', prompt)
 
-    if (!message || !finishReason || !usage) throw new Error('Response missing expected data')
+    const response = await axios<AIChatRequest, AxiosResponse<AIChatResponse, AIChatRequest>>({
+      method: 'post',
+      url,
+      headers: getBackendHeaders(backend),
+      timeout: options.apiTimeoutMs,
+      timeoutErrorMessage: 'Error: AI Request Timeout',
 
-    return { message, finishReason, usage }
-  } catch (error) {
-    return handleError(error)
-  }
-}
-
-export async function chatLlama(messages: OpenAIMessage[], max_tokens: number, model: string) {
-  try {
-    log('%s/%s messages: %d', backendProvider, model, messages.length)
-    // log('%o', messages)
-    const result = await api.chat.completions.create(
-      {
-        model,
-        max_tokens,
-        messages,
-        temperature: 0.8,
-        presence_penalty: 1.2,
-        frequency_penalty: 0.7,
-        top_p: 0.4,
-        // @ts-expect-error Llama models support
-        top_k: 0.6,
+      data: {
+        messages: prompt,
+        ...parameters,
       },
-      { headers },
-    )
-
-    // TODO Proper OpenRouter support errors/options
-    // @ts-expect-error stop using this library
-    if (result.error) {
-      // @ts-expect-error stop using this library
-      const { error } = result
-      log(error)
-      const code = error.code
-      const errMsg = (error.message as string).replaceAll('\n', '')
-      const message = `Received the following garbage: ${code} ${errMsg}`
-      return { error: message }
-    }
-
-    const message = result.choices[0].message?.content
-    if (!message) throw new Error('Response missing expected data')
-
-    return { message }
-  } catch (error) {
-    return handleError(error)
-  }
-}
-
-// * image gen is OpenAI only
-
-export async function image(prompt: string, format: 'url' | 'b64_json') {
-  try {
-    log('image: %s', prompt)
-
-    const openAI = new OpenAI()
-    const response = await openAI.images.generate({
-      prompt,
-      n: 1,
-      size: '1024x1024',
-      response_format: format,
     })
 
-    const result = response.data[0].b64_json
-    if (!result) throw new Error('Result missing?')
-
-    return { content: result }
+    const data = response.data.choices[0]
+    return data
   } catch (error) {
-    if (error instanceof OpenAI.APIError) {
-      log(error.status) // e.g. 401
-      log(error.message) // e.g. The authentication token you passed was invalid...
-      log(error.code) // e.g. 'invalid_api_key'
-      log(error.type) // e.g. 'invalid_request_error'
-      return { error: error.message }
-    } else {
-      // Non-API error
-      log(error)
-      return { error: 'Unknown error' }
+    return handleError(error)
+  }
+}
+
+const moderationCache = {
+  profile: '',
+  message: new Map<number, boolean>(),
+  text: new Map<string, boolean>(),
+}
+
+async function moderate(botEvent: ChatEvent, contextual: Message[]) {
+  try {
+    const { chatModel, options, message, profile } = botEvent
+    const { moderationProfile } = options
+
+    // only moderate openAI
+    if (chatModel.backend !== 'openAI') {
+      return { success: true, contextual }
+    }
+
+    const log = debug('pIRCe:moderation')
+
+    // invalidate cache on profile change
+    if (moderationCache.profile !== moderationProfile.join(',')) {
+      moderationCache.profile = moderationProfile.join(',')
+      moderationCache.message.clear()
+      moderationCache.text.clear()
+    }
+
+    // TODO cache
+    const prompts = profile.prompt + profile.promptTail ?? ''
+    const messages = [message, ...contextual].map((m) => `${m.nick}: ${m.content}`)
+
+    const input = [prompts, ...messages]
+
+    const response = await axios<
+      OpenAIModerationRequest,
+      AxiosResponse<OpenAIModerationResponse, OpenAIModerationRequest>
+    >({
+      method: 'post',
+      url: 'https://api.openai.com/v1/moderations',
+      headers: getBackendHeaders('openAI'),
+      timeout: options.apiTimeoutMs,
+      timeoutErrorMessage: 'Error: AI Request Timeout',
+      data: {
+        input,
+      },
+    })
+
+    const rejectedCategories = response.data.results.map((result) => {
+      // get flagged keys, remove allowed, return remaining objectional keys
+      const categories = result.categories as Record<string, boolean>
+      const flaggedKeys = Object.keys(categories).filter((k) => categories[k])
+      return flaggedKeys.filter((k) => !moderationProfile.includes(k))
+    })
+
+    const results = {
+      prompts: rejectedCategories[0],
+      message: rejectedCategories[1],
+      contextual: rejectedCategories.slice(2),
+    }
+
+    const promptsStatus = results.prompts.length === 0
+    moderationCache.text.set(prompts, promptsStatus)
+    if (!promptsStatus) log('[Rejected] System Prompt %o', results.prompts)
+
+    const messageStatus = results.message.length === 0
+    moderationCache.message.set(message.id, messageStatus)
+    if (!messageStatus) log('[Rejected] %m %o', message, results.message)
+
+    const contextualFiltered = contextual.filter((msg, i) => {
+      const status = results.contextual[i].length === 0
+      moderationCache.message.set(msg.id, status)
+      if (!status) log('[Rejected] %m %o', msg, results.contextual[i])
+      return status
+    })
+
+    return { success: promptsStatus && messageStatus, contextual: contextualFiltered }
+  } catch (error) {
+    handleError(error)
+    return { success: false, contextual: [] }
+  }
+}
+
+async function image(imageEvent: ImageEvent) {
+  try {
+    const log = debug('pIRCe:api.image')
+    const { imageModel, message } = imageEvent
+    log('image %o', imageModel.id)
+
+    const { config, parameters } = getBackendRequestConfig(imageEvent)
+    const prompt = message.content.replace(/^@\w*\s/, '')
+
+    const response = await axios<
+      OpenAIImageRequest,
+      AxiosResponse<OpenAIImageResponse<'b64_json'>, OpenAIImageRequest>
+    >({
+      ...config,
+      data: {
+        prompt,
+        ...parameters,
+      },
+    })
+
+    const result = response.data.data[0].b64_json
+    return { result }
+  } catch (error) {
+    if (isAxiosError(error) && error.response && error.response.data) {
+      const { data } = error.response
+      if (data.error.code === 'content_policy_violation') {
+        log(data.error)
+        return {
+          error: data.error.message as string,
+        }
+      }
+    }
+
+    return handleError(error)
+  }
+}
+
+export const ai = { chat, image }
+
+function getBackendRequestConfig(botEvent: ChatEvent | ImageEvent) {
+  const { options } = botEvent
+
+  const model = 'chatModel' in botEvent ? botEvent.chatModel : botEvent.imageModel
+
+  const { id, url, ...parameters } = model
+  const backend = id.split('.')[0]
+
+  const config = {
+    method: 'post',
+    url,
+    timeout: options.apiTimeoutMs,
+    timeoutErrorMessage: 'Error: AI Request Timeout',
+    headers: {} as Record<string, string>,
+  }
+
+  if (backend === 'openai') {
+    config.headers = { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` }
+  }
+
+  if (backend === 'openrouter') {
+    config.headers = {
+      Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
+      'HTTP-Referer': getEnv('OPENROUTER_YOUR_SITE_URL'),
+      'X-Title': getEnv('OPENROUTER_YOUR_APP_NAME'),
     }
   }
+
+  return { config, parameters }
+}
+
+function getEnv(name: string) {
+  const value = process.env[name]
+  if (!value) throw new Error(`${name} not set`)
+  return value
+}
+
+function getBackendHeaders(backend: 'openAI' | 'openRouter') {
+  if (backend === 'openAI') {
+    // OpenAI api key
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set')
+
+    return {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    }
+  } else {
+    // OpenRouter api key + required headers
+    if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set')
+    if (!process.env.OPENROUTER_YOUR_SITE_URL) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
+    if (!process.env.OPENROUTER_YOUR_APP_NAME) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
+
+    return {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': process.env.OPENROUTER_YOUR_SITE_URL,
+      'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
+    }
+  }
+}
+
+const roles = {
+  system: 'system',
+  user: 'user',
+  assistant: 'assistant',
+} as const
+
+// TODO proper command striping/nick replace
+function buildOpenChatPrompt(
+  system: string,
+  conversation: Message[],
+  message: Message,
+  tail?: string | null,
+) {
+  const messages = [...conversation, message].map((msg) => {
+    if (msg.self) {
+      return { role: roles.assistant, content: msg.content }
+    } else {
+      return {
+        role: roles.user,
+        name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, '_'),
+        content: msg.content,
+      }
+    }
+  })
+
+  const prompt = [{ role: roles.system, content: system }, ...messages]
+
+  if (tail) {
+    prompt.push({ role: roles.system, content: tail })
+  }
+
+  return prompt
 }
 
 function handleError(error: unknown) {
-  if (error instanceof OpenAI.APIError) {
-    log(error.status) // e.g. 401
-    log(error.message) // e.g. The authentication token you passed was invalid...
-    log(error.code) // e.g. 'invalid_api_key'
-    log(error.type) // e.g. 'invalid_request_error'
-    return null
+  if (isAxiosError(error)) {
+    if (error.response) {
+      // API error
+      const { status, statusText, data } = error.response
+      log('*** API Response Error ***')
+      log('Status: (%s) %s', status, statusText)
+      'error' in data ? log('%o', data.error) : log('%O', data)
+
+      return error
+    } else if (error.request) {
+      // No response received
+      log('*** API Request Error ***')
+      log(error.request)
+
+      return error
+    } else {
+      // Error creating request
+      log('*** API Create Request Error ***')
+      log(error.message)
+
+      return error
+    }
   } else {
-    // Non-API error
-    log(error)
-    return null
+    if (error instanceof Error) {
+      // something unrelated to axios
+      log('*** Unknown API Error ***')
+      log(error)
+
+      return error
+    } else {
+      // something happened ???
+      throw new Error('Unknown error error')
+    }
   }
 }
+
+export type AIChatRequest = {
+  model: string // technically optional on OR
+  messages: AIChatMessage[]
+  temperature?: number // 1
+  top_p?: number // 1
+  n?: number // 1
+  stream?: boolean // false
+  stop?: string | string[]
+  max_tokens?: number // inf
+  presence_penalty?: number // 0
+  frequency_penalty?: number // 0
+  logit_bias?: Record<string, number>
+  user?: string // end user abuse tracking
+
+  // OpenAI only
+  functions?: OpenAIFunctionCall[]
+  function_call?: string
+  // OpenRouter only
+  top_k?: number
+  transforms?: [] | ['middle-out']
+}
+
+export type AIChatResponse = {
+  id: string
+  choices: AIChatResponseChoice[]
+  created: number
+  model: string
+  object: string
+  usage?: Record<string, number> // OpenAI only
+}
+
+export type AIChatResponseChoice = {
+  finish_reason: 'stop' | 'length' | 'function_call'
+  index: number
+  message: {
+    role: 'system' | 'user' | 'assistant' | 'function'
+    content: string | null
+    // function_call?: OpenAIFunctionCall
+  }
+}
+
+export type AIChatMessage = {
+  role: 'user' | 'assistant' | 'system' | 'function'
+  name?: string // required if role is 'function'
+  content: string | null
+  function_call?: OpenAIFunctionCall
+}
+
+export type OpenAIFunctionCall = {
+  arguments: string // JSON
+  name: string
+}
+
+type OpenAIModerationRequest = {
+  input: string | string[]
+  model?: 'text-moderation-stable' | 'text-moderation-latest'
+}
+
+type OpenAIModerationResponse = {
+  id: string
+  model: string
+  results: {
+    flagged: boolean
+    categories: {
+      sexual: boolean
+      hate: boolean
+      harassment: boolean
+      'self-harm': boolean
+      'sexual/minors': boolean
+      'hate/threatening': boolean
+      'violence/graphic': boolean
+      'self-harm/intent': boolean
+      'self-harm/instructions': boolean
+      'harassment/threatening': boolean
+      violence: boolean
+    }
+    categories_scores: {
+      sexual: number
+      hate: number
+      harassment: number
+      'self-harm': number
+      'sexual/minors': number
+      'hate/threatening': number
+      'violence/graphic': number
+      'self-harm/intent': number
+      'self-harm/instructions': number
+      'harassment/threatening': number
+      violence: number
+    }
+  }[]
+}
+
+type OpenAIImageRequest = {
+  prompt: string
+  n: number
+  size: '256x256' | '512x512' | '1024x1024'
+  response_format: 'url' | 'b64_json'
+  user?: string
+}
+
+type OpenAIImageResponse<T extends 'url' | 'b64_json'> = {
+  data: T extends 'url' ? { url: string }[] : { b64_json: string }[]
+}
+
+/* 
+  OpenAI Error
+  400	BadRequestError
+  401	AuthenticationError
+  403	PermissionDeniedError
+  404	NotFoundError
+  422	UnprocessableEntityError
+  429	RateLimitError
+  >=500	InternalServerError
+  N/A	APIConnectionError
+
+  log(error.status) // e.g. 401
+  log(error.message) // e.g. The authentication token you passed was invalid...
+  log(error.code) // e.g. 'invalid_api_key'
+  log(error.type) // e.g. 'invalid_request_error'
+*/

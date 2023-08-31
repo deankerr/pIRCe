@@ -1,10 +1,10 @@
 import type { Message } from '@prisma/client'
+import debug from 'debug'
 
 import { prisma } from '../api/db.js'
 import { command } from '../command.js'
-import { logger } from '../util.js'
 
-const log = logger.create('admin')
+const log = debug('pIRCe:admin')
 
 // admin commands
 export async function admin(message: Message) {
