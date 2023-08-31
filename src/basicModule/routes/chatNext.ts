@@ -1,11 +1,11 @@
 import { ai } from '../api/ai_next.js'
-import { createTag, getContextualMessages, type BotEvent } from '../api/db.js'
+import { createTag, getContextualMessages, type ChatEvent } from '../api/db.js'
 import { command } from '../command.js'
 import { logger } from '../util.js'
 
 const log = logger.create('chatNext')
 
-export async function chatNext(botEvent: BotEvent) {
+export async function chatNext(botEvent: ChatEvent) {
   const { profile, message, route } = botEvent
 
   const contexual = await getContextualMessages(botEvent)

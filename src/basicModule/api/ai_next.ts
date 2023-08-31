@@ -2,12 +2,12 @@ import type { Message } from '@prisma/client'
 import axios, { AxiosResponse, isAxiosError } from 'axios'
 import debug from 'debug'
 
-import type { BotEvent } from './db.js'
+import type { ChatEvent, ImageEvent } from './db.js'
 
 const log = debug('pIRCe:ai')
 
 // TODO count tokens (somewhere)
-async function chat(botEvent: BotEvent, contexual: Message[]) {
+async function chat(botEvent: ChatEvent, contexual: Message[]) {
   try {
     const { chatModel, options, profile, message } = botEvent
     const { id, url, backend, ...parameters } = chatModel
@@ -51,7 +51,7 @@ const moderationCache = {
   text: new Map<string, boolean>(),
 }
 
-async function moderate(botEvent: BotEvent, contextual: Message[]) {
+async function moderate(botEvent: ChatEvent, contextual: Message[]) {
   try {
     const { chatModel, options, message, profile } = botEvent
     const { moderationProfile } = options
@@ -85,7 +85,6 @@ async function moderate(botEvent: BotEvent, contextual: Message[]) {
       headers: getBackendHeaders('openAI'),
       timeout: options.apiTimeoutMs,
       timeoutErrorMessage: 'Error: AI Request Timeout',
-
       data: {
         input,
       },
@@ -126,7 +125,81 @@ async function moderate(botEvent: BotEvent, contextual: Message[]) {
   }
 }
 
-export const ai = { chat }
+async function image(imageEvent: ImageEvent) {
+  try {
+    const log = debug('pIRCe:api.image')
+    const { imageModel, message } = imageEvent
+    log('image %o', imageModel.id)
+
+    const { config, parameters } = getBackendRequestConfig(imageEvent)
+    const prompt = message.content.replace(/^@\w*\s/, '')
+
+    const response = await axios<
+      OpenAIImageRequest,
+      AxiosResponse<OpenAIImageResponse<'b64_json'>, OpenAIImageRequest>
+    >({
+      ...config,
+      data: {
+        prompt,
+        ...parameters,
+      },
+    })
+
+    const result = response.data.data[0].b64_json
+    return { result }
+  } catch (error) {
+    if (isAxiosError(error) && error.response && error.response.data) {
+      const { data } = error.response
+      if (data.error.code === 'content_policy_violation') {
+        log(data.error)
+        return {
+          error: data.error.message as string,
+        }
+      }
+    }
+
+    return handleError(error)
+  }
+}
+
+export const ai = { chat, image }
+
+function getBackendRequestConfig(botEvent: ChatEvent | ImageEvent) {
+  const { options } = botEvent
+
+  const model = 'chatModel' in botEvent ? botEvent.chatModel : botEvent.imageModel
+
+  const { id, url, ...parameters } = model
+  const backend = id.split('.')[0]
+
+  const config = {
+    method: 'post',
+    url,
+    timeout: options.apiTimeoutMs,
+    timeoutErrorMessage: 'Error: AI Request Timeout',
+    headers: {} as Record<string, string>,
+  }
+
+  if (backend === 'openai') {
+    config.headers = { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` }
+  }
+
+  if (backend === 'openrouter') {
+    config.headers = {
+      Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
+      'HTTP-Referer': getEnv('OPENROUTER_YOUR_SITE_URL'),
+      'X-Title': getEnv('OPENROUTER_YOUR_APP_NAME'),
+    }
+  }
+
+  return { config, parameters }
+}
+
+function getEnv(name: string) {
+  const value = process.env[name]
+  if (!value) throw new Error(`${name} not set`)
+  return value
+}
 
 function getBackendHeaders(backend: 'openAI' | 'openRouter') {
   if (backend === 'openAI') {
@@ -312,7 +385,21 @@ type OpenAIModerationResponse = {
     }
   }[]
 }
+
+type OpenAIImageRequest = {
+  prompt: string
+  n: number
+  size: '256x256' | '512x512' | '1024x1024'
+  response_format: 'url' | 'b64_json'
+  user?: string
+}
+
+type OpenAIImageResponse<T extends 'url' | 'b64_json'> = {
+  data: T extends 'url' ? { url: string }[] : { b64_json: string }[]
+}
+
 /* 
+  OpenAI Error
   400	BadRequestError
   401	AuthenticationError
   403	PermissionDeniedError
@@ -321,4 +408,9 @@ type OpenAIModerationResponse = {
   429	RateLimitError
   >=500	InternalServerError
   N/A	APIConnectionError
+
+  log(error.status) // e.g. 401
+  log(error.message) // e.g. The authentication token you passed was invalid...
+  log(error.code) // e.g. 'invalid_api_key'
+  log(error.type) // e.g. 'invalid_request_error'
 */

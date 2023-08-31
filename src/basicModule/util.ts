@@ -9,3 +9,7 @@ export function randomPick<T>(list: T[]) {
   const n = Math.round(Math.random() * (list.length - 1))
   return list[n]
 }
+
+export function getClown() {
+  return randomPick(['🤡', '😋', '🤓', '🤣', '🤪', '🤠'])
+}

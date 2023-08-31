@@ -46,7 +46,7 @@ model Route {
 }
 
 // Prompt set up, options and values
-// 'Character' ? 
+// 'Character' 'Entity' 'Handler ? 
 model Profile {
   id         String  @id // 'bart', 'eee'
   prompt     String // in "promptScript"
@@ -54,12 +54,6 @@ model Profile {
 
   chatModel   ChatModel? @relation(fields: [chatModelID], references: [id])
   chatModelID String?
-
-  // TODO: remove prompt parameters, moved to ModelChat
-  maxTokens   Int
-  temperature Float    @default(0.9)
-  choices     Int      @default(1) // TODO rename?
-  stop        String[] // ? can this just be empty
 
   // our opts
   maxHistorySize       Int // Profile Tagged
@@ -94,18 +88,11 @@ model ChatModel {
   presence_penalty  Float  @default(0)
   frequency_penalty Float  @default(0)
   logit_bias        String @default("{}")
-
-  // functions (todo)
-
   // OpenRouter only
   top_k      Int    @default(0)
   transforms String @default("[\"middle-out\"]")
 
   profile Profile[]
-
-  // later posibile backends will be different
-  // - data response type
-  // - lets wait til we get there
 }
 
 model ImageModel {
@@ -113,7 +100,7 @@ model ImageModel {
   url             String
   n               Int    @default(1)
   size            String @default("1024x1024")
-  response_format String @default("b64_json")
+  response_format String @default("b64_json") // "url"
 }
 
 // Options

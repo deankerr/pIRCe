@@ -1,4 +1,10 @@
-import { PrismaClient, type Message, type Profile, type Route } from '@prisma/client'
+import {
+  PrismaClient,
+  type ImageModel,
+  type Message,
+  type Profile,
+  type Route,
+} from '@prisma/client'
 
 import { EventMessage } from '../../types.js'
 
@@ -6,10 +12,23 @@ export const prisma = new PrismaClient()
 
 export type BotEvent = {
   route: Route
-  profile: Profile
-  chatModel: OpenChatModel
   message: Message
   options: Options
+}
+
+export type ChatEvent = {
+  route: Route
+  message: Message
+  options: Options
+  profile: Profile
+  chatModel: OpenChatModel
+}
+
+export type ImageEvent = {
+  route: Route
+  message: Message
+  options: Options
+  imageModel: ImageModel
 }
 
 export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>
@@ -49,6 +68,10 @@ export async function getChatModel(id: string) {
   }
 
   return model
+}
+
+export async function getImageModel(id: string) {
+  return await prisma.imageModel.findUniqueOrThrow({ where: { id } })
 }
 
 export async function createMessage(ircMessage: EventMessage) {
@@ -202,7 +225,7 @@ export async function getMessages(pMsg: ProfileMessage, amount: number) {
 }
 
 // retrieve same profile tagged and/or local messages
-export async function getContextualMessages(botEvent: BotEvent) {
+export async function getContextualMessages(botEvent: ChatEvent) {
   const { profile, message } = botEvent
   const { maxHistorySize, numIncludeContextual } = profile
   const { server, target } = message

@@ -2,12 +2,16 @@ import { EventMessage } from '../types.js'
 import { createMessage, getChatModel, getOptions, getRoutesForTarget } from './api/db.js'
 import { admin } from './routes/admin.js'
 import { chatNext } from './routes/chatNext.js'
+import { image } from './routes/image.js'
 import { context, logger } from './util.js'
 
 const log = logger.create('router')
 
-// const handlers = [admin, chat, chatWithContext, chatLlama, image, chatNext]
-const handlers = [chatNext]
+const handlers = {
+  chatNext,
+  image,
+  admin,
+}
 
 export async function router(message: EventMessage) {
   const msg = await createMessage(message)
@@ -50,14 +54,15 @@ export async function router(message: EventMessage) {
     )
   }
 
+  // TODO figure this out
   for (const route of validRoutes) {
     if (route.handler === 'admin') return admin(msg)
+    if (route.handler === 'image') return handlers.image({ route, message: msg, options })
 
-    const handler = handlers.find((h) => h.name === route.handler)
     const { profile } = route
     const chatModel = profile?.chatModelID ? await getChatModel(profile.chatModelID) : null
 
-    if (handler && profile && chatModel) {
+    if (profile && chatModel) {
       const botEvent = {
         route,
         profile,
@@ -65,9 +70,9 @@ export async function router(message: EventMessage) {
         message: msg,
         options,
       }
-      handler(botEvent)
+      handlers.chatNext(botEvent)
     } else {
-      log('invalid route: handler %o profile %o chatModel: %o', handler, profile, chatModel)
+      log('invalid route: handler %o profile %o chatModel: %o', route.handler, profile, chatModel)
     }
   }
 }
