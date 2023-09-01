@@ -1,8 +1,9 @@
+import debug from 'debug'
+
 import { getOptions, getWordList } from '../api/db.js'
 import { outputToIDFile } from '../api/file.js'
-import { create } from './logger.js'
 
-const log = create('output')
+const log = debug('pIRCe:output')
 
 export async function formatOutput(text: string) {
   let filtered = text

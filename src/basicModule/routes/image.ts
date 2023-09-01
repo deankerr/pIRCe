@@ -8,6 +8,7 @@ import { getClown } from '../util.js'
 
 const log = debug('pIRCe:image')
 
+// currently the only option
 const modelID = 'openai.dalle'
 
 export async function image(botEvent: BotEvent) {

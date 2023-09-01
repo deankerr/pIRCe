@@ -12,6 +12,6 @@ logs
 *.db
 prisma/seed-*.ts
 
-.vscode/settings.json
+.vscode
 
 output

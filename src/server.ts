@@ -22,7 +22,6 @@ log('reload keyword: %s', moduleInfo.reloadKeyword)
 const irc = new IRCClient(ircConfig, moduleInfo.path, moduleInfo.reloadKeyword)
 
 // add some feedback messages
-// irc.on('notice', (from, _, text) => log(`notice: %s %s`, from ?? '(server)', text))
 irc.on('error', (err) => log('error: %o', err))
 irc.on('netError', (err) => log('error: %o', err))
 

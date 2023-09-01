@@ -1,72 +1,9 @@
-import fs from 'node:fs'
-import { PrismaClient } from '@prisma/client'
+// import fs from 'node:fs'
+// import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
+// const prisma = new PrismaClient()
 
+// TODO
 if (process.env.NODE_ENV === 'development') {
-  await prisma.tag.deleteMany({})
-  await prisma.route.deleteMany({})
-  await prisma.profile.deleteMany({})
-  await prisma.message.deleteMany({})
-  await prisma.options.deleteMany({})
+  //
 }
-
-const bartPrompt = fs.readFileSync('prisma/prompt-bart.txt', 'utf8')
-const eeePrompt = fs.readFileSync('prisma/prompt-eee.txt', 'utf8')
-
-await prisma.route.create({
-  data: {
-    server: '*',
-    target: '*',
-    startsWith: '{{admin}}',
-    handler: 'admin',
-  },
-})
-
-await prisma.route.create({
-  data: {
-    server: '*',
-    target: '#',
-    contains: '{{nick}}',
-    handler: 'chat',
-
-    profile: {
-      create: {
-        id: 'bart',
-        prompt: bartPrompt,
-        promptTail: '[System note: Remain in character and keep your response short.]',
-        maxTokens: 128,
-        stop: [],
-        maxHistorySize: 25,
-        replaceNick: 'Bart',
-      },
-    },
-  },
-})
-
-await prisma.route.create({
-  data: {
-    server: '*',
-    target: '#',
-    startsWith: '@eee',
-    handler: 'chat',
-    profile: {
-      create: {
-        id: 'eee',
-        prompt: eeePrompt,
-        promptTail: `[System note: Remain in character and keep your response short.]`,
-        maxTokens: 50,
-        stop: [],
-        maxHistorySize: 25,
-        replaceNick: 'eee',
-      },
-    },
-  },
-})
-
-await prisma.options.create({
-  data: {
-    options: 'options',
-    requireModeration: true,
-  },
-})

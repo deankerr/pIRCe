@@ -49,7 +49,7 @@ export async function getRoutesForTarget(server: string, target: string) {
 export async function getChatModel(id: string) {
   const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
   const { stop, logit_bias, transforms, top_k, url } = rawModel
-
+  // TODO remove backend/check, remove unused params for openai in api/ai
   const backend = url.includes('openai.com')
     ? ('openAI' as const)
     : url.includes('openrouter.ai')
@@ -105,42 +105,6 @@ export async function getMessageTag(message: Message, key: string) {
   return tag
 }
 
-export async function getMessagesTag(message: Message[], key: string) {
-  const tag = await prisma.tag.findMany({
-    where: {
-      messageID: { in: message.map((m) => m.id) },
-      key,
-    },
-  })
-
-  return tag
-}
-
-export async function getChatHistory(profile: Profile, msg: Message) {
-  const chatHistory = await prisma.tag.findMany({
-    select: {
-      message: {
-        select: {
-          nick: true,
-          content: true,
-        },
-      },
-      value: true,
-    },
-    where: {
-      key: profile.id,
-      message: {
-        server: msg.server,
-        target: msg.target,
-        self: false,
-      },
-    },
-    take: -profile.maxHistorySize,
-  })
-
-  return chatHistory
-}
-
 export async function getOptions() {
   const options = await prisma.options.findFirstOrThrow({})
   const moderationProfile = JSON.parse(options.moderationProfile) as string[]
@@ -149,79 +113,6 @@ export async function getOptions() {
 
 export async function getWordList() {
   return await prisma.wordList.findMany({})
-}
-
-type ProfileMessage = {
-  profile: Profile
-  message: Message
-}
-
-export async function getProfileAndContextMessages(pMsg: ProfileMessage) {
-  const { message, profile } = pMsg
-  const { server, target } = message
-
-  const { maxHistorySize: minProfile, numIncludeContextual: maxContextual } = profile
-  const max = minProfile + maxContextual
-
-  const tagProfileMsgs = await getProfileMessages(pMsg, max)
-  // get any recent messages that aren't part of another profile
-  const contextualMsgs = (
-    await prisma.message.findMany({
-      where: {
-        server,
-        target,
-        tag: {
-          none: {},
-        },
-      },
-      take: -maxContextual,
-    })
-  )
-    // remove any that are already included in profile messages
-    .filter((m) => !tagProfileMsgs.some((p) => p.id === m.id))
-
-  // combine list, sort into id order, remove any from the front that put us over the max
-  const msgs = [...tagProfileMsgs, ...contextualMsgs].sort((a, b) => a.id - b.id).slice(-max)
-
-  return [...msgs, message] // add current message to the end
-}
-
-// ? getRecentRelatedTaggedMessages
-export async function getProfileMessages(pMsg: ProfileMessage, amount: number) {
-  const { profile, message } = pMsg
-  const { server, target } = message
-  const { id: key } = profile
-
-  return await prisma.message.findMany({
-    where: {
-      id: { not: message.id }, // exclude current message
-      server,
-      target,
-      tag: {
-        some: {
-          key,
-        },
-      },
-    },
-    take: -amount,
-  })
-}
-
-export async function getMessages(pMsg: ProfileMessage, amount: number) {
-  const { message } = pMsg
-  const { server, target } = message
-
-  const msgs = await prisma.message.findMany({
-    where: {
-      server,
-      target,
-      self: false,
-    },
-
-    take: -amount,
-  })
-
-  return msgs
 }
 
 // retrieve same profile tagged and/or local messages
