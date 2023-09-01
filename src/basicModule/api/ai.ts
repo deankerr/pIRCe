@@ -1,8 +1,8 @@
-import type { Message } from '@prisma/client'
-import axios, { AxiosResponse, isAxiosError } from 'axios'
+import type { ChatModel, ImageModel, Message } from '@prisma/client'
+import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 
-import type { ChatEvent, ImageEvent } from './db.js'
+import type { ChatEvent, ImageEvent, Options } from './db.js'
 
 const log = debug('pIRCe:ai')
 
@@ -10,8 +10,7 @@ const log = debug('pIRCe:ai')
 async function chat(botEvent: ChatEvent, contexual: Message[]) {
   try {
     const { chatModel, options, profile, message } = botEvent
-    const { id, url, backend, ...parameters } = chatModel
-
+    const { id, url, ...parameters } = chatModel
     log('chat %o', id)
 
     const moderated = await moderate(botEvent, contexual)
@@ -25,21 +24,20 @@ async function chat(botEvent: ChatEvent, contexual: Message[]) {
     )
     log('%O', prompt)
 
-    const response = await axios<AIChatRequest, AxiosResponse<AIChatResponse, AIChatRequest>>({
-      method: 'post',
-      url,
-      headers: getBackendHeaders(backend),
-      timeout: options.apiTimeoutMs,
-      timeoutErrorMessage: 'Error: AI Request Timeout',
+    const isOpenAIBackend = getBackendID(chatModel) === 'openai'
+    const data = {
+      ...parameters,
+      messages: prompt,
+      stop: JSON.parse(parameters.stop),
+      logit_bias: JSON.parse(parameters.logit_bias),
+      transforms: isOpenAIBackend ? undefined : JSON.parse(parameters.transforms),
+      top_k: isOpenAIBackend ? undefined : parameters.top_k,
+    }
 
-      data: {
-        messages: prompt,
-        ...parameters,
-      },
-    })
+    const config = getAxiosConfig(url, options)
+    const response = await axios<AIChatResponse>({ ...config, data })
 
-    const data = response.data.choices[0]
-    return data
+    return response.data.choices[0]
   } catch (error) {
     return handleError(error)
   }
@@ -57,7 +55,7 @@ async function moderate(botEvent: ChatEvent, contextual: Message[]) {
     const { moderationProfile } = options
 
     // only moderate openAI
-    if (chatModel.backend !== 'openAI') {
+    if (!chatModel.url.includes('openai.com')) {
       return { success: true, contextual }
     }
 
@@ -75,20 +73,9 @@ async function moderate(botEvent: ChatEvent, contextual: Message[]) {
     const messages = [message, ...contextual].map((m) => `${m.nick}: ${m.content}`)
 
     const input = [prompts, ...messages]
-
-    const response = await axios<
-      OpenAIModerationRequest,
-      AxiosResponse<OpenAIModerationResponse, OpenAIModerationRequest>
-    >({
-      method: 'post',
-      url: 'https://api.openai.com/v1/moderations',
-      headers: getBackendHeaders('openAI'),
-      timeout: options.apiTimeoutMs,
-      timeoutErrorMessage: 'Error: AI Request Timeout',
-      data: {
-        input,
-      },
-    })
+    const config = getAxiosConfig('https://api.openai.com/v1/moderations', options)
+    const data = { input }
+    const response = await axios<OpenAIModerationResponse>({ ...config, data })
 
     const rejectedCategories = response.data.results.map((result) => {
       // get flagged keys, remove allowed, return remaining objectional keys
@@ -102,6 +89,7 @@ async function moderate(botEvent: ChatEvent, contextual: Message[]) {
       message: rejectedCategories[1],
       contextual: rejectedCategories.slice(2),
     }
+    log('%O', results)
 
     const promptsStatus = results.prompts.length === 0
     moderationCache.text.set(prompts, promptsStatus)
@@ -128,23 +116,18 @@ async function moderate(botEvent: ChatEvent, contextual: Message[]) {
 async function image(imageEvent: ImageEvent) {
   try {
     const log = debug('pIRCe:api.image')
-    const { imageModel, message } = imageEvent
-    log('image %o', imageModel.id)
 
-    const { config, parameters } = getBackendRequestConfig(imageEvent)
-    const prompt = message.content.replace(/^@\w*\s/, '')
+    const { imageModel, message, options } = imageEvent
+    const { id, url, ...parameters } = imageModel
+    log('%o %m', id, message)
 
-    const response = await axios<
-      OpenAIImageRequest,
-      AxiosResponse<OpenAIImageResponse<'b64_json'>, OpenAIImageRequest>
-    >({
-      ...config,
-      data: {
-        prompt,
-        ...parameters,
-      },
-    })
+    const config = getAxiosConfig(url, options)
+    // TODO trigger removal
+    const data = { ...parameters, prompt: message.content.replace(/^@\w*\s/, '') }
 
+    const response = await axios<OpenAIImageResponseB64>({ ...config, data })
+
+    log(response.data)
     const result = response.data.data[0].b64_json
     return { result }
   } catch (error) {
@@ -164,63 +147,43 @@ async function image(imageEvent: ImageEvent) {
 
 export const ai = { chat, image }
 
-function getBackendRequestConfig(botEvent: ChatEvent | ImageEvent) {
-  const { options } = botEvent
-
-  const model = 'chatModel' in botEvent ? botEvent.chatModel : botEvent.imageModel
-
-  const { id, url, ...parameters } = model
-  const backend = id.split('.')[0]
-
-  const config = {
+function getAxiosConfig(url: string, options: Options) {
+  return {
     method: 'post',
     url,
+    headers: getBackendHeaders(url),
     timeout: options.apiTimeoutMs,
     timeoutErrorMessage: 'Error: AI Request Timeout',
-    headers: {} as Record<string, string>,
   }
-
-  if (backend === 'openai') {
-    config.headers = { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` }
-  }
-
-  if (backend === 'openrouter') {
-    config.headers = {
-      Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
-      'HTTP-Referer': getEnv('OPENROUTER_YOUR_SITE_URL'),
-      'X-Title': getEnv('OPENROUTER_YOUR_APP_NAME'),
-    }
-  }
-
-  return { config, parameters }
 }
 
-function getEnv(name: string) {
-  const value = process.env[name]
-  if (!value) throw new Error(`${name} not set`)
-  return value
+function getBackendID(model: ImageModel | ChatModel | string) {
+  const url = typeof model === 'string' ? model : model.url
+  if (url.includes('openai.com')) return 'openai' as const
+  if (url.includes('openrouter.ai')) return 'openrouter' as const
+  throw new Error('Unknown backend: ' + url)
 }
 
-function getBackendHeaders(backend: 'openAI' | 'openRouter') {
-  if (backend === 'openAI') {
-    // OpenAI api key
-    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set')
+function getBackendHeaders(url: string) {
+  const backendID = getBackendID(url)
 
-    return {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    }
-  } else {
-    // OpenRouter api key + required headers
-    if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not set')
-    if (!process.env.OPENROUTER_YOUR_SITE_URL) throw new Error('OPENROUTER_YOUR_SITE_URL not set')
-    if (!process.env.OPENROUTER_YOUR_APP_NAME) throw new Error('OPENROUTER_YOUR_APP_NAME not set')
-
-    return {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'HTTP-Referer': process.env.OPENROUTER_YOUR_SITE_URL,
-      'X-Title': process.env.OPENROUTER_YOUR_APP_NAME,
-    }
+  switch (backendID) {
+    case 'openai':
+      return { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` }
+    case 'openrouter':
+      return {
+        Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
+        'HTTP-Referer': getEnv('OPENROUTER_YOUR_SITE_URL'),
+        'X-Title': getEnv('OPENROUTER_YOUR_APP_NAME'),
+      }
+    default:
+      throw new Error('Unknown backend id: ' + backendID)
   }
+}
+
+function getEnv(key: string) {
+  if (!process.env[key]) throw new Error(`${key} not set`)
+  return process.env[key]
 }
 
 const roles = {
@@ -271,7 +234,7 @@ function handleError(error: unknown) {
       // No response received
       log('*** API Request Error ***')
       log(error.request)
-
+      log(error.message)
       return error
     } else {
       // Error creating request
@@ -347,9 +310,9 @@ export type OpenAIFunctionCall = {
   name: string
 }
 
-type OpenAIModerationRequest = {
+export type OpenAIModerationRequest = {
   input: string | string[]
-  model?: 'text-moderation-stable' | 'text-moderation-latest'
+  model?: string // 'text-moderation-stable' | 'text-moderation-latest'
 }
 
 type OpenAIModerationResponse = {
@@ -386,17 +349,16 @@ type OpenAIModerationResponse = {
   }[]
 }
 
-type OpenAIImageRequest = {
+export type OpenAIImageRequest = {
   prompt: string
   n: number
-  size: '256x256' | '512x512' | '1024x1024'
-  response_format: 'url' | 'b64_json'
+  size: string // '256x256' | '512x512' | '1024x1024'
+  response_format: string // 'url' | 'b64_json'
   user?: string
 }
 
-type OpenAIImageResponse<T extends 'url' | 'b64_json'> = {
-  data: T extends 'url' ? { url: string }[] : { b64_json: string }[]
-}
+export type OpenAIImageResponseURL = { data: { url: string }[] }
+export type OpenAIImageResponseB64 = { data: { b64_json: string }[] }
 
 /* 
   OpenAI Error
@@ -413,4 +375,30 @@ type OpenAIImageResponse<T extends 'url' | 'b64_json'> = {
   log(error.message) // e.g. The authentication token you passed was invalid...
   log(error.code) // e.g. 'invalid_api_key'
   log(error.type) // e.g. 'invalid_request_error'
+*/
+
+/* 
+  OpenRouter
+  400: Bad Request (invalid or missing params, CORS)
+  401: Invalid credentials (OAuth session expired, disabled/invalid API key)
+  402: Out of credits
+  403: Your chosen model requires moderation and your input was flagged
+  408: Your request time out
+  429: You are being rate limited
+  502: Your chosen model is down or we received an invalid response from it
+
+  type ErrorResponse = {
+    error: {
+      code: number
+      message: string
+    }
+  }
+
+  const request = await fetch("https://openrouter.ai/...")
+  console.log(request.status) // Will be an error code unless the model started processing your request
+  const response = await request.json()
+  console.error(response.error?.status) // Will be an error code
+  console.error(response.error?.message)
+
+
 */

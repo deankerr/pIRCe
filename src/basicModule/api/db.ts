@@ -47,26 +47,7 @@ export async function getRoutesForTarget(server: string, target: string) {
 }
 
 export async function getChatModel(id: string) {
-  const rawModel = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
-  const { stop, logit_bias, transforms, top_k, url } = rawModel
-  // TODO remove backend/check, remove unused params for openai in api/ai
-  const backend = url.includes('openai.com')
-    ? ('openAI' as const)
-    : url.includes('openrouter.ai')
-    ? ('openRouter' as const)
-    : null
-
-  if (!backend) throw new Error('Unrecognised backend provider/URL: ' + url)
-
-  const model = {
-    ...rawModel,
-    backend,
-    stop: JSON.parse(stop) as string[],
-    logit_bias: JSON.parse(logit_bias) as Record<string, number>,
-    transforms: backend === 'openRouter' ? (JSON.parse(transforms) as string[]) : undefined,
-    top_k: backend === 'openRouter' ? top_k : undefined,
-  }
-
+  const model = await prisma.chatModel.findUniqueOrThrow({ where: { id } })
   return model
 }
 
