@@ -2,7 +2,7 @@ import { ChildProcess, fork } from 'node:child_process'
 import { IrcClient } from '@ctrl/irc'
 import debug from 'debug'
 
-import type { CommandMessage, IRCConfig } from './types.js'
+import type { CommandMessage, IRCConfig } from '../types.js'
 
 const log = debug('pIRCe:server')
 
@@ -16,7 +16,7 @@ export class IRCClient extends IrcClient {
     const { host, nick, nickservPassword, ...options } = config
     super(host, nick, options)
 
-    this.modulePath = modulePath + '/index.js'
+    this.modulePath = 'src/bot/index.js'
     this.reloadKeyword = reloadKeyword
 
     this.on('registered', () => {

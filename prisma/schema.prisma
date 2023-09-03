@@ -45,8 +45,9 @@ model Route {
   profileID String?
 }
 
-// Prompt set up, options and values
-// 'Character' 'Entity' 'Handler ? 
+// Prompt / Persona
+// Move contextual message values to Route
+// replaceNick -> Name?
 model Profile {
   id         String  @id // 'bart', 'eee'
   prompt     String // in "promptScript"
@@ -63,6 +64,10 @@ model Profile {
   route Route[]
 }
 
+// Interaction? Result? Response?
+// Genrally denotes previous interaction by Persona
+// Can store arbitrary data I never seem to
+// Could almost just be a field on Messages but might be faster / useful one day
 model Tag {
   id        Int     @id @default(autoincrement())
   message   Message @relation(fields: [messageID], references: [id])
@@ -74,6 +79,7 @@ model Tag {
   @@unique([messageID, key])
 }
 
+// merge to 'Model', convert parameters to JSON
 model ChatModel {
   id    String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
   url   String // 'https://api.openai.com/v1/chat/completions' | 'https://openrouter.ai/api/v1/chat/completions'
@@ -95,6 +101,7 @@ model ChatModel {
   profile Profile[]
 }
 
+// merge to 'Model', convert parameters to JSON
 model ImageModel {
   id              String @id
   url             String

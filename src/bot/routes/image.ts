@@ -1,9 +1,10 @@
 import debug from 'debug'
 
 import { ai } from '../api/ai.js'
-import { getImageModel, type BotEvent } from '../api/db.js'
+import { getImageModel } from '../api/db.js'
 import { outputBase64ToImage } from '../api/file.js'
 import { command } from '../command.js'
+import type { BotEvent } from '../types.js'
 import { getClown } from '../util.js'
 
 const log = debug('pIRCe:image')

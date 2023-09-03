@@ -1,6 +1,6 @@
 import debug from 'debug'
 
-import { EventMessage } from '../types.js'
+import type { EventMessage } from '../types.js'
 import { createMessage, getChatModel, getOptions, getRoutesForTarget } from './api/db.js'
 import { admin } from './routes/admin.js'
 import { chat } from './routes/chat.js'

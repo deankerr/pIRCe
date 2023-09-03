@@ -1,20 +1,21 @@
 import debug from 'debug'
 
 import { ai } from '../api/ai.js'
-import { createTag, getContextualMessages, type ChatEvent } from '../api/db.js'
+import { createTag, getContextualMessages } from '../api/db.js'
 import { command } from '../command.js'
+import type { ChatEvent } from '../types.js'
 
 const log = debug('pIRCe:chat')
 
 export async function chat(botEvent: ChatEvent) {
   const { profile, message, route } = botEvent
 
-  const contexual = await getContextualMessages(botEvent)
+  const contextual = await getContextualMessages(botEvent)
 
   log('%m', profile.prompt)
   log('%m', message)
 
-  const result = await ai.chat(botEvent, contexual)
+  const result = await ai.chat(botEvent, contextual)
 
   if (!result || result instanceof Error) return log('chat failed')
 

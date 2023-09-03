@@ -14,7 +14,5 @@ export const irc: IRCConfig = {
 }
 
 export const module = {
-  name: 'basicModule',
-  path: 'src/basicModule',
   reloadKeyword: '!!reload!!',
 }

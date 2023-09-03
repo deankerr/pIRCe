@@ -1,38 +1,9 @@
-import {
-  PrismaClient,
-  type ImageModel,
-  type Message,
-  type Profile,
-  type Route,
-} from '@prisma/client'
+import { PrismaClient, type Message } from '@prisma/client'
 
-import { EventMessage } from '../../types.js'
+import type { EventMessage } from '../../types.js'
+import type { ChatEvent } from '../types.js'
 
 export const prisma = new PrismaClient()
-
-export type BotEvent = {
-  route: Route
-  message: Message
-  options: Options
-}
-
-export type ChatEvent = {
-  route: Route
-  message: Message
-  options: Options
-  profile: Profile
-  chatModel: OpenChatModel
-}
-
-export type ImageEvent = {
-  route: Route
-  message: Message
-  options: Options
-  imageModel: ImageModel
-}
-
-export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>
-export type Options = Awaited<ReturnType<typeof getOptions>>
 
 export async function getRoutesForTarget(server: string, target: string) {
   const targetList = [target, '*', target.startsWith('#') ? '#' : '?']

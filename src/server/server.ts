@@ -5,21 +5,21 @@ import 'dotenv/config'
 import chokidar from 'chokidar'
 import debug from 'debug'
 
+import { IRCConfig } from '../types.js'
 import { IRCClient } from './irc.js'
-import { IRCConfig } from './types.js'
 
 export const log = debug('pIRCe:server')
 
 const ircConfig = await config().get<IRCConfig>('irc')
 const moduleInfo = await config().get<Record<string, string>>('module')
+const modulePath = 'src/bot/index.js'
 
 log('NODE_ENV: %s', process.env.NODE_ENV)
 log(`server: %s nick: %s`, ircConfig.host, ircConfig.nick)
-log('module: %s / %s', moduleInfo.name, moduleInfo.path)
 log('reload keyword: %s', moduleInfo.reloadKeyword)
 
 // set up irc client
-const irc = new IRCClient(ircConfig, moduleInfo.path, moduleInfo.reloadKeyword)
+const irc = new IRCClient(ircConfig, modulePath, moduleInfo.reloadKeyword)
 
 // add some feedback messages
 irc.on('error', (err) => log('error: %o', err))
@@ -33,7 +33,7 @@ function watchReload() {
   irc.reloadBot()
 }
 
-const watch = chokidar.watch(moduleInfo.path, { ignoreInitial: true })
+const watch = chokidar.watch(modulePath, { ignoreInitial: true })
 watch.on('add', watchReload)
 watch.on('change', watchReload)
 
