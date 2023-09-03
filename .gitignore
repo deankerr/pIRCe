@@ -15,3 +15,7 @@ prisma/seed-*.ts
 .vscode
 
 output
+
+# next.js
+/.next/
+/out/

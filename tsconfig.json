@@ -12,11 +12,7 @@
     "strict": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
@@ -27,16 +23,8 @@
       }
     ]
   },
-  "include": [
-    "src",
-    "config",
-    "package.json",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "build"
-  ],
+  "include": ["src", "config", "package.json", ".next/types/**/*.ts", "next-env.d.ts"],
+  "exclude": ["node_modules", "build"],
   "ts-node": {
     "esm": true,
     "transpileOnly": true,

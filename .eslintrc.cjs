@@ -5,6 +5,7 @@ module.exports = {
     'plugin:@typescript-eslint/strict',
     'plugin:@typescript-eslint/stylistic',
     'prettier',
+    'next',
   ],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
