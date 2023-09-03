@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Messages (IRC events, could be things like join/quit etc)
+model Message {
+  id Int @id @default(autoincrement())
+
+  target String // channel, or origin user if direct message
+  nick   String
+
+  type    String // irc command, e.g. 'message' 'action'
+  content String // msg text value, but could be whatever if other cmds added
+
+  self Boolean // we did this
+
+  time   DateTime @default(now())
+  mask   String // just user@host
+  server String
+
+  tag Tag[]
+}
+
+// Describes the conditions under which a message is sent to a handler/profile
+model Route {
+  id Int @id @default(autoincrement())
+
+  server String // * = any or irc.server.org
+  target String // # = any channel, ? = any query (ie. pm), * = any target
+
+  startsWith String? // triggers
+  contains   String?
+
+  handler String // name of actual function message is sent to TYPE
+
+  redirectOutput String? // output to this target instead
+
+  // the ai profile data to send to handler along with message
+  profile   Profile? @relation(fields: [profileID], references: [id])
+  profileID String?
+}
+
+// Prompt / Persona
+// Move contextual message values to Route
+// replaceNick -> Name?
+model Profile {
+  id         String  @id // 'bart', 'eee'
+  prompt     String // in "promptScript"
+  promptTail String?
+
+  chatModel   ChatModel? @relation(fields: [chatModelID], references: [id])
+  chatModelID String?
+
+  // our opts
+  maxHistorySize       Int // Profile Tagged
+  numIncludeContextual Int     @default(0) // Local Msgs
+  replaceNick          String?
+
+  route Route[]
+}
+
+// Interaction? Result? Response?
+// Genrally denotes previous interaction by Persona
+// Can store arbitrary data I never seem to
+// Could almost just be a field on Messages but might be faster / useful one day
+model Tag {
+  id        Int     @id @default(autoincrement())
+  message   Message @relation(fields: [messageID], references: [id])
+  messageID Int
+
+  key   String
+  value String?
+
+  @@unique([messageID, key])
+}
+
+// merge to 'Model', convert parameters to JSON
+model ChatModel {
+  id    String @id // 'openai.gpt-3.5-turbo' 'openai.gpt-4' 'openai.gpt-4.temp_1_top_p_4' ??
+  url   String // 'https://api.openai.com/v1/chat/completions' | 'https://openrouter.ai/api/v1/chat/completions'
+  model String // OAI: 'gpt-3.5-turbo' / OR: 'openai/gpt-3.5-turbo'
+
+  // Parameters
+  max_tokens        Int    @default(128)
+  temperature       Float  @default(1)
+  top_p             Int    @default(1)
+  n                 Int    @default(1)
+  stop              String @default("[]")
+  presence_penalty  Float  @default(0)
+  frequency_penalty Float  @default(0)
+  logit_bias        String @default("{}")
+  // OpenRouter only
+  top_k      Int    @default(0)
+  transforms String @default("[\"middle-out\"]")
+
+  profile Profile[]
+}
+
+// merge to 'Model', convert parameters to JSON
+model ImageModel {
+  id              String @id
+  url             String
+  n               Int    @default(1)
+  size            String @default("1024x1024")
+  response_format String @default("b64_json") // "url"
+}
+
+// Options
+model Options {
+  options           String @id @default("options") // there can only be one
+  adminKeyword      String @default("!!admin!!")
+  moderationProfile String @default("[]") // categories to allow 
+
+  outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
+  outputFileDir          String @default("output")
+  outputFilenameIDLength Int    @default(3) // i.e. 3 = abc.txt
+  outputIRCMaxNewlines   Int    @default(4)
+  outputIRCMaxChars      Int    @default(440)
+
+  apiTimeoutMs Int @default(20000)
+}
+
+// output filter
+model WordList {
+  word String @id // the word/phrase
+}
