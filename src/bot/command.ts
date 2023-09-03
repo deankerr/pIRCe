@@ -1,9 +1,8 @@
-import type { CommandMessage } from '../types.js'
 import { createMessage, createTag } from './api/db.js'
 import { self } from './util.js'
 import { formatOutput } from './util/formatOutput.js'
 
-const send = (message: CommandMessage) => {
+const send = (message: string) => {
   if (!process.send) throw new Error('process.send is unavailable')
   process.send(message)
 }
@@ -21,9 +20,9 @@ export const command = {
     })
 
     if (tag) createTag(msg, tag)
-
-    send({ say: [target, await formatOutput(message)] })
+    send(`say ${target} ${await formatOutput(message)}`)
   },
+
   action: async (target: string, message: string, tag: string | null) => {
     const msg = await createMessage({
       server: self.server,
@@ -36,19 +35,14 @@ export const command = {
     })
 
     if (tag) createTag(msg, tag)
+    send(`action ${target} ${await formatOutput(message)}`)
+  },
 
-    send({ action: [target, await formatOutput(message)] })
-  },
   join: (target: string) => {
-    send({ join: target })
+    send(`join ${target}`)
   },
+
   part: (target: string) => {
-    send({ part: target })
-  },
-  quit: (message: string) => {
-    send({ quit: message })
-  },
-  info: () => {
-    send({ info: true })
+    send(`part ${target}`)
   },
 }

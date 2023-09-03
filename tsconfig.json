@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "es5",
+    "module": "esnext",
+    "moduleResolution": "Node",
     "rootDir": "./",
     "outDir": "./build",
     "resolveJsonModule": true,
@@ -28,7 +28,6 @@
   "ts-node": {
     "esm": true,
     "transpileOnly": true,
-    "files": true,
-    "experimentalResolver": true
+    "files": true
   }
 }
