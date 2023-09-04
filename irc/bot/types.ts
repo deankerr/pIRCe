@@ -1,8 +1,7 @@
-import type { ImageModel, Message, Profile, Route } from "@prisma/client";
+import type { Message, Profile, Route, Model } from "@prisma/client";
 
-import type { getChatModel, getOptions } from "./api/db.js";
+import type { getOptions } from "./api/db.js";
 
-export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>;
 export type Options = Awaited<ReturnType<typeof getOptions>>;
 
 export type EventMessage = {
@@ -26,14 +25,14 @@ export type ChatEvent = {
   message: Message;
   options: Options;
   profile: Profile;
-  chatModel: OpenChatModel;
+  chatModel: Model;
 };
 
 export type ImageEvent = {
   route: Route;
   message: Message;
   options: Options;
-  imageModel: ImageModel;
+  imageModel: Model;
 };
 
 //* API

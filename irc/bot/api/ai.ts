@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { ChatModel, ImageModel, Message } from "@prisma/client";
+import type { Message, Model } from "@prisma/client";
 import axios, { isAxiosError } from "axios";
 import debug from "debug";
 
@@ -18,7 +18,7 @@ const log = debug("pIRCe:ai");
 async function chat(botEvent: ChatEvent, contextual: Message[]) {
   try {
     const { chatModel, options, profile, message } = botEvent;
-    const { id, url, ...parameters } = chatModel;
+    const { id, url, parameters } = chatModel;
     log("chat %o", id);
 
     const moderated = await moderate(botEvent, contextual);
@@ -32,17 +32,13 @@ async function chat(botEvent: ChatEvent, contextual: Message[]) {
     );
     log("%O", prompt);
 
-    const isOpenAIBackend = getBackendID(chatModel) === "openai";
+    const params = JSON.parse(parameters) as Record<string, string>;
+
     const data = {
-      ...parameters,
+      ...params,
       messages: prompt,
-      stop: JSON.parse(parameters.stop),
-      logit_bias: JSON.parse(parameters.logit_bias),
-      transforms: isOpenAIBackend
-        ? undefined
-        : JSON.parse(parameters.transforms),
-      top_k: isOpenAIBackend ? undefined : parameters.top_k,
     };
+    log(data);
 
     const config = getAxiosConfig(url, options);
     const response = await axios<AIChatResponse>({ ...config, data });
@@ -190,7 +186,7 @@ function getAxiosConfig(url: string, options: Options) {
   };
 }
 
-function getBackendID(model: ImageModel | ChatModel | string) {
+function getBackendID(model: Model | string) {
   const url = typeof model === "string" ? model : model.url;
   if (url.includes("openai.com")) return "openai" as const;
   if (url.includes("openrouter.ai")) return "openrouter" as const;

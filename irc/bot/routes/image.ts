@@ -1,7 +1,7 @@
 import debug from "debug";
 
 import { ai } from "../api/ai.js";
-import { getImageModel } from "../api/db.js";
+import { getModel } from "../api/db.js";
 import { outputBase64ToImage } from "../api/file.js";
 import { command } from "../command.js";
 import type { BotEvent } from "../types.js";
@@ -16,7 +16,7 @@ export async function image(botEvent: BotEvent) {
   try {
     const { route, options } = botEvent;
 
-    const imageModel = await getImageModel(modelID);
+    const imageModel = await getModel(modelID);
     const result = await ai.image({ ...botEvent, imageModel });
     if (result instanceof Error) throw result;
 

@@ -9,7 +9,9 @@
     "next:lint": "next lint",
     "next:start": "next start",
     "postinstall": "prisma generate",
-    "irc:dev": "DEBUG=pIRCe* ts-node irc/client.ts"
+    "irc:dev": "DEBUG=pIRCe* ts-node irc/client.ts",
+    "studio": "prisma studio",
+    "migrate": "prisma migrate"
   },
   "dependencies": {
     "@prisma/client": "^5.1.1",

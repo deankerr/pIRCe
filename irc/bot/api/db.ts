@@ -16,13 +16,9 @@ export async function getRoutesForTarget(server: string, target: string) {
   return routes;
 }
 
-export async function getChatModel(id: string) {
-  const model = await prisma.chatModel.findUniqueOrThrow({ where: { id } });
+export async function getModel(id: string) {
+  const model = await prisma.model.findUniqueOrThrow({ where: { id } });
   return model;
-}
-
-export async function getImageModel(id: string) {
-  return await prisma.imageModel.findUniqueOrThrow({ where: { id } });
 }
 
 export async function createMessage(ircMessage: EventMessage) {

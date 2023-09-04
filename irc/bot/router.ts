@@ -3,9 +3,9 @@ import debug from "debug";
 import type { EventMessage } from "./types.js";
 import {
   createMessage,
-  getChatModel,
   getOptions,
   getRoutesForTarget,
+  getModel,
 } from "./api/db.js";
 import { admin } from "./routes/admin.js";
 import { chat } from "./routes/chat.js";
@@ -73,9 +73,8 @@ export async function router(message: EventMessage) {
       return handlers.image({ route, message: msg, options });
 
     const { profile } = route;
-    const chatModel = profile?.chatModelID
-      ? await getChatModel(profile.chatModelID)
-      : null;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const chatModel = profile?.modelID ? await getModel(profile.modelID) : null;
 
     if (profile && chatModel) {
       const botEvent = {
