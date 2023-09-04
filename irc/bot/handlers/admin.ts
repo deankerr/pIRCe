@@ -1,14 +1,14 @@
-import type { Message } from "@prisma/client";
 import debug from "debug";
 
 import { prisma } from "../api/db.js";
 import { command } from "../command.js";
+import type { BotEvent } from "../types.js";
 
 const log = debug("pIRCe:admin");
 
 // admin commands
-export function admin(message: Message) {
-  // const [trigger, cmd, arg, ...rest] = message.content.split(' ')
+export function admin(botEvent: BotEvent) {
+  const { message } = botEvent;
   const split = message.content.split(" ");
   const cmd = split[1] ?? "";
   const arg = split[2] ?? "";

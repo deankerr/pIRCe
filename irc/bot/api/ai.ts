@@ -17,8 +17,8 @@ const log = debug("pIRCe:ai");
 // TODO count tokens (somewhere)
 async function chat(botEvent: ChatEvent, contextual: Message[]) {
   try {
-    const { chatModel, options, profile, message } = botEvent;
-    const { id, url, parameters } = chatModel;
+    const { model, options, profile, message } = botEvent;
+    const { id, url, parameters } = model;
     log("chat %o", id);
 
     const moderated = await moderate(botEvent, contextual);
@@ -57,11 +57,11 @@ const moderationCache = {
 
 async function moderate(botEvent: ChatEvent, contextual: Message[]) {
   try {
-    const { chatModel, options, message, profile } = botEvent;
+    const { model, options, message, profile } = botEvent;
     const { moderationProfile } = options;
 
     // only moderate openAI
-    if (!chatModel.url.includes("openai.com")) {
+    if (!model.url.includes("openai.com")) {
       return { success: true, contextual };
     }
 
@@ -133,20 +133,20 @@ async function image(imageEvent: ImageEvent) {
   try {
     const log = debug("pIRCe:api.image");
 
-    const { imageModel, message, options } = imageEvent;
-    const { id, url, ...parameters } = imageModel;
+    const { model, message, options } = imageEvent;
+    const { id, url, parameters } = model;
     log("%o %m", id, message);
 
     const config = getAxiosConfig(url, options);
     // TODO trigger removal
+    const params = JSON.parse(parameters) as Record<string, string>;
     const data = {
-      ...parameters,
+      ...params,
       prompt: message.content.replace(/^@\w*\s/, ""),
     };
 
     const response = await axios<OpenAIImageResponseB64>({ ...config, data });
 
-    log(response.data);
     const result = response.data.data[0]?.b64_json;
     if (!result) throw new Error("Result is undefined");
     return { result };

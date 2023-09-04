@@ -33,9 +33,9 @@ model Route {
   server String // * = any or irc.server.org
   target String // # = any channel, ? = any query (ie. pm), * = any target
 
-  keyword String? // e.g. "@bot", or %nick
+  keyword           String? // e.g. "@bot", or %nick
   startsWithKeyword Boolean @default(true)
-  mentionsKeyword Boolean @default(false)
+  mentionsKeyword   Boolean @default(false)
 
   handler String // the function used to respond to event
 
@@ -44,6 +44,9 @@ model Route {
   // the ai profile data to send to handler along with message
   profile   Profile? @relation(fields: [profileID], references: [id])
   profileID String?
+
+  model   Model?  @relation(fields: [modelID], references: [id])
+  modelID String?
 }
 
 // Prompt / Persona
@@ -51,9 +54,6 @@ model Profile {
   id         String  @id // 'bart', 'eee'
   prompt     String // "system" block
   promptTail String? // "system" block inserted after last user message
-
-  model   Model?  @relation(fields: [modelID], references: [id])
-  modelID String?
 
   // our opts
   conversationLength Int     @default(10) // include messages tagged with this profile
@@ -84,7 +84,7 @@ model Model {
 
   parameters String // JSON
 
-  profileID Profile[]
+  route Route[]
 }
 
 // OpenAI/OpenRouter Chat Parameters

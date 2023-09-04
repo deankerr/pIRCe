@@ -18,6 +18,8 @@ export type BotEvent = {
   route: Route;
   message: Message;
   options: Options;
+  profile?: Profile;
+  model?: Model;
 };
 
 export type ChatEvent = {
@@ -25,14 +27,15 @@ export type ChatEvent = {
   message: Message;
   options: Options;
   profile: Profile;
-  chatModel: Model;
+  model: Model;
 };
 
 export type ImageEvent = {
   route: Route;
   message: Message;
   options: Options;
-  imageModel: Model;
+  profile?: Profile;
+  model: Model;
 };
 
 //* API

@@ -11,6 +11,7 @@ export async function getRoutesForTarget(server: string, target: string) {
     where: { server: { in: [server, "*"] }, target: { in: targetList } },
     include: {
       profile: true,
+      model: true,
     },
   });
   return routes;
