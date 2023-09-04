@@ -1,23 +1,25 @@
-import type { Message } from '@prisma/client'
-import debug from 'debug'
+import type { Message } from "@prisma/client";
+import debug from "debug";
 
-import { prisma } from '../api/db.js'
-import { command } from '../command.js'
+import { prisma } from "../api/db.js";
+import { command } from "../command.js";
 
-const log = debug('pIRCe:admin')
+const log = debug("pIRCe:admin");
 
 // admin commands
-export async function admin(message: Message) {
-  const [_trigger, cmd, arg, ...rest] = message.content.split(' ')
-  log('%s %s', cmd, arg || '')
+export function admin(message: Message) {
+  // const [trigger, cmd, arg, ...rest] = message.content.split(' ')
+  const split = message.content.split(" ");
+  const cmd = split[1] ?? "";
+  const arg = split[2] ?? "";
+  const rest = split.slice(3).join(" ");
+  log("%s %s", cmd, arg ?? "");
 
-  if (cmd === 'join') command.join(arg)
-  if (cmd === 'part') command.part(arg)
-  if (cmd === 'quit') command.quit([arg, ...rest].join(' '))
-  if (cmd === 'action') command.action(arg, rest.join(' '), null)
-  if (cmd === 'say') command.say(arg, rest.join(' '), null)
-  if (cmd === 'info') command.info()
-  if (cmd === 'replay') replay()
+  if (cmd === "join") command.join(arg);
+  if (cmd === "part") command.part(arg);
+  if (cmd === "action") void command.action(arg, rest, null);
+  if (cmd === "say") void command.say(arg, rest, null);
+  if (cmd === "replay") void replay();
 }
 
 async function replay() {
@@ -26,11 +28,11 @@ async function replay() {
       self: true,
     },
     take: -1,
-  })
-  if (lastMsg) {
-    const { target, content } = lastMsg[0]
-    command.say(target, content || '(empty replay content)', null)
+  });
+  if (lastMsg[0]) {
+    const { target, content } = lastMsg[0];
+    void command.say(target, content || "(empty replay content)", null);
   } else {
-    log('no message to replay')
+    log("no message to replay");
   }
 }

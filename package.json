@@ -2,12 +2,14 @@
   "name": "my-t3-app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "next:build": "next build",
+    "next:dev": "next dev",
+    "next:lint": "next lint",
+    "next:start": "next start",
     "postinstall": "prisma generate",
-    "lint": "next lint",
-    "start": "next start"
+    "irc:dev": "DEBUG=pIRCe* ts-node irc/client.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.1.1",
@@ -20,6 +22,7 @@
     "axios": "^1.5.0",
     "chokidar": "^3.5.3",
     "debug": "^4.3.4",
+    "dotenv": "^16.3.1",
     "matrix-org-irc": "^2.2.0",
     "nanoid": "^4.0.2",
     "next": "^13.4.13",

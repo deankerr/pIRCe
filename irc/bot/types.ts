@@ -1,136 +1,146 @@
-import type { ImageModel, Message, Profile, Route } from '@prisma/client'
+import type { ImageModel, Message, Profile, Route } from "@prisma/client";
 
-import type { getChatModel, getOptions } from './api/db.js'
+import type { getChatModel, getOptions } from "./api/db.js";
 
-export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>
-export type Options = Awaited<ReturnType<typeof getOptions>>
+export type OpenChatModel = Awaited<ReturnType<typeof getChatModel>>;
+export type Options = Awaited<ReturnType<typeof getOptions>>;
+
+export type EventMessage = {
+  server: string;
+  target: string;
+  nick: string;
+  content: string;
+  type: string;
+  self: boolean;
+  mask: string;
+};
 
 export type BotEvent = {
-  route: Route
-  message: Message
-  options: Options
-}
+  route: Route;
+  message: Message;
+  options: Options;
+};
 
 export type ChatEvent = {
-  route: Route
-  message: Message
-  options: Options
-  profile: Profile
-  chatModel: OpenChatModel
-}
+  route: Route;
+  message: Message;
+  options: Options;
+  profile: Profile;
+  chatModel: OpenChatModel;
+};
 
 export type ImageEvent = {
-  route: Route
-  message: Message
-  options: Options
-  imageModel: ImageModel
-}
+  route: Route;
+  message: Message;
+  options: Options;
+  imageModel: ImageModel;
+};
 
 //* API
 //* OpenAI / OpenRouter
 
 export type AIChatRequest = {
-  model: string // technically optional on OR
-  messages: AIChatMessage[]
-  temperature?: number // 1
-  top_p?: number // 1
-  n?: number // 1
-  stream?: boolean // false
-  stop?: string | string[]
-  max_tokens?: number // inf
-  presence_penalty?: number // 0
-  frequency_penalty?: number // 0
-  logit_bias?: Record<string, number>
-  user?: string // end user abuse tracking
+  model: string; // technically optional on OR
+  messages: AIChatMessage[];
+  temperature?: number; // 1
+  top_p?: number; // 1
+  n?: number; // 1
+  stream?: boolean; // false
+  stop?: string | string[];
+  max_tokens?: number; // inf
+  presence_penalty?: number; // 0
+  frequency_penalty?: number; // 0
+  logit_bias?: Record<string, number>;
+  user?: string; // end user abuse tracking
 
   // OpenAI only
-  functions?: OpenAIFunctionCall[]
-  function_call?: string
+  functions?: OpenAIFunctionCall[];
+  function_call?: string;
   // OpenRouter only
-  top_k?: number
-  transforms?: [] | ['middle-out']
-}
+  top_k?: number;
+  transforms?: [] | ["middle-out"];
+};
 
 export type AIChatResponse = {
-  id: string
-  choices: AIChatResponseChoice[]
-  created: number
-  model: string
-  object: string
-  usage?: Record<string, number> // OpenAI only
-}
+  id: string;
+  choices: AIChatResponseChoice[];
+  created: number;
+  model: string;
+  object: string;
+  usage?: Record<string, number>; // OpenAI only
+};
 
 export type AIChatResponseChoice = {
-  finish_reason: 'stop' | 'length' | 'function_call'
-  index: number
+  finish_reason: "stop" | "length" | "function_call";
+  index: number;
   message: {
-    role: 'system' | 'user' | 'assistant' | 'function'
-    content: string | null
+    role: "system" | "user" | "assistant" | "function";
+    content: string | null;
     // function_call?: OpenAIFunctionCall
-  }
-}
+  };
+};
 
 export type AIChatMessage = {
-  role: 'user' | 'assistant' | 'system' | 'function'
-  name?: string // required if role is 'function'
-  content: string | null
-  function_call?: OpenAIFunctionCall
-}
+  role: "user" | "assistant" | "system" | "function";
+  name?: string; // required if role is 'function'
+  content: string | null;
+  function_call?: OpenAIFunctionCall;
+};
 
 export type OpenAIFunctionCall = {
-  arguments: string // JSON
-  name: string
-}
+  arguments: string; // JSON
+  name: string;
+};
 
 export type OpenAIModerationRequest = {
-  input: string | string[]
-  model?: string // 'text-moderation-stable' | 'text-moderation-latest'
-}
+  input: string | string[];
+  model?: string; // 'text-moderation-stable' | 'text-moderation-latest'
+};
 
 export type OpenAIModerationResponse = {
-  id: string
-  model: string
+  id: string;
+  model: string;
   results: {
-    flagged: boolean
+    flagged: boolean;
     categories: {
-      sexual: boolean
-      hate: boolean
-      harassment: boolean
-      'self-harm': boolean
-      'sexual/minors': boolean
-      'hate/threatening': boolean
-      'violence/graphic': boolean
-      'self-harm/intent': boolean
-      'self-harm/instructions': boolean
-      'harassment/threatening': boolean
-      violence: boolean
-    }
+      sexual: boolean;
+      hate: boolean;
+      harassment: boolean;
+      "self-harm": boolean;
+      "sexual/minors": boolean;
+      "hate/threatening": boolean;
+      "violence/graphic": boolean;
+      "self-harm/intent": boolean;
+      "self-harm/instructions": boolean;
+      "harassment/threatening": boolean;
+      violence: boolean;
+    };
     categories_scores: {
-      sexual: number
-      hate: number
-      harassment: number
-      'self-harm': number
-      'sexual/minors': number
-      'hate/threatening': number
-      'violence/graphic': number
-      'self-harm/intent': number
-      'self-harm/instructions': number
-      'harassment/threatening': number
-      violence: number
-    }
-  }[]
-}
+      sexual: number;
+      hate: number;
+      harassment: number;
+      "self-harm": number;
+      "sexual/minors": number;
+      "hate/threatening": number;
+      "violence/graphic": number;
+      "self-harm/intent": number;
+      "self-harm/instructions": number;
+      "harassment/threatening": number;
+      violence: number;
+    };
+  }[];
+};
 
 export type OpenAIImageRequest = {
-  prompt: string
-  n: number
-  size: string // '256x256' | '512x512' | '1024x1024'
-  response_format: string // 'url' | 'b64_json'
-  user?: string
-}
+  prompt: string;
+  n: number;
+  size: string; // '256x256' | '512x512' | '1024x1024'
+  response_format: string; // 'url' | 'b64_json'
+  user?: string;
+};
 
-export type OpenAIImageResponseURL = { data: { url: string }[] }
-export type OpenAIImageResponseB64 = { data: { b64_json: string }[] }
+export type OpenAIImageResponseURL = { data: { url: string }[] };
+export type OpenAIImageResponseB64 = { data: { b64_json: string }[] };
 
 /* 
     OpenAI Error

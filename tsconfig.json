@@ -24,10 +24,16 @@
   "include": [
     ".eslintrc.cjs",
     "next-env.d.ts",
+    "ts-reset.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.cjs",
     "**/*.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "esm": true,
+    "transpileOnly": true,
+    "files": true
+  }
 }
