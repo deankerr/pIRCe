@@ -103,6 +103,7 @@ export async function getContextualMessages(botEvent: ChatEvent) {
 
   // combine list, sort into id order
   const contextual = [...related, ...local].sort((a, b) => a.id - b.id);
-
+  // add user message
+  contextual.push(message);
   return contextual;
 }

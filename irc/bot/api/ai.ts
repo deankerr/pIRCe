@@ -1,47 +1,40 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { Message, Model } from "@prisma/client";
+import type { Model } from "@prisma/client";
 import axios, { isAxiosError } from "axios";
 import debug from "debug";
 
 import type {
+  AIChatMessage,
   AIChatResponse,
-  ChatEvent,
   ImageEvent,
   OpenAIImageResponseB64,
   OpenAIModerationResponse,
   Options,
 } from "../types.js";
 import { normalizeAPIInput } from "../util/input.js";
+import { getOptions } from "./db.js";
 
 const log = debug("pIRCe:ai");
 
 // TODO count tokens (somewhere)
-async function chat(botEvent: ChatEvent, contextual: Message[]) {
+
+async function chat(model: Model, messages: AIChatMessage[]) {
   try {
-    const { model, options, profile, message, route } = botEvent;
     const { id, url, parameters } = model;
-    log("chat %o", id);
-
-    const moderated = await moderate(botEvent, contextual);
-    if (!moderated.success) return log("moderation failed");
-
-    const prompt = buildOpenChatPrompt(
-      profile.prompt,
-      moderated.contextual,
-      message,
-      profile.promptTail,
+    log(
+      "chat %o %o",
+      id,
+      messages.findLast((m) => m.role === "user"),
     );
-    log("%O", prompt);
 
-    const params = JSON.parse(parameters) as Record<string, string>;
-
+    const parsedParams = JSON.parse(parameters) as Record<string, string>;
     const data = {
-      ...params,
-      messages: normalizeAPIInput(prompt, route.keyword),
+      ...parsedParams,
+      messages,
     };
-    log(data);
 
-    const config = getAxiosConfig(url, options);
+    const config = await getAxiosConfig(url);
+    log("chat ", config.url);
     const response = await axios<AIChatResponse>({ ...config, data });
 
     return response.data.choices[0];
@@ -50,83 +43,28 @@ async function chat(botEvent: ChatEvent, contextual: Message[]) {
   }
 }
 
-const moderationCache = {
-  profile: "",
-  message: new Map<number, boolean>(),
-  text: new Map<string, boolean>(),
-};
-
-async function moderate(botEvent: ChatEvent, contextual: Message[]) {
+async function moderateMessages(messages: AIChatMessage[]) {
   try {
-    const { model, options, message, profile } = botEvent;
-    const { moderationProfile } = options;
+    const { moderationProfile } = await getOptions();
 
-    // only moderate openAI
-    if (!model.url.includes("openai.com")) {
-      return { success: true, contextual };
-    }
-
-    const log = debug("pIRCe:moderation");
-
-    // invalidate cache on profile change
-    if (moderationCache.profile !== moderationProfile.join(",")) {
-      moderationCache.profile = moderationProfile.join(",");
-      moderationCache.message.clear();
-      moderationCache.text.clear();
-    }
-
-    // TODO cache
-    const prompts = profile.prompt + profile.promptTail ?? "";
-    const messages = [message, ...contextual].map(
-      (m) => `${m.nick}: ${m.content}`,
-    );
-
-    const input = [prompts, ...messages];
-    const config = getAxiosConfig(
+    const config = await getAxiosConfig(
       "https://api.openai.com/v1/moderations",
-      options,
     );
-    const data = { input };
+    const data = { input: messages.map((m) => `${m.name ?? ""} ${m.content}`) };
+
+    log("moderate %o", "openai");
     const response = await axios<OpenAIModerationResponse>({ ...config, data });
 
-    const rejectedCategories = response.data.results.map((result) => {
-      // get flagged keys, remove allowed, return remaining objectional keys
+    // get flagged keys, remove allowed, return remaining objectional keys
+    const parsed = response.data.results.map((result) => {
       const categories = result.categories as Record<string, boolean>;
       const flaggedKeys = Object.keys(categories).filter((k) => categories[k]);
       return flaggedKeys.filter((k) => !moderationProfile.includes(k));
     });
 
-    const results = {
-      prompts: rejectedCategories[0],
-      message: rejectedCategories[1],
-      contextual: rejectedCategories.slice(2),
-    };
-    log("%O", results);
-
-    const promptsStatus = results.prompts?.length === 0;
-    moderationCache.text.set(prompts, promptsStatus);
-    if (!promptsStatus) log("[Rejected] System Prompt %o", results.prompts);
-
-    const messageStatus = results.message?.length === 0;
-    moderationCache.message.set(message.id, messageStatus);
-    if (!messageStatus) log("[Rejected] %m %o", message, results.message);
-
-    const contextualFiltered = contextual.filter((msg, i) => {
-      const status =
-        results.contextual[i] !== undefined &&
-        results.contextual[i]?.length === 0;
-      moderationCache.message.set(msg.id, status);
-      if (!status) log("[Rejected] %m %o", msg, results.contextual[i]);
-      return status;
-    });
-
-    return {
-      success: promptsStatus && messageStatus,
-      contextual: contextualFiltered,
-    };
+    return parsed;
   } catch (error) {
-    handleError(error);
-    return { success: false, contextual: [] };
+    return handleError(error);
   }
 }
 
@@ -142,7 +80,7 @@ async function image(imageEvent: ImageEvent) {
     );
     log("%o %m", id, prompt);
 
-    const config = getAxiosConfig(url, options);
+    const config = await getAxiosConfig(url, options);
 
     const params = JSON.parse(parameters) as Record<string, string>;
     const data = {
@@ -179,14 +117,15 @@ async function image(imageEvent: ImageEvent) {
   }
 }
 
-export const ai = { chat, image };
+export const ai = { chat, image, moderateMessages };
 
-function getAxiosConfig(url: string, options: Options) {
+async function getAxiosConfig(url: string, options?: Options) {
+  const opts = options ? options : await getOptions();
   return {
     method: "post",
     url,
     headers: getBackendHeaders(url),
-    timeout: options.apiTimeoutMs,
+    timeout: opts.apiTimeoutMs,
     timeoutErrorMessage: "Error: AI Request Timeout",
   };
 }
@@ -218,40 +157,6 @@ function getBackendHeaders(url: string) {
 function getEnv(key: string) {
   if (!process.env[key]) throw new Error(`${key} not set`);
   return process.env[key];
-}
-
-const roles = {
-  system: "system",
-  user: "user",
-  assistant: "assistant",
-} as const;
-
-// TODO proper command striping/nick replace
-function buildOpenChatPrompt(
-  system: string,
-  conversation: Message[],
-  message: Message,
-  tail?: string | null,
-) {
-  const messages = [...conversation, message].map((msg) => {
-    if (msg.self) {
-      return { role: roles.assistant, content: msg.content };
-    } else {
-      return {
-        role: roles.user,
-        name: msg.nick,
-        content: msg.content,
-      };
-    }
-  });
-
-  const prompt = [{ role: roles.system, content: system }, ...messages];
-
-  if (tail) {
-    prompt.push({ role: roles.system, content: tail });
-  }
-
-  return prompt;
 }
 
 function handleError(error: unknown) {
