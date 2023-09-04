@@ -15,7 +15,6 @@ export async function chat(botEvent: BotEvent) {
     const { profile, message, route, model } = chatEvent;
 
     const contextual = await getContextualMessages(chatEvent);
-    log(contextual);
     let messages = buildOpenChatMessages(profile, contextual);
 
     if (model.url.includes("openai.com")) {
@@ -31,7 +30,9 @@ export async function chat(botEvent: BotEvent) {
     if (!result || result instanceof Error) return log("chat failed");
 
     // OR.hermes leaks hallucinated response
-    const response = result.message.content.replace(/<human>.*$/, "").trim();
+    const response = result.message.content
+      .replaceAll(/<(human|bot)>.*$/gm, "")
+      .trim();
 
     log("%s {%s}", response, result.finish_reason ?? "?");
 
