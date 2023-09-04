@@ -77,7 +77,7 @@ export type AIChatResponseChoice = {
   index: number;
   message: {
     role: "system" | "user" | "assistant" | "function";
-    content: string | null;
+    content: string;
     // function_call?: OpenAIFunctionCall
   };
 };

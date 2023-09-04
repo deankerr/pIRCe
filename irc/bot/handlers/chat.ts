@@ -15,6 +15,7 @@ export async function chat(botEvent: BotEvent) {
     const { profile, message, route, model } = chatEvent;
 
     const contextual = await getContextualMessages(chatEvent);
+    log(contextual);
     let messages = buildOpenChatMessages(profile, contextual);
 
     if (model.url.includes("openai.com")) {
@@ -29,13 +30,16 @@ export async function chat(botEvent: BotEvent) {
 
     if (!result || result instanceof Error) return log("chat failed");
 
-    log("%s {%s}", result.message.content, result.finish_reason ?? "?");
+    // OR.hermes leaks hallucinated response
+    const response = result.message.content.replace(/<human>.*$/, "").trim();
+
+    log("%s {%s}", response, result.finish_reason ?? "?");
 
     await createTag(message, profile.id);
     const target = route.overrideOutputTarget
       ? route.overrideOutputTarget
       : message.target;
-    void command.say(target, result.message.content ?? "", profile.id);
+    void command.say(target, response, profile.id);
   } catch (error) {
     log(error);
   }
