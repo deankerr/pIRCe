@@ -5,7 +5,7 @@ import { createTag, getContextualMessages } from "../api/db.js";
 import { command } from "../command.js";
 import type { ChatEvent, BotEvent, AIChatMessage } from "../types.js";
 import type { Message, Model, Profile } from "@prisma/client";
-import { buildOpenChatMessages } from "../util/input.js";
+import { buildOpenChatMessages, normalizeAPIInput } from "../util/input.js";
 
 const log = debug("pIRCe:chat");
 
@@ -22,6 +22,8 @@ export async function chat(botEvent: BotEvent) {
       if (!moderated) return log("chat failed");
       messages = moderated;
     }
+
+    messages = normalizeAPIInput(messages, route.keyword);
 
     const result = await ai.chat(model, messages);
 

@@ -34,7 +34,6 @@ async function chat(model: Model, messages: AIChatMessage[]) {
     };
 
     const config = await getAxiosConfig(url);
-    log("chat ", config.url);
     const response = await axios<AIChatResponse>({ ...config, data });
 
     return response.data.choices[0];
