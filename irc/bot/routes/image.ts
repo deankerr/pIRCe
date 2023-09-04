@@ -22,7 +22,7 @@ export async function image(botEvent: BotEvent) {
 
     if ("error" in result && !result.result) {
       const msg = `OpenAI sez: ${result.error} ${getClown()}`;
-      const target = route.redirectOutput ?? botEvent.message.target;
+      const target = route.overrideOutputTarget ?? botEvent.message.target;
       void command.say(target, msg, null);
       return;
     }
@@ -33,7 +33,7 @@ export async function image(botEvent: BotEvent) {
 
     log("image: %s", fileURL);
 
-    const target = route.redirectOutput ?? botEvent.message.target;
+    const target = route.overrideOutputTarget ?? botEvent.message.target;
     void command.say(target, fileURL, null);
   } catch (error) {
     log("failed.");

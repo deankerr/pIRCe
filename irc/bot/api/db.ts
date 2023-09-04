@@ -65,7 +65,7 @@ export async function getWordList() {
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(botEvent: ChatEvent) {
   const { profile, message } = botEvent;
-  const { maxHistorySize, numIncludeContextual } = profile;
+  const { conversationLength, contextualLength } = profile;
   const { server, target } = message;
 
   // get related tagged
@@ -80,7 +80,7 @@ export async function getContextualMessages(botEvent: ChatEvent) {
         },
       },
     },
-    take: -maxHistorySize,
+    take: -conversationLength,
   });
   const relatedIDs = related.map((r) => r.id);
 
@@ -95,7 +95,7 @@ export async function getContextualMessages(botEvent: ChatEvent) {
           none: {}, // not tagged with any other profile
         },
       },
-      take: -numIncludeContextual,
+      take: -contextualLength,
     })
   ) // filter duplicates
     .filter((m) => !relatedIDs.includes(m.id));

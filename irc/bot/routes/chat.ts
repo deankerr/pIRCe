@@ -22,6 +22,8 @@ export async function chat(botEvent: ChatEvent) {
   log("%m {%s}", result.message.content, result.finish_reason ?? "?");
 
   await createTag(message, profile.id);
-  const target = route.redirectOutput ? route.redirectOutput : message.target;
+  const target = route.overrideOutputTarget
+    ? route.overrideOutputTarget
+    : message.target;
   void command.say(target, result.message.content ?? "", profile.id);
 }

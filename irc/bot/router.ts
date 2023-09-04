@@ -10,6 +10,7 @@ import {
 import { admin } from "./routes/admin.js";
 import { chat } from "./routes/chat.js";
 import { image } from "./routes/image.js";
+import { self } from "./util.js";
 
 const log = debug("pIRCe:router");
 
@@ -19,7 +20,6 @@ const handlers = {
   admin,
 };
 
-// TODO fix keyword mess
 export async function router(message: EventMessage) {
   const msg = await createMessage(message);
 
@@ -31,29 +31,20 @@ export async function router(message: EventMessage) {
   // relevant routes
   const routes = await getRoutesForTarget(msg.server, msg.target);
 
-  // const keywords = { "{{nick}}": self.nick, "{{admin}}": options.adminKeyword };
-
   const validRoutes = routes.filter((route) => {
-    if (route.startsWith !== null && route.startsWith !== "") {
-      // const keyword = substituteKeywords(route.startsWith, keywords);
-      const keyword =
-        route.startsWith === "{{admin}}"
-          ? options.adminKeyword
-          : route.startsWith;
+    // fail if keyword not set
+    if (route.keyword === null) return false;
+
+    const keyword = route.keyword.replace("%nick", self.nick);
+
+    if (route.startsWithKeyword) {
       if (msg.content.startsWith(keyword + " ")) return true;
     }
 
-    if (route.contains !== null && route.contains !== "") {
-      // const keyword = substituteKeywords(route.contains, keywords);
-      const keyword = route.contains;
-      const tests = [
-        new RegExp(`^${keyword}[.,!?:;\\s]`), // starts with
-        new RegExp(`\\s${keyword}[.,!?:;\\s]`), // includes
-        new RegExp(`\\s${keyword}$`), // ends with
-        new RegExp(`^${keyword}$`), // is only
-      ];
-
-      if (tests.some((t) => t.test(msg.content))) return true;
+    if (route.mentionsKeyword) {
+      // is word reasonably mentioned in message
+      const mentions = new RegExp(`(^|\\s)${keyword}([.,!?:;\\s]|$)`);
+      if (mentions.test(keyword)) return true;
     }
 
     return false;
@@ -95,17 +86,3 @@ export async function router(message: EventMessage) {
     }
   }
 }
-
-// TODO figure this out
-// function substituteKeywords(
-//   content: string,
-//   replacers: Record<string, string>,
-// ) {
-//   let result = content;
-//   for (const key of Object.keys(replacers)) {
-//     const k = key;
-//     result = result.replaceAll(k, replacers[k]);
-//   }
-
-//   return result;
-// }

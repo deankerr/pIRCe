@@ -26,19 +26,20 @@ model Message {
   tag Tag[]
 }
 
-// Describes the conditions under which a message is sent to a handler/profile
+// Conditions to trigger a response
 model Route {
   id Int @id @default(autoincrement())
 
   server String // * = any or irc.server.org
   target String // # = any channel, ? = any query (ie. pm), * = any target
 
-  startsWith String? // triggers
-  contains   String?
+  keyword String? // e.g. "@bot", or %nick
+  startsWithKeyword Boolean @default(true)
+  mentionsKeyword Boolean @default(false)
 
-  handler String // name of actual function message is sent to TYPE
+  handler String // the function used to respond to event
 
-  redirectOutput String? // output to this target instead
+  overrideOutputTarget String? // output to this target instead
 
   // the ai profile data to send to handler along with message
   profile   Profile? @relation(fields: [profileID], references: [id])
@@ -46,20 +47,18 @@ model Route {
 }
 
 // Prompt / Persona
-// Move contextual message values to Route
-// replaceNick -> Name?
 model Profile {
   id         String  @id // 'bart', 'eee'
-  prompt     String // in "promptScript"
-  promptTail String?
+  prompt     String // "system" block
+  promptTail String? // "system" block inserted after last user message
 
   model   Model?  @relation(fields: [modelID], references: [id])
   modelID String?
 
   // our opts
-  maxHistorySize       Int // Profile Tagged
-  numIncludeContextual Int     @default(0) // Local Msgs
-  replaceNick          String?
+  conversationLength Int     @default(10) // include messages tagged with this profile
+  contextualLength   Int     @default(0) // include unrelated recent messages
+  characterName      String? // substitue bot's nick with this value
 
   route Route[]
 }
@@ -110,7 +109,6 @@ model Model {
 // Options
 model Options {
   options           String @id @default("options") // there can only be one
-  adminKeyword      String @default("!!admin!!")
   moderationProfile String @default("[]") // categories to allow 
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
