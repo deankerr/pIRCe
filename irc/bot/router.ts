@@ -44,7 +44,7 @@ export async function router(ircMessage: EventMessage) {
   for (const route of validRoutes) {
     const botEvent = {
       route,
-      message: message,
+      message,
       options,
     };
 

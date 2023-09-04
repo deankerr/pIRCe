@@ -11,13 +11,14 @@ import type {
   OpenAIModerationResponse,
   Options,
 } from "../types.js";
+import { normalizeAPIInput } from "../util/input.js";
 
 const log = debug("pIRCe:ai");
 
 // TODO count tokens (somewhere)
 async function chat(botEvent: ChatEvent, contextual: Message[]) {
   try {
-    const { model, options, profile, message } = botEvent;
+    const { model, options, profile, message, route } = botEvent;
     const { id, url, parameters } = model;
     log("chat %o", id);
 
@@ -36,7 +37,7 @@ async function chat(botEvent: ChatEvent, contextual: Message[]) {
 
     const data = {
       ...params,
-      messages: prompt,
+      messages: normalizeAPIInput(prompt, route.keyword),
     };
     log(data);
 
@@ -135,14 +136,18 @@ async function image(imageEvent: ImageEvent) {
 
     const { model, message, options } = imageEvent;
     const { id, url, parameters } = model;
-    log("%o %m", id, message);
+    const prompt = normalizeAPIInput(
+      message.content,
+      imageEvent.route.keyword ?? "",
+    );
+    log("%o %m", id, prompt);
 
     const config = getAxiosConfig(url, options);
-    // TODO trigger removal
+
     const params = JSON.parse(parameters) as Record<string, string>;
     const data = {
       ...params,
-      prompt: message.content.replace(/^@\w*\s/, ""),
+      prompt,
     };
 
     const response = await axios<OpenAIImageResponseB64>({ ...config, data });
@@ -234,7 +239,7 @@ function buildOpenChatPrompt(
     } else {
       return {
         role: roles.user,
-        name: msg.nick.replaceAll(/[^a-zA-Z0-9_]/g, "_"),
+        name: msg.nick,
         content: msg.content,
       };
     }

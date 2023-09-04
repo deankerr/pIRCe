@@ -4,6 +4,7 @@ import { ai } from "../api/ai.js";
 import { createTag, getContextualMessages } from "../api/db.js";
 import { command } from "../command.js";
 import type { ChatEvent, BotEvent } from "../types.js";
+import { type Model, type Profile } from "@prisma/client";
 
 const log = debug("pIRCe:chat");
 
@@ -30,8 +31,10 @@ export async function chat(botEvent: BotEvent) {
 }
 
 function createChatEvent(botEvent: BotEvent): ChatEvent {
-  if (botEvent.profile && botEvent.model) {
-    return { ...botEvent, profile: botEvent.profile, model: botEvent.model };
+  if ("profile" in botEvent.route && "model" in botEvent.route) {
+    const profile = botEvent.route.profile as Profile;
+    const model = botEvent.route.model as Model;
+    return { ...botEvent, profile, model };
   } else {
     throw new Error("BotEvent missing profile/model");
   }

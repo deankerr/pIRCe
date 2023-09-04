@@ -85,7 +85,7 @@ export type AIChatResponseChoice = {
 export type AIChatMessage = {
   role: "user" | "assistant" | "system" | "function";
   name?: string; // required if role is 'function'
-  content: string | null;
+  content: string;
   function_call?: OpenAIFunctionCall;
 };
 

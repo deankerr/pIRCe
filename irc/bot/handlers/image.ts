@@ -5,6 +5,7 @@ import { outputBase64ToImage } from "../api/file.js";
 import { command } from "../command.js";
 import type { BotEvent, ImageEvent } from "../types.js";
 import { getClown } from "../util.js";
+import { type Model } from "@prisma/client";
 
 const log = debug("pIRCe:image");
 
@@ -32,14 +33,16 @@ export async function image(botEvent: BotEvent) {
     const target = route.overrideOutputTarget ?? botEvent.message.target;
     void command.say(target, fileURL, null);
   } catch (error) {
-    log("failed.");
+    log(error);
   }
 }
 
 function createImageEvent(botEvent: BotEvent): ImageEvent {
-  if (botEvent.model) {
-    return { ...botEvent, model: botEvent.model };
+  if ("model" in botEvent.route) {
+    const model = botEvent.route.model as Model;
+    return { ...botEvent, model };
   } else {
-    throw new Error("BotEvent missing profile/model");
+    log(botEvent);
+    throw new Error("BotEvent missing model");
   }
 }
