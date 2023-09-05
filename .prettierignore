@@ -1,5 +1,6 @@
 *.d.ts
 pnpm-lock.yaml
+tsconfig.tsbuildinfo
 
 .next
 logs
