@@ -1,88 +1,80 @@
-import debug from "debug";
+import type { Message, Model, Profile } from '@prisma/client'
+import type { AIChatMessage, BotEvent, ChatEvent } from '../types.js'
+import debug from 'debug'
+import { ai } from '../api/ai.js'
+import { createTag, getContextualMessages } from '../api/db.js'
+import { command } from '../command.js'
+import { buildOpenChatMessages, normalizeAPIInput } from '../util/input.js'
 
-import { ai } from "../api/ai.js";
-import { createTag, getContextualMessages } from "../api/db.js";
-import { command } from "../command.js";
-import type { ChatEvent, BotEvent, AIChatMessage } from "../types.js";
-import type { Message, Model, Profile } from "@prisma/client";
-import { buildOpenChatMessages, normalizeAPIInput } from "../util/input.js";
-
-const log = debug("pIRCe:chat");
+const log = debug('pIRCe:chat')
 
 export async function chat(botEvent: BotEvent) {
   try {
-    const chatEvent = createChatEvent(botEvent);
-    const { profile, message, route, model } = chatEvent;
+    const chatEvent = createChatEvent(botEvent)
+    const { profile, message, route, model } = chatEvent
 
-    const contextual = await getContextualMessages(chatEvent);
-    let messages = buildOpenChatMessages(profile, contextual);
+    const contextual = await getContextualMessages(chatEvent)
+    let messages = buildOpenChatMessages(profile, contextual)
 
-    if (model.url.includes("openai.com")) {
-      const moderated = await moderateMessages(messages, message);
-      if (!moderated) return log("chat failed");
-      messages = moderated;
+    if (model.url.includes('openai.com')) {
+      const moderated = await moderateMessages(messages, message)
+      if (!moderated) return log('chat failed')
+      messages = moderated
     }
 
-    messages = normalizeAPIInput(messages, route.keyword);
-    log("%O", messages);
+    messages = normalizeAPIInput(messages, route.keyword)
+    log('%O', messages)
 
-    const result = await ai.chat(model, messages);
+    const result = await ai.chat(model, messages)
 
-    if (!result || result instanceof Error) return log("chat failed");
+    if (!result || result instanceof Error) return log('chat failed')
 
     // OR.hermes leaks hallucinated response
-    const response = result.message.content
-      .replaceAll(/<(human|bot).*$/gm, "")
-      .trim();
+    const response = result.message.content.replaceAll(/<(human|bot).*$/gm, '').trim()
 
-    log("%s {%s}", response, result.finish_reason ?? "?");
+    log('%s {%s}', response, result.finish_reason ?? '?')
 
-    await createTag(message, profile.id);
-    const target = route.overrideOutputTarget
-      ? route.overrideOutputTarget
-      : message.target;
-    void command.say(target, response, profile.id);
+    await createTag(message, profile.id)
+    const target = route.overrideOutputTarget ? route.overrideOutputTarget : message.target
+    void command.say(target, response, profile.id)
   } catch (error) {
-    log(error);
+    log(error)
   }
 }
 
-async function moderateMessages(
-  messages: AIChatMessage[],
-  userMessage: Message,
-) {
-  const modResults = await ai.moderateMessages(messages);
-  if (modResults instanceof Error) throw modResults;
+async function moderateMessages(messages: AIChatMessage[], userMessage: Message) {
+  const modResults = await ai.moderateMessages(messages)
+  if (modResults instanceof Error) throw modResults
 
-  let abort = false;
+  let abort = false
   messages.filter((msg, i) => {
-    const result = modResults[i];
-    if (!result) throw new Error("Invalid moderation result");
+    const result = modResults[i]
+    if (!result) throw new Error('Invalid moderation result')
 
-    const allowed = result.length === 0;
+    const allowed = result.length === 0
 
-    if (!allowed && msg.role === "system") {
-      log("Moderation failed on system prompt: %o", msg.content);
-      abort = true;
+    if (!allowed && msg.role === 'system') {
+      log('Moderation failed on system prompt: %o', msg.content)
+      abort = true
     }
 
     if (!allowed && msg.content === userMessage.content) {
-      log("Moderation failed: %o", msg.content);
-      abort = true;
+      log('Moderation failed: %o', msg.content)
+      abort = true
     }
 
-    return allowed;
-  });
+    return allowed
+  })
 
-  return abort ? null : messages;
+  return abort ? null : messages
 }
 
 function createChatEvent(botEvent: BotEvent): ChatEvent {
-  if ("profile" in botEvent.route && "model" in botEvent.route) {
-    const profile = botEvent.route.profile as Profile;
-    const model = botEvent.route.model as Model;
-    return { ...botEvent, profile, model };
+  if ('profile' in botEvent.route && 'model' in botEvent.route) {
+    const profile = botEvent.route.profile as Profile
+    const model = botEvent.route.model as Model
+    return { ...botEvent, profile, model }
   } else {
-    throw new Error("BotEvent missing profile/model");
+    throw new Error('BotEvent missing profile/model')
   }
 }

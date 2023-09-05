@@ -1,32 +1,32 @@
-import { PrismaClient, type Message } from "@prisma/client";
+import type { Message } from '@prisma/client'
+import type { ChatEvent, EventMessage } from '../types.js'
+import { PrismaClient } from '@prisma/client'
 
-import type { EventMessage, ChatEvent } from "../types.js";
-
-export const prisma = new PrismaClient();
+export const prisma = new PrismaClient()
 
 export async function getRoutesForTarget(server: string, target: string) {
-  const targetList = [target, "*", target.startsWith("#") ? "#" : "?"];
+  const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
 
   const routes = await prisma.route.findMany({
-    where: { server: { in: [server, "*"] }, target: { in: targetList } },
+    where: { server: { in: [server, '*'] }, target: { in: targetList } },
     include: {
       profile: true,
       model: true,
     },
-  });
-  return routes;
+  })
+  return routes
 }
 
 export async function getModel(id: string) {
-  const model = await prisma.model.findUniqueOrThrow({ where: { id } });
-  return model;
+  const model = await prisma.model.findUniqueOrThrow({ where: { id } })
+  return model
 }
 
 export async function createMessage(ircMessage: EventMessage) {
   const msg = await prisma.message.create({
     data: { ...ircMessage, content: ircMessage.content.trim() },
-  });
-  return msg;
+  })
+  return msg
 }
 
 export async function createTag(message: Message, key: string, value?: string) {
@@ -38,8 +38,8 @@ export async function createTag(message: Message, key: string, value?: string) {
       key,
       value,
     },
-  });
-  return msg;
+  })
+  return msg
 }
 
 export async function getMessageTag(message: Message, key: string) {
@@ -48,26 +48,26 @@ export async function getMessageTag(message: Message, key: string) {
       messageID: message.id,
       key,
     },
-  });
+  })
 
-  return tag;
+  return tag
 }
 
 export async function getOptions() {
-  const options = await prisma.options.findFirstOrThrow({});
-  const moderationProfile = JSON.parse(options.moderationProfile) as string[];
-  return { ...options, moderationProfile };
+  const options = await prisma.options.findFirstOrThrow({})
+  const moderationProfile = JSON.parse(options.moderationProfile) as string[]
+  return { ...options, moderationProfile }
 }
 
 export async function getWordList() {
-  return await prisma.wordList.findMany({});
+  return await prisma.wordList.findMany({})
 }
 
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(botEvent: ChatEvent) {
-  const { profile, message } = botEvent;
-  const { conversationLength, contextualLength } = profile;
-  const { server, target } = message;
+  const { profile, message } = botEvent
+  const { conversationLength, contextualLength } = profile
+  const { server, target } = message
 
   // get related tagged
   const related = await prisma.message.findMany({
@@ -82,8 +82,8 @@ export async function getContextualMessages(botEvent: ChatEvent) {
       },
     },
     take: -conversationLength,
-  });
-  const relatedIDs = related.map((r) => r.id);
+  })
+  const relatedIDs = related.map((r) => r.id)
 
   // get local
   const local = (
@@ -99,11 +99,11 @@ export async function getContextualMessages(botEvent: ChatEvent) {
       take: -contextualLength,
     })
   ) // filter duplicates
-    .filter((m) => !relatedIDs.includes(m.id));
+    .filter((m) => !relatedIDs.includes(m.id))
 
   // combine list, sort into id order
-  const contextual = [...related, ...local].sort((a, b) => a.id - b.id);
+  const contextual = [...related, ...local].sort((a, b) => a.id - b.id)
   // add user message
-  contextual.push(message);
-  return contextual;
+  contextual.push(message)
+  return contextual
 }

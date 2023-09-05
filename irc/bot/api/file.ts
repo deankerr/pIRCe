@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import util from 'node:util'
 import { nanoid } from 'nanoid'
-
 import { getOptions } from './db.js'
 
 async function getOutputPath(filename: string) {

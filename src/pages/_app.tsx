@@ -1,11 +1,9 @@
-import { type AppType } from "next/app";
-
-import { api } from "~/utils/api";
-
-import "~/styles/globals.css";
+import { api } from '~/utils/api'
+import { type AppType } from 'next/app'
+import '~/styles/globals.css'
 
 const MyApp: AppType = ({ Component, pageProps }) => {
-  return <Component {...pageProps} />;
-};
+  return <Component {...pageProps} />
+}
 
-export default api.withTRPC(MyApp);
+export default api.withTRPC(MyApp)
