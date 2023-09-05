@@ -143,6 +143,57 @@ export type OpenAIImageRequest = {
 export type OpenAIImageResponseURL = { data: { url: string }[] }
 export type OpenAIImageResponseB64 = { data: { b64_json: string }[] }
 
+export type TogetherAIImageResponse = {
+  status: string
+  prompt: string[]
+  model: string
+  model_owner: string
+  tags: object // ?
+  num_returns: number
+  args: Record<string, string | number | string[]> // ?
+  subjobs: unknown[] // ?
+  output: {
+    choices: { image_base64: string }[] // TODO chat
+    result_type: string
+  }
+}
+
+/* 
+  Together AI response image
+{
+  "status": "finished",
+  "prompt": [
+    "The capital of France is"
+  ],
+  "model": "SG161222/Realistic_Vision_V3.0_VAE",
+  "model_owner": "",
+  "tags": {},
+  "num_returns": 1,
+  "args": {
+    "model": "SG161222/Realistic_Vision_V3.0_VAE",
+    "prompt": "The capital of France is",
+    "max_tokens": 128,
+    "stop": [
+      "."
+    ],
+    "temperature": 0.7,
+    "top_p": 0.7,
+    "top_k": 50,
+    "repetition_penalty": 1
+  },
+  "subjobs": [],
+  "output": {
+    "choices": [
+      {
+        "image_base64": "BLAHBLAHBLAH..."
+      }
+    ],
+    "result_type": "image-model-inference"
+  }
+}
+
+*/
+
 /* 
     OpenAI Error
     400	BadRequestError
