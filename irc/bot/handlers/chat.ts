@@ -24,6 +24,7 @@ export async function chat(botEvent: BotEvent) {
     }
 
     messages = normalizeAPIInput(messages, route.keyword);
+    log("%O", messages);
 
     const result = await ai.chat(model, messages);
 
@@ -31,7 +32,7 @@ export async function chat(botEvent: BotEvent) {
 
     // OR.hermes leaks hallucinated response
     const response = result.message.content
-      .replaceAll(/<(human|bot)>.*$/gm, "")
+      .replaceAll(/<(human|bot).*$/gm, "")
       .trim();
 
     log("%s {%s}", response, result.finish_reason ?? "?");
