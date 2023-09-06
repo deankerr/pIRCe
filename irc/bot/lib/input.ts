@@ -1,5 +1,5 @@
-import type { Message, Profile } from '@prisma/client'
-import type { AIChatMessage } from '../types'
+import type { Message } from '@prisma/client'
+import type { AIChatMessage, Profile } from '../types'
 
 // replace invalid nick chars, replace/remove trigger keywords
 export function stripInitialKeyword(input: string, keyword: string) {

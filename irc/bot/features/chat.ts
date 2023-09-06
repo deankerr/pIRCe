@@ -1,21 +1,20 @@
 import type { Message } from '@prisma/client'
-import type { AIChatMessage, HandlerEvent, Options } from '../types.js'
+import type { AIChatMessage, InitialContext, Options } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
 import { createTag, getContextualMessages } from '../api/db.js'
 import { command } from '../command.js'
-import { buildOpenChatMessages, normalizeAPIInput } from '../util/input.js'
+import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
+import { validateActionContext } from '../lib/validate.js'
 
 const log = debug('pIRCe:chat')
 
-export async function chat(event: HandlerEvent) {
+export async function chat(event: InitialContext) {
   try {
-    // TODO Validate all the null profile values
-    const { message, options, handler } = event
-    const { profile } = handler
-    if (profile === null) throw new Error('chat: profile is null')
-    const { model } = profile
-    if (model === null) throw new Error('chat: model is null')
+    const ctx = validateActionContext(event)
+    if (ctx instanceof Error) return log('failed')
+
+    const { message, options, handler, profile, model, platform } = ctx
 
     const contextual = await getContextualMessages(message, profile)
     let messages = buildOpenChatMessages(profile, contextual)
@@ -30,15 +29,13 @@ export async function chat(event: HandlerEvent) {
     log('%O', messages)
 
     // * Construct payload
-    const parameters = JSON.parse(profile.parameters) as Record<string, string>
-
-    const payload = {
-      ...parameters,
+    const parameters = {
+      ...profile.parameters,
       messages,
       model: model.id,
     }
 
-    const result = await ai.chat(model.platform, payload, options)
+    const result = await ai.chat(platform, parameters, options)
 
     if (!result || result instanceof Error) return log('chat failed')
 
@@ -84,13 +81,3 @@ async function moderateMessages(messages: AIChatMessage[], userMessage: Message,
   log(messages, abort)
   return abort ? null : messages
 }
-
-// function createChatEvent(botEvent: BotEvent): ChatEvent {
-//   if ('profile' in botEvent.route && 'model' in botEvent.route) {
-//     const profile = botEvent.route.profile as Profile
-//     const model = botEvent.route.model as Model
-//     return { ...botEvent, profile, model }
-//   } else {
-//     throw new Error('BotEvent missing profile/model')
-//   }
-// }

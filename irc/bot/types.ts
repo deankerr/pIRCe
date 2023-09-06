@@ -1,8 +1,7 @@
-import type { Message } from '@prisma/client'
-import type { getHandlers, getOptions } from './api/db.js'
+import type { Handler, Message, Model, Platform, Profile as RawProfile } from '@prisma/client'
+import type { getOptions } from './api/db.js'
 
 export type Options = Awaited<ReturnType<typeof getOptions>>
-export type Handler = Awaited<ReturnType<typeof getHandlers>>[number]
 
 export type IRCEventMessage = {
   server: string
@@ -14,11 +13,29 @@ export type IRCEventMessage = {
   mask: string
 }
 
-export type HandlerEvent = {
+export type InitialContext = {
   message: Message
   options: Options
   handler: Handler
+  profile: Profile | null
+  model: Model | null
+  platform: Platform | null
 }
+
+export type ActionContext = {
+  message: Message
+  options: Options
+  handler: Handler
+  profile: Profile
+  model: Model
+  platform: Platform
+}
+
+export type Profile = Omit<RawProfile, 'parameters'> & { parameters: ModelParameters }
+
+export type ModelParameters = Partial<
+  AIChatRequest & OpenAIImageRequest & TogetherAIImageRequest & Record<string, unknown>
+>
 
 //* API
 //* OpenAI / OpenRouter
@@ -42,7 +59,7 @@ export type AIChatRequest = {
   function_call?: string
   // OpenRouter only
   top_k?: number
-  transforms?: [] | ['middle-out']
+  transforms?: string[]
 }
 
 export type AIChatResponse = {
@@ -125,6 +142,15 @@ export type OpenAIImageRequest = {
 
 export type OpenAIImageResponseURL = { data: { url: string }[] }
 export type OpenAIImageResponseB64 = { data: { b64_json: string }[] }
+
+export type TogetherAIImageRequest = {
+  model: string
+  prompt: string
+  n: number
+  steps: number
+  width: number
+  height: number
+}
 
 export type TogetherAIImageResponse = {
   status: string

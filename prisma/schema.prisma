@@ -2,6 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator zod {
+  provider = "prisma-zod-generator"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -97,8 +101,8 @@ model Model {
   platform   Platform @relation(fields: [platformID], references: [id])
   platformID String
 
-  feature      String // chat / image
-  promptFormat String // openai/alpacca (variants?)
+  feature      String? // chat / image
+  promptFormat String? // openai/alpacca (variants?)
   // future: parameters available 
   // description, stats, cost? pulled from api
   // max context size

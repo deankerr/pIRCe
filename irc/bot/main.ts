@@ -1,5 +1,5 @@
 import type { FEATURE } from './const.js'
-import type { HandlerEvent, IRCEventMessage } from './types.js'
+import type { InitialContext, IRCEventMessage } from './types.js'
 import debug from 'debug'
 import { createMessage, getHandlers, getOptions } from './api/db.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
@@ -8,7 +8,7 @@ import { chat } from './features/chat.js'
 import { image } from './features/image.js'
 import { self } from './util.js'
 
-type Feature = (event: HandlerEvent) => void | Promise<void>
+type Feature = (ctx: InitialContext) => void | Promise<void>
 const features: Record<string, Feature> = {
   admin,
   chat,
@@ -26,7 +26,8 @@ export async function main(ircMessage: IRCEventMessage) {
   const options = await getOptions()
   log(`start: ${message.content}`)
   // find all matching handlers
-  const handlers = (await getHandlers()).filter((handler) => {
+  const allHandlers = await getHandlers()
+  const matched = allHandlers.filter(({ handler }) => {
     log(`test: ${handler.triggerWord}`)
     // require trigger word / feature
     if (handler.feature === null || handler.triggerWord === null) return false
@@ -57,18 +58,22 @@ export async function main(ircMessage: IRCEventMessage) {
     return false
   })
 
-  log('handlers: %o', handlers)
+  log(
+    'handlers: %o',
+    matched.map((m) => m.handler),
+  )
 
-  for (const handler of handlers) {
+  for (const match of matched) {
+    const { handler } = match
     if (handler.feature === null) continue // should already be filtered?
 
     const feature = features[handler.feature]
     if (feature) {
       log('%s / %s / %s', handler.triggerWord, handler.feature, handler.profileID ?? '')
       void feature({
+        ...match,
         message,
         options,
-        handler,
       })
     }
   }

@@ -1,6 +1,6 @@
 import { createMessage, createTag } from './api/db.js'
+import { formatOutput } from './lib/formatOutput.js'
 import { self } from './util.js'
-import { formatOutput } from './util/formatOutput.js'
 
 const send = (message: string) => {
   if (!process.send) throw new Error('process.send is unavailable')

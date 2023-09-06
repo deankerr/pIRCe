@@ -12,7 +12,10 @@
     "irc:dev": "DEBUG=pIRCe* ts-node irc/client.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate",
-    "db": "prisma db"
+    "db": "prisma db",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0"
   },
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"
@@ -32,6 +35,7 @@
     "matrix-org-irc": "^2.2.0",
     "nanoid": "^4.0.2",
     "next": "^13.4.13",
+    "prisma-zod-generator": "^0.8.13",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "superjson": "^1.13.1",

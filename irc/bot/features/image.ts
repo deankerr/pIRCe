@@ -1,29 +1,29 @@
-import type { HandlerEvent } from '../types.js'
+import type { InitialContext } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
 import { outputBase64ToImage } from '../api/file.js'
 import { command } from '../command.js'
 import { PLATFORM } from '../const.js'
-import { stripInitialKeyword } from '../util/input.js'
+import { stripInitialKeyword } from '../lib/input.js'
+import { validateActionContext } from '../lib/validate.js'
 
 const log = debug('pIRCe:image')
 
-export async function image(event: HandlerEvent) {
+export async function image(event: InitialContext) {
   try {
-    const { message, options, handler } = event
+    const ctx = validateActionContext(event)
+    if (ctx instanceof Error) return log('failed')
 
-    if (event.handler.profile === null) throw new Error('image: profile is null')
-    if (event.handler.profile.model === null) throw new Error('image: model is null')
+    const { message, options, handler, profile, model, platform } = ctx
+
     // ? Handle request payload construction / response validation here? (payload)
     // ? api handles url + headers (config)
 
-    // TODO validate
-    const parameters = JSON.parse(event.handler.profile.parameters) as Record<string, string>
-    const { model } = event.handler.profile
-    const { platform } = model
-
     // * Construct payload
-    parameters.prompt = stripInitialKeyword(message.content, handler.triggerWord ?? '')
+    const parameters = {
+      ...profile.parameters,
+      prompt: stripInitialKeyword(message.content, handler.triggerWord ?? ''),
+    }
 
     if (platform.id !== PLATFORM.openai) {
       parameters.model = model.id

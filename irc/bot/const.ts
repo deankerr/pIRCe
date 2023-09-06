@@ -19,3 +19,8 @@ export const PLATFORM = {
   openrouter: 'openrouter',
   togetherai: 'togetherai',
 } as const
+
+export const PROMPT_FORMAT = {
+  openai: 'openai',
+  alpacca: 'alpacca',
+} as const

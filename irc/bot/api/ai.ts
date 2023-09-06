@@ -2,6 +2,7 @@ import type { Platform } from '@prisma/client'
 import type {
   AIChatMessage,
   AIChatResponse,
+  ModelParameters,
   OpenAIImageResponseB64,
   OpenAIModerationResponse,
   Options,
@@ -15,7 +16,7 @@ const log = debug('pIRCe:ai')
 
 // TODO count tokens (somewhere)
 
-async function chat(platform: Platform, payload: Record<string, unknown>, options: Options) {
+async function chat(platform: Platform, parameters: ModelParameters, options: Options) {
   try {
     log('chat %o', platform.label)
 
@@ -26,7 +27,7 @@ async function chat(platform: Platform, payload: Record<string, unknown>, option
     if (platform.id === 'togetherai') url = 'https://api.together.xyz/inference'
 
     const config = createConfig(url, options)
-    const response = await axios<AIChatResponse>({ ...config, data: payload })
+    const response = await axios<AIChatResponse>({ ...config, data: parameters })
 
     return response.data.choices[0]
   } catch (error) {
@@ -60,11 +61,11 @@ async function moderateMessages(messages: AIChatMessage[], options: Options) {
 }
 
 // TODO better payload type
-async function image(platform: Platform, payload: Record<string, string>, options: Options) {
+async function image(platform: Platform, parameters: ModelParameters, options: Options) {
   try {
     const log = debug('pIRCe:api.image')
 
-    log('%s %o', platform.label, payload.prompt)
+    log('%s %o', platform.label, parameters.prompt)
 
     let url = ''
 
@@ -76,7 +77,7 @@ async function image(platform: Platform, payload: Record<string, string>, option
 
     const response = await axios<OpenAIImageResponseB64 | TogetherAIImageResponse>({
       ...config,
-      data: payload,
+      data: parameters,
     })
 
     let result

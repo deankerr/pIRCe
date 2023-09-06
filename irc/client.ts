@@ -77,7 +77,6 @@ function createBot() {
 
 function reloadBot() {
   log('[reloading bot]')
-  console.log('rload')
   bot.kill()
   bot = createBot()
 }
