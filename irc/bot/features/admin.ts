@@ -1,4 +1,4 @@
-import type { BotEvent } from '../types.js'
+import type { MessageEvent } from '../types.js'
 import debug from 'debug'
 import { prisma } from '../api/db.js'
 import { command } from '../command.js'
@@ -6,8 +6,8 @@ import { command } from '../command.js'
 const log = debug('pIRCe:admin')
 
 // admin commands
-export function admin(botEvent: BotEvent) {
-  const { message } = botEvent
+export function admin(event: MessageEvent) {
+  const { message } = event
   const split = message.content.split(' ')
   const cmd = split[1] ?? ''
   const arg = split[2] ?? ''

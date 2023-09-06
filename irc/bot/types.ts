@@ -1,9 +1,10 @@
-import type { Message, Model, Profile, Route } from '@prisma/client'
-import type { getOptions } from './api/db.js'
+import type { Message, Model, Profile } from '@prisma/client'
+import type { getHandlers, getOptions } from './api/db.js'
 
 export type Options = Awaited<ReturnType<typeof getOptions>>
+export type Handler = Awaited<ReturnType<typeof getHandlers>>[number]
 
-export type EventMessage = {
+export type IRCEventMessage = {
   server: string
   target: string
   nick: string
@@ -13,8 +14,14 @@ export type EventMessage = {
   mask: string
 }
 
+export type MessageEvent = {
+  message: Message
+  options: Options
+  handler: Handler
+}
+
 export type BotEvent = {
-  route: Route
+  route: any
   message: Message
   options: Options
   profile?: Profile
@@ -22,7 +29,7 @@ export type BotEvent = {
 }
 
 export type ChatEvent = {
-  route: Route
+  route: any
   message: Message
   options: Options
   profile: Profile
@@ -30,7 +37,7 @@ export type ChatEvent = {
 }
 
 export type ImageEvent = {
-  route: Route
+  route: any
   message: Message
   options: Options
   profile?: Profile

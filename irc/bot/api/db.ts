@@ -1,28 +1,44 @@
 import type { Message } from '@prisma/client'
-import type { ChatEvent, EventMessage } from '../types.js'
+import type { ChatEvent, IRCEventMessage } from '../types.js'
 import { PrismaClient } from '@prisma/client'
 
 export const prisma = new PrismaClient()
 
-export async function getRoutesForTarget(server: string, target: string) {
-  const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
+// export async function getRoutesForTarget(server: string, target: string) {
+//   const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
 
-  const routes = await prisma.route.findMany({
-    where: { server: { in: [server, '*'] }, target: { in: targetList } },
+//   const routes = await prisma.route.findMany({
+//     where: { server: { in: [server, '*'] }, target: { in: targetList } },
+//     include: {
+//       profile: true,
+//       model: true,
+//     },
+//   })
+//   return routes
+// }
+
+export async function getHandlers() {
+  return await prisma.handler.findMany({
     include: {
-      profile: true,
-      model: true,
+      profile: {
+        include: {
+          model: {
+            include: {
+              platform: true,
+            },
+          },
+        },
+      },
     },
   })
-  return routes
 }
 
 export async function getModel(id: string) {
-  const model = await prisma.model.findUniqueOrThrow({ where: { id } })
-  return model
+  // const model = await prisma.model.findUniqueOrThrow({ where: { id } })
+  // return model
 }
 
-export async function createMessage(ircMessage: EventMessage) {
+export async function createMessage(ircMessage: IRCEventMessage) {
   const msg = await prisma.message.create({
     data: { ...ircMessage, content: ircMessage.content.trim() },
   })
@@ -66,7 +82,9 @@ export async function getWordList() {
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(botEvent: ChatEvent) {
   const { profile, message } = botEvent
-  const { conversationLength, contextualLength } = profile
+  // const { conversationLength, contextualLength } = profile
+  const conversationLength = 2
+  const contextualLength = 0
   const { server, target } = message
 
   // get related tagged
@@ -77,7 +95,8 @@ export async function getContextualMessages(botEvent: ChatEvent) {
       target,
       tag: {
         some: {
-          key: profile.id,
+          // key: profile.id,
+          key: 'no',
         },
       },
     },

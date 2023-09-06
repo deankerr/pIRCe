@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { Model } from '@prisma/client'
+import type { Model, Platform } from '@prisma/client'
 import type {
   AIChatMessage,
   AIChatResponse,
-  ImageEvent,
   OpenAIImageResponseB64,
   OpenAIModerationResponse,
   Options,
@@ -11,7 +12,7 @@ import type {
 } from '../types.js'
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
-import { normalizeAPIInput } from '../util/input.js'
+// import { normalizeAPIInput } from '../util/input.js'
 import { getOptions } from './db.js'
 
 const log = debug('pIRCe:ai')
@@ -20,7 +21,7 @@ const log = debug('pIRCe:ai')
 
 async function chat(model: Model, messages: AIChatMessage[]) {
   try {
-    const { id, url, parameters } = model
+    const { id, url, parameters } = model as any
     log(
       'chat %o %o',
       id,
@@ -65,28 +66,25 @@ async function moderateMessages(messages: AIChatMessage[]) {
   }
 }
 
-async function image(imageEvent: ImageEvent) {
+// TODO better payload type
+async function image(platform: Platform, payload: Record<string, string>, options: Options) {
   try {
     const log = debug('pIRCe:api.image')
 
-    const { model, message, options } = imageEvent
-    const { id, url, parameters } = model
-    const prompt = normalizeAPIInput(message.content, imageEvent.route.keyword ?? '')
-    log('%o %m', id, prompt)
+    log('%s %o', platform.label, payload.prompt)
 
-    const config = await getAxiosConfig(url, options)
+    let url = ''
 
-    const params = JSON.parse(parameters) as Record<string, string>
-    const data = {
-      ...params,
-      prompt,
-    }
+    // TODO platform specific set up
+    if (platform.id === 'openai') url = 'https://api.openai.com/v1/images/generations'
+    if (platform.id === 'togetherai') url = 'https://api.together.xyz/inference'
+
+    const config = createConfig(url, options)
 
     const response = await axios<OpenAIImageResponseB64 | TogetherAIImageResponse>({
       ...config,
-      data,
+      data: payload,
     })
-    log(response.data)
 
     let result
 
@@ -103,6 +101,7 @@ async function image(imageEvent: ImageEvent) {
 
     return { result }
   } catch (error) {
+    // TODO fix this
     if (isAxiosError(error) && error?.response?.data) {
       const { data } = error.response
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -128,6 +127,16 @@ async function image(imageEvent: ImageEvent) {
 
 export const ai = { chat, image, moderateMessages }
 
+function createConfig(url: string, options: Options) {
+  return {
+    method: 'post',
+    url,
+    headers: getBackendHeaders(url),
+    timeout: options.apiTimeoutMs,
+    timeoutErrorMessage: 'Error: AI Request Timeout',
+  }
+}
+
 async function getAxiosConfig(url: string, options?: Options) {
   const opts = options ? options : await getOptions()
   return {
@@ -139,8 +148,7 @@ async function getAxiosConfig(url: string, options?: Options) {
   }
 }
 
-function getBackendID(model: Model | string) {
-  const url = typeof model === 'string' ? model : model.url
+function getBackendID(url: string) {
   if (url.includes('openai.com')) return 'openai' as const
   if (url.includes('openrouter.ai')) return 'openrouter' as const
   if (url.includes('together.xyz')) return 'together' as const
@@ -187,7 +195,7 @@ function handleError(error: unknown) {
     } else if (error.request) {
       // No response received
       log('*** API Request Error ***')
-      log(error.request)
+      // log(error.request)
       log(error.message)
       return error
     } else {
