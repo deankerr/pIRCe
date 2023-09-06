@@ -16,8 +16,8 @@ export function admin(event: InitialContext) {
 
   if (cmd === 'join') command.join(arg)
   if (cmd === 'part') command.part(arg)
-  if (cmd === 'action') void command.action(arg, rest, null)
-  if (cmd === 'say') void command.say(arg, rest, null)
+  if (cmd === 'action') void command.action(arg, rest)
+  if (cmd === 'say') void command.say(arg, rest)
   if (cmd === 'replay') void replay()
 }
 
@@ -30,7 +30,7 @@ async function replay() {
   })
   if (lastMsg[0]) {
     const { target, content } = lastMsg[0]
-    void command.say(target, content || '(empty replay content)', null)
+    void command.say(target, content || '(empty replay content)')
   } else {
     log('no message to replay')
   }

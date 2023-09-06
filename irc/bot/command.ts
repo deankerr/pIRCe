@@ -1,5 +1,5 @@
 import { createMessage } from './api/db.js'
-import { formatOutput } from './lib/formatOutput.js'
+import { formatOutput } from './lib/output.js'
 import { self } from './util.js'
 
 const send = (message: string) => {
@@ -8,7 +8,7 @@ const send = (message: string) => {
 }
 
 export const command = {
-  say: async (target: string, message: string, _tag?: string | null) => {
+  say: async (target: string, message: string) => {
     const msg = await createMessage({
       server: self.server,
       target,
@@ -22,7 +22,7 @@ export const command = {
     return msg
   },
 
-  action: async (target: string, message: string, _tag?: string | null) => {
+  action: async (target: string, message: string) => {
     const msg = await createMessage({
       server: self.server,
       target,

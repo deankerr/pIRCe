@@ -30,7 +30,7 @@
     "**/*.cjs",
     "**/*.mjs"
   ],
-  "exclude": ["node_modules", "prisma/generated"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "esm": true,
     "transpileOnly": true,

@@ -2,10 +2,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator zod {
-  provider = "prisma-zod-generator"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -82,13 +78,13 @@ model Profile {
   platformID String?
 
   // Chat 
-  mainPrompt        String? // "system" / instructions
-  examplePrompt     String? // JSON? allow examples or fake messages to always follow instructions
-  postPrompt        String? // inserted after/just before last message
-  postPromptOffset  Int? // 0 = last, 1 = just before last, etc.
+  mainPrompt            String? // "system" / instructions
+  examplePromptList     String? // JSON? allow examples or fake messages to always follow instructions
+  postPrompt            String? // inserted after/just before last message
+  postPromptOffset      Int? // 0 = last, 1 = just before last, etc.
   // Chat Options
-  maxHistoryLength  Int? // max messages
-  maxLocalIRCLength Int? // max unrelated ambient irc messages
+  maxConversationLength Int? // max messages
+  maxLocalMessageLength Int? // max unrelated ambient irc messages
   // character name? image?
 
   handler         Handler[]
@@ -99,7 +95,7 @@ model Profile {
 
 model Model {
   id          String // value passed to API: "gpt-3.5-turbo" / nousresearch/nous-hermes-llama2-13b / "SG161222/Realistic_Vision_V3.0_VAE"
-  label       String? // friendly name
+  label       String // friendly name
   description String?
 
   platform   Platform @relation(fields: [platformID], references: [id])
@@ -125,8 +121,9 @@ model Platform {
 
 // Options
 model Options {
-  options           String @id @default("options") // there can only be one
-  moderationProfile String @default("[]") // categories to allow 
+  options               String @id @default("options") // there can only be one
+  moderationProfileList String @default("[]") // categories to allow 
+  wordFilterList        String @default("[]") // censored words
 
   outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
   outputFileDir          String @default("output")
@@ -138,10 +135,4 @@ model Options {
 
   appName String @default("pIRCe") // for API headers
   appURL  String @default("http://pirce.dev")
-}
-
-// just move into options
-// output filter
-model WordList {
-  word String @id // the word/phrase
 }

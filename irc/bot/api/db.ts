@@ -1,6 +1,7 @@
 import type { Message, Profile as RawProfile } from '@prisma/client'
 import type { IRCEventMessage, ModelParameters, Profile } from '../types.js'
 import { PrismaClient } from '@prisma/client'
+import { parseJsonList } from '../lib/validate.js'
 
 export const prisma = new PrismaClient()
 
@@ -55,32 +56,20 @@ export async function createConversationTag(profile: Profile, message: Message) 
   })
 }
 
-// export async function getMessageTag(message: Message, key: string) {
-//   const tag = await prisma.tag.findFirst({
-//     where: {
-//       messageID: message.id,
-//       key,
-//     },
-//   })
-
-//   return tag
-// }
-
 export async function getOptions() {
   const options = await prisma.options.findFirstOrThrow({})
-  const moderationProfile = JSON.parse(options.moderationProfile) as string[]
-  return { ...options, moderationProfile }
-}
 
-export async function getWordList() {
-  return await prisma.wordList.findMany({})
+  const moderationProfileList = parseJsonList(options.moderationProfileList)
+  const wordFilterList = parseJsonList(options.wordFilterList)
+
+  return { ...options, moderationProfileList, wordFilterList }
 }
 
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(message: Message, profile: Profile) {
   // const { conversationLength, contextualLength } = profile
-  const conversationLength = profile.maxHistoryLength ?? 0
-  const contextualLength = profile.maxLocalIRCLength ?? 0
+  const conversationLength = profile.maxConversationLength ?? 0
+  const contextualLength = profile.maxLocalMessageLength ?? 0
   const { server, target } = message
 
   // get related tagged

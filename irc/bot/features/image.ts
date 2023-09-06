@@ -50,7 +50,7 @@ export async function image(event: InitialContext) {
     log('image: %s', fileURL)
 
     const target = handler.overrideOutputTarget ?? message.target
-    void command.say(target, fileURL, null)
+    void command.say(target, fileURL)
   } catch (error) {
     log(error)
   }
