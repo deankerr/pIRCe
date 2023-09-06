@@ -3,7 +3,7 @@ import { IntFilterObjectSchema } from './IntFilter.schema';
 import { StringFilterObjectSchema } from './StringFilter.schema';
 import { BoolFilterObjectSchema } from './BoolFilter.schema';
 import { DateTimeFilterObjectSchema } from './DateTimeFilter.schema';
-import { TagListRelationFilterObjectSchema } from './TagListRelationFilter.schema';
+import { ConversationTagListRelationFilterObjectSchema } from './ConversationTagListRelationFilter.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -50,7 +50,9 @@ const Schema: z.ZodType<Prisma.MessageWhereInput> = z
     server: z
       .union([z.lazy(() => StringFilterObjectSchema), z.string()])
       .optional(),
-    tag: z.lazy(() => TagListRelationFilterObjectSchema).optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagListRelationFilterObjectSchema)
+      .optional(),
   })
   .strict();
 

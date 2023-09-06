@@ -45,29 +45,26 @@ export async function createMessage(ircMessage: IRCEventMessage) {
   return msg
 }
 
-export async function createTag(message: Message, key: string, value?: string) {
-  const msg = await prisma.tag.create({
+export async function createConversationTag(profile: Profile, message: Message) {
+  return await prisma.conversationTag.create({
     data: {
-      message: {
-        connect: { id: message.id },
-      },
-      key,
-      value,
-    },
-  })
-  return msg
-}
-
-export async function getMessageTag(message: Message, key: string) {
-  const tag = await prisma.tag.findFirst({
-    where: {
+      profileID: profile.id,
+      profileVersion: profile.version,
       messageID: message.id,
-      key,
     },
   })
-
-  return tag
 }
+
+// export async function getMessageTag(message: Message, key: string) {
+//   const tag = await prisma.tag.findFirst({
+//     where: {
+//       messageID: message.id,
+//       key,
+//     },
+//   })
+
+//   return tag
+// }
 
 export async function getOptions() {
   const options = await prisma.options.findFirstOrThrow({})
@@ -86,17 +83,16 @@ export async function getContextualMessages(message: Message, profile: Profile) 
   const contextualLength = profile.maxLocalIRCLength ?? 0
   const { server, target } = message
 
-  // TODO proper tag system
-  const tempProfileIDTag = `${profile.id}+${profile.version}`
   // get related tagged
   const related = await prisma.message.findMany({
     where: {
       id: { lt: message.id }, // before current message
       server,
       target,
-      tag: {
+      conversationTag: {
         some: {
-          key: tempProfileIDTag,
+          profileID: profile.id,
+          profileVersion: profile.version,
         },
       },
     },
@@ -111,7 +107,7 @@ export async function getContextualMessages(message: Message, profile: Profile) 
         id: { lt: message.id }, // before current message
         server,
         target,
-        tag: {
+        conversationTag: {
           none: {}, // not tagged with any other profile
         },
       },

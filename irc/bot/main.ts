@@ -19,16 +19,11 @@ const log = debug('pIRCe')
 
 export async function main(ircMessage: IRCEventMessage) {
   const message = await createMessage(ircMessage)
+  if (message.self) return // don't route our own messages
 
-  // don't route our own messages
-  if (message.self) return
-
-  const options = await getOptions()
-  log(`start: ${message.content}`)
   // find all matching handlers
   const allHandlers = await getHandlers()
   const matched = allHandlers.filter(({ handler }) => {
-    log(`test: ${handler.triggerWord}`)
     // require trigger word / feature
     if (handler.feature === null || handler.triggerWord === null) return false
     // filter target
@@ -38,7 +33,7 @@ export async function main(ircMessage: IRCEventMessage) {
     if (handler.restrictServer && message.server !== handler.restrictServer) return false
     if (handler.restrictTarget && message.target !== handler.restrictTarget) return false
     // TODO check admin status
-    log(`test: ${handler.triggerWord} past filter`)
+
     if (handler.triggerType === TRIGGER_TYPE.anything) return true
 
     // evaluate wildcard in handler trigger
@@ -54,22 +49,24 @@ export async function main(ircMessage: IRCEventMessage) {
       if (mention.test(message.content)) return true
     }
     // no match
-    log(`test: ${handler.triggerWord} no keyword match`)
     return false
   })
 
-  log(
-    'handlers: %o',
-    matched.map((m) => m.handler),
-  )
-
   for (const match of matched) {
-    const { handler } = match
+    const { handler, profile, model, platform } = match
     if (handler.feature === null) continue // should already be filtered?
 
     const feature = features[handler.feature]
     if (feature) {
-      log('%s / %s / %s', handler.triggerWord, handler.feature, handler.profileID ?? '')
+      log(
+        '%s / %s / %s / %s / %s',
+        handler.triggerWord,
+        handler.feature,
+        profile?.label,
+        model?.label,
+        platform?.label,
+      )
+      const options = await getOptions()
       void feature({
         ...match,
         message,

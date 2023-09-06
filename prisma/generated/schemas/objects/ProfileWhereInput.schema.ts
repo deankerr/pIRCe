@@ -6,6 +6,7 @@ import { IntNullableFilterObjectSchema } from './IntNullableFilter.schema';
 import { ModelRelationFilterObjectSchema } from './ModelRelationFilter.schema';
 import { ModelWhereInputObjectSchema } from './ModelWhereInput.schema';
 import { HandlerListRelationFilterObjectSchema } from './HandlerListRelationFilter.schema';
+import { ConversationTagListRelationFilterObjectSchema } from './ConversationTagListRelationFilter.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -81,6 +82,9 @@ const Schema: z.ZodType<Prisma.ProfileWhereInput> = z
       .optional()
       .nullable(),
     handler: z.lazy(() => HandlerListRelationFilterObjectSchema).optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagListRelationFilterObjectSchema)
+      .optional(),
   })
   .strict();
 

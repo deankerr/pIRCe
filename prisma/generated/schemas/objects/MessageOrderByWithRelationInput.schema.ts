@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { SortOrderSchema } from '../enums/SortOrder.schema';
-import { TagOrderByRelationAggregateInputObjectSchema } from './TagOrderByRelationAggregateInput.schema';
+import { ConversationTagOrderByRelationAggregateInputObjectSchema } from './ConversationTagOrderByRelationAggregateInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -15,7 +15,9 @@ const Schema: z.ZodType<Prisma.MessageOrderByWithRelationInput> = z
     time: z.lazy(() => SortOrderSchema).optional(),
     mask: z.lazy(() => SortOrderSchema).optional(),
     server: z.lazy(() => SortOrderSchema).optional(),
-    tag: z.lazy(() => TagOrderByRelationAggregateInputObjectSchema).optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagOrderByRelationAggregateInputObjectSchema)
+      .optional(),
   })
   .strict();
 

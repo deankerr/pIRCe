@@ -3,6 +3,7 @@ import { SortOrderSchema } from '../enums/SortOrder.schema';
 import { SortOrderInputObjectSchema } from './SortOrderInput.schema';
 import { ModelOrderByWithRelationInputObjectSchema } from './ModelOrderByWithRelationInput.schema';
 import { HandlerOrderByRelationAggregateInputObjectSchema } from './HandlerOrderByRelationAggregateInput.schema';
+import { ConversationTagOrderByRelationAggregateInputObjectSchema } from './ConversationTagOrderByRelationAggregateInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -69,6 +70,9 @@ const Schema: z.ZodType<Prisma.ProfileOrderByWithRelationInput> = z
     model: z.lazy(() => ModelOrderByWithRelationInputObjectSchema).optional(),
     handler: z
       .lazy(() => HandlerOrderByRelationAggregateInputObjectSchema)
+      .optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagOrderByRelationAggregateInputObjectSchema)
       .optional(),
   })
   .strict();

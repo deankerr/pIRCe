@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdateOperationsInput.schema';
 import { BoolFieldUpdateOperationsInputObjectSchema } from './BoolFieldUpdateOperationsInput.schema';
 import { DateTimeFieldUpdateOperationsInputObjectSchema } from './DateTimeFieldUpdateOperationsInput.schema';
-import { TagUpdateManyWithoutMessageNestedInputObjectSchema } from './TagUpdateManyWithoutMessageNestedInput.schema';
+import { ConversationTagUpdateManyWithoutMessageNestedInputObjectSchema } from './ConversationTagUpdateManyWithoutMessageNestedInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -56,8 +56,10 @@ const Schema: z.ZodType<Prisma.MessageUpdateInput> = z
         z.lazy(() => StringFieldUpdateOperationsInputObjectSchema),
       ])
       .optional(),
-    tag: z
-      .lazy(() => TagUpdateManyWithoutMessageNestedInputObjectSchema)
+    conversationTag: z
+      .lazy(
+        () => ConversationTagUpdateManyWithoutMessageNestedInputObjectSchema,
+      )
       .optional(),
   })
   .strict();

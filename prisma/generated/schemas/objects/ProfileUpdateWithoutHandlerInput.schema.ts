@@ -4,6 +4,7 @@ import { StringFieldUpdateOperationsInputObjectSchema } from './StringFieldUpdat
 import { NullableStringFieldUpdateOperationsInputObjectSchema } from './NullableStringFieldUpdateOperationsInput.schema';
 import { NullableIntFieldUpdateOperationsInputObjectSchema } from './NullableIntFieldUpdateOperationsInput.schema';
 import { ModelUpdateOneWithoutProfileNestedInputObjectSchema } from './ModelUpdateOneWithoutProfileNestedInput.schema';
+import { ConversationTagUpdateManyWithoutOwnerNestedInputObjectSchema } from './ConversationTagUpdateManyWithoutOwnerNestedInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -78,6 +79,9 @@ const Schema: z.ZodType<Prisma.ProfileUpdateWithoutHandlerInput> = z
       .nullable(),
     model: z
       .lazy(() => ModelUpdateOneWithoutProfileNestedInputObjectSchema)
+      .optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagUpdateManyWithoutOwnerNestedInputObjectSchema)
       .optional(),
   })
   .strict();

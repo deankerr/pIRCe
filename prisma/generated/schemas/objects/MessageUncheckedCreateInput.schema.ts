@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TagUncheckedCreateNestedManyWithoutMessageInputObjectSchema } from './TagUncheckedCreateNestedManyWithoutMessageInput.schema';
+import { ConversationTagUncheckedCreateNestedManyWithoutMessageInputObjectSchema } from './ConversationTagUncheckedCreateNestedManyWithoutMessageInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -14,8 +14,11 @@ const Schema: z.ZodType<Prisma.MessageUncheckedCreateInput> = z
     time: z.coerce.date().optional(),
     mask: z.string(),
     server: z.string(),
-    tag: z
-      .lazy(() => TagUncheckedCreateNestedManyWithoutMessageInputObjectSchema)
+    conversationTag: z
+      .lazy(
+        () =>
+          ConversationTagUncheckedCreateNestedManyWithoutMessageInputObjectSchema,
+      )
       .optional(),
   })
   .strict();

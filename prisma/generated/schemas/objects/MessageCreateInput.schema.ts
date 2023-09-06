@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TagCreateNestedManyWithoutMessageInputObjectSchema } from './TagCreateNestedManyWithoutMessageInput.schema';
+import { ConversationTagCreateNestedManyWithoutMessageInputObjectSchema } from './ConversationTagCreateNestedManyWithoutMessageInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -13,8 +13,10 @@ const Schema: z.ZodType<Prisma.MessageCreateInput> = z
     time: z.coerce.date().optional(),
     mask: z.string(),
     server: z.string(),
-    tag: z
-      .lazy(() => TagCreateNestedManyWithoutMessageInputObjectSchema)
+    conversationTag: z
+      .lazy(
+        () => ConversationTagCreateNestedManyWithoutMessageInputObjectSchema,
+      )
       .optional(),
   })
   .strict();

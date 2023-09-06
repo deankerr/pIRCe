@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ModelCreateNestedOneWithoutProfileInputObjectSchema } from './ModelCreateNestedOneWithoutProfileInput.schema';
 import { HandlerCreateNestedManyWithoutProfileInputObjectSchema } from './HandlerCreateNestedManyWithoutProfileInput.schema';
+import { ConversationTagCreateNestedManyWithoutOwnerInputObjectSchema } from './ConversationTagCreateNestedManyWithoutOwnerInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -21,6 +22,9 @@ const Schema: z.ZodType<Prisma.ProfileCreateInput> = z
       .optional(),
     handler: z
       .lazy(() => HandlerCreateNestedManyWithoutProfileInputObjectSchema)
+      .optional(),
+    conversationTag: z
+      .lazy(() => ConversationTagCreateNestedManyWithoutOwnerInputObjectSchema)
       .optional(),
   })
   .strict();

@@ -27,22 +27,23 @@ model Message {
   mask   String // just user@host
   server String
 
-  tag Tag[]
+  conversationTag ConversationTag[]
 }
 
-// Interaction? Result? Response? MetaTag MemoryTag
-// Genrally denotes previous interaction by Persona
-// Can store arbitrary data I never seem to
-// Could almost just be a field on Messages but might be faster / useful one day
-model Tag {
-  id        Int     @id @default(autoincrement())
+// Indicates a message is part of a conversation with a Profile
+model ConversationTag {
+  id Int @id @default(autoincrement())
+
+  owner          Profile @relation(fields: [profileID, profileVersion], references: [id, version])
+  profileID      Int
+  profileVersion Int
+
   message   Message @relation(fields: [messageID], references: [id])
   messageID Int
 
-  key   String
-  value String?
+  metadata String?
 
-  @@unique([messageID, key])
+  @@unique([profileID, profileVersion, messageID])
 }
 
 model Handler {
@@ -90,7 +91,10 @@ model Profile {
   maxLocalIRCLength Int? // max unrelated ambient irc messages
   // character name? image?
 
-  handler Handler[]
+  handler         Handler[]
+  conversationTag ConversationTag[]
+
+  @@unique([id, version])
 }
 
 model Model {

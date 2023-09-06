@@ -1,4 +1,4 @@
-import { createMessage, createTag } from './api/db.js'
+import { createMessage } from './api/db.js'
 import { formatOutput } from './lib/formatOutput.js'
 import { self } from './util.js'
 
@@ -8,7 +8,7 @@ const send = (message: string) => {
 }
 
 export const command = {
-  say: async (target: string, message: string, tag: string | null) => {
+  say: async (target: string, message: string, _tag?: string | null) => {
     const msg = await createMessage({
       server: self.server,
       target,
@@ -18,12 +18,11 @@ export const command = {
       mask: 'self',
       type: 'message',
     })
-
-    if (tag) void createTag(msg, tag)
     send(`say ${target} ${await formatOutput(message)}`)
+    return msg
   },
 
-  action: async (target: string, message: string, tag: string | null) => {
+  action: async (target: string, message: string, _tag?: string | null) => {
     const msg = await createMessage({
       server: self.server,
       target,
@@ -33,9 +32,8 @@ export const command = {
       mask: 'self',
       type: 'action',
     })
-
-    if (tag) void createTag(msg, tag)
     send(`action ${target} ${await formatOutput(message)}`)
+    return msg
   },
 
   join: (target: string) => {

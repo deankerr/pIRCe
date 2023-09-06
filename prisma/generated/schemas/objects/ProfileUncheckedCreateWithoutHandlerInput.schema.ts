@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ConversationTagUncheckedCreateNestedManyWithoutOwnerInputObjectSchema } from './ConversationTagUncheckedCreateNestedManyWithoutOwnerInput.schema';
 
 import type { Prisma } from '@prisma/client';
 
@@ -17,6 +18,12 @@ const Schema: z.ZodType<Prisma.ProfileUncheckedCreateWithoutHandlerInput> = z
     postPromptOffset: z.number().optional().nullable(),
     maxHistoryLength: z.number().optional().nullable(),
     maxLocalIRCLength: z.number().optional().nullable(),
+    conversationTag: z
+      .lazy(
+        () =>
+          ConversationTagUncheckedCreateNestedManyWithoutOwnerInputObjectSchema,
+      )
+      .optional(),
   })
   .strict();
 
