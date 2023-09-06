@@ -1,5 +1,5 @@
 import { createMessage } from './api/db.js'
-import { formatOutput } from './lib/output.js'
+import { format } from './lib/output.js'
 import { self } from './util.js'
 
 const send = (message: string) => {
@@ -18,7 +18,7 @@ export const command = {
       mask: 'self',
       type: 'message',
     })
-    send(`say ${target} ${await formatOutput(message)}`)
+    send(`say ${target} ${await format(message)}`)
     return msg
   },
 
@@ -32,7 +32,7 @@ export const command = {
       mask: 'self',
       type: 'action',
     })
-    send(`action ${target} ${await formatOutput(message)}`)
+    send(`action ${target} ${await format(message)}`)
     return msg
   },
 

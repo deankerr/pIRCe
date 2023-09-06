@@ -1,46 +1,64 @@
-import fs from 'node:fs'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import util from 'node:util'
+import debug from 'debug'
 import { nanoid } from 'nanoid'
 import { getOptions } from './db.js'
 
-async function getOutputPath(filename: string) {
-  const options = await getOptions()
-  const dirName = options.outputFileDir
+const log = debug('pIRCe:file')
 
-  if (!fs.existsSync(dirName)) {
-    fs.mkdirSync(dirName)
-  }
-  return `${dirName}/${filename}`
-}
-
-export async function outputToIDFile(content: string) {
-  const options = await getOptions()
-  const id = nanoid(options.outputFilenameIDLength)
-  const filepath = await getOutputPath(`${id}.txt`)
-
-  fs.writeFile(filepath, content, (err) => {
-    if (err) throw err
-  })
-  return id
-}
-
-export async function outputBase64ToImage(content: string) {
-  const id = nanoid(4)
-  const filepath = await getOutputPath(`${id}.png`)
-  fs.writeFile(filepath, content, { encoding: 'base64' }, () => {
-    console.log('File created.')
-  })
-
-  return id
-}
-
-export async function utilFormatToFile(filenamePrefix: string, data: unknown) {
+async function appendLog(name: string, data: unknown) {
   try {
-    const fdata = util.format('%o', data)
-    const filepath = `logs/${filenamePrefix}-${nanoid(6)}.txt`
-    await fs.promises.writeFile(filepath, fdata, 'utf-8')
+    const filename = `${name}.log`
+    const filepath = await getFilepath('logs', filename)
+    await writeFile(filepath, util.format('%o', data))
   } catch (error) {
-    console.error('utilFormatToFile error')
-    console.error(error)
+    log(error)
   }
 }
+
+async function errorLog(name: string, data: unknown) {
+  try {
+    const filename = `${name}-${new Date().toJSON()}.log`
+    const filepath = await getFilepath('logs', filename)
+    await writeFile(filepath, util.format('%o', data))
+  } catch (error) {
+    log(error)
+  }
+}
+
+async function getFilepath(outputDir: string, filename: string) {
+  await mkdir(outputDir, { recursive: true })
+  return join(outputDir, filename)
+}
+
+async function text(text: string) {
+  return file(text, 'txt', 'utf8')
+}
+
+async function base64ToPNG(data: string) {
+  return file(data, 'png', 'base64')
+}
+
+async function file(data: string, extension: string, encoding?: BufferEncoding) {
+  try {
+    const options = await getOptions()
+    const id = nanoid(options.outputFilenameLength)
+    const filename = `${id}.${extension}`
+    const filepath = await getFilepath(options.outputFilePath, filename)
+
+    await writeFile(filepath, data, encoding)
+    log('created %o', filepath)
+
+    if (options.outputFileBaseURL) {
+      return options.outputFileBaseURL + options.outputURLFilenameExtension ? extension : ''
+    } else {
+      return filename
+    }
+  } catch (error) {
+    log(error)
+    return null
+  }
+}
+
+export const create = { text, base64ToPNG, file, errorLog, appendLog }

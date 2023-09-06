@@ -1,7 +1,7 @@
 import type { InitialContext } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
-import { outputBase64ToImage } from '../api/file.js'
+import { create } from '../api/file.js'
 import { command } from '../command.js'
 import { PLATFORM } from '../const.js'
 import { stripInitialKeyword } from '../lib/input.js'
@@ -42,26 +42,13 @@ export async function image(event: InitialContext) {
     //   return
     // }
 
-    // TODO encapsulate this + long text function
-    const { outputFileURLTemplate } = options
-    const fileID = await outputBase64ToImage(result.result)
-    const fileURL = outputFileURLTemplate.replace('%', fileID)
+    const fileLabel = await create.base64ToPNG(result.result)
 
-    log('image: %s', fileURL)
-
-    const target = handler.overrideOutputTarget ?? message.target
-    void command.say(target, fileURL)
+    if (fileLabel) {
+      const target = handler.overrideOutputTarget ?? message.target
+      void command.say(target, fileLabel)
+    }
   } catch (error) {
     log(error)
   }
 }
-
-// function createImageEvent(botEvent: BotEvent): ImageEvent {
-//   if ('model' in botEvent.route) {
-//     const model = botEvent.route.model as Model
-//     return { ...botEvent, model }
-//   } else {
-//     log(botEvent)
-//     throw new Error('BotEvent missing model')
-//   }
-// }

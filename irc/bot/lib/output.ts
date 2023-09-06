@@ -1,52 +1,50 @@
-import debug from 'debug'
 import { getOptions } from '../api/db.js'
-import { outputToIDFile } from '../api/file.js'
+import { create } from '../api/file.js'
 
-const log = debug('pIRCe:output')
-
-export async function formatOutput(text: string) {
+export async function format(text: string) {
   const options = await getOptions()
+
   const filtered = applyWordFilter(options.wordFilterList, text)
+  const output = formatNewlines(options.outputIRCMessageMaxNewlines, filtered)
 
-  // split any newlines, remove blanks, trim
-  const nsplit = filtered
-    .split('\n')
-    .filter((l) => l !== '')
-    .map((l) => l.trim())
-
-  const { outputIRCMaxNewlines, outputFileURLTemplate, outputIRCMaxChars } = options
-
-  if (nsplit.length > outputIRCMaxNewlines || text.length > outputIRCMaxChars) {
-    const fileID = await outputToIDFile(text)
-
-    // assume response is something like song lyrics if first line doesn't end with punctuation
-    const joinWith = /.*[.!?:;"]$/.test(nsplit[0] ?? '') ? ' ' : ' / '
-
-    const output = nsplit.slice(0, outputIRCMaxNewlines).join(joinWith).slice(0, outputIRCMaxChars)
-    if (!outputFileURLTemplate) {
-      log(
-        'add a outputFileURLTemplate option with a % char to replace with filename to enable file URL output',
-      )
-      return output
-    } else {
-      return `${output} ${outputFileURLTemplate.replace('%', fileID)}`
-    }
+  // add text file URL output if above max char length
+  if (output.length > options.outputIRCMessageMaxLength) {
+    const fileLabel = await create.text(output)
+    return output + fileLabel
   } else {
-    return nsplit.slice(0, outputIRCMaxNewlines).join('\n')
+    return output
   }
 }
 
 // const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)
 
-function applyWordFilter(list: string[], content: string) {
-  let text = content
+function applyWordFilter(list: string[], text: string) {
+  let filtered = text
   for (const word of list) {
-    text = text.replaceAll(new RegExp(`${word}`, 'gi'), '****')
+    filtered = text.replaceAll(new RegExp(`${word}`, 'gi'), '****')
   }
 
-  return text
+  return filtered
 }
 
+function formatNewlines(maxNewlines: number, text: string) {
+  // split any newlines, remove blanks, trim
+  const lines = text
+    .split('\n')
+    .filter((l) => l !== '')
+    .map((l) => l.trim())
+
+  // concatenate to single line if above max
+  if (lines.length > maxNewlines) {
+    return lines.reduce((acc, cur) => {
+      // if line doesn't end with punctuation, assume something like lyrics; join with slash
+      const joinChar = /.*[.!?:;"]$/.test(cur) ? ' ' : ' / '
+      return acc + joinChar + cur
+    })
+  } else {
+    return lines.join('\n')
+  }
+}
 // export function respond(ctx: InitialContext | ActionContext) {
 //
 // }

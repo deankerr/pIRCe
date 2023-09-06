@@ -39,7 +39,7 @@ async function moderateMessages(messages: AIChatMessage[], options: Options) {
   try {
     log('moderate OpenAI')
 
-    const { moderationProfile } = await getOptions()
+    const { moderationProfileList } = await getOptions()
 
     const config = createConfig('https://api.openai.com/v1/moderations', options)
     const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
@@ -51,7 +51,7 @@ async function moderateMessages(messages: AIChatMessage[], options: Options) {
     const parsed = response.data.results.map((result) => {
       const categories = result.categories as Record<string, boolean>
       const flaggedKeys = Object.keys(categories).filter((k) => categories[k])
-      return flaggedKeys.filter((k) => !moderationProfile.includes(k))
+      return flaggedKeys.filter((k) => !moderationProfileList.includes(k))
     })
 
     return parsed

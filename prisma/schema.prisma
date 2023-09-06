@@ -125,11 +125,13 @@ model Options {
   moderationProfileList String @default("[]") // categories to allow 
   wordFilterList        String @default("[]") // censored words
 
-  outputFileURLTemplate  String @default("") // eg "web.site/%.txt"
-  outputFileDir          String @default("output")
-  outputFilenameIDLength Int    @default(3) // i.e. 3 = abc.txt
-  outputIRCMaxNewlines   Int    @default(4)
-  outputIRCMaxChars      Int    @default(440)
+  outputFilePath             String  @default("output")
+  outputFileBaseURL          String? // eg "web.site/{filename}"
+  outputURLFilenameExtension Boolean @default(true)
+  outputFilenameLength       Int     @default(3) // i.e. 3 = abc.txt
+
+  outputIRCMessageMaxNewlines Int @default(4)
+  outputIRCMessageMaxLength   Int @default(440)
 
   apiTimeoutMs Int @default(30000)
 
