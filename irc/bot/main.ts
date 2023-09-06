@@ -1,5 +1,5 @@
 import type { FEATURES } from './const.js'
-import type { BotEvent, IRCEventMessage, MessageEvent } from './types.js'
+import type { IRCEventMessage, MessageEvent } from './types.js'
 import debug from 'debug'
 import { createMessage, getHandlers, getOptions } from './api/db.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
@@ -16,9 +16,9 @@ const features: Record<string, Feature> = {
 }
 //satisfies Record<keyof typeof FEATURES, Feature>
 
-const log = debug('pIRCe:router')
+const log = debug('pIRCe')
 
-export async function router(ircMessage: IRCEventMessage) {
+export async function main(ircMessage: IRCEventMessage) {
   const message = await createMessage(ircMessage)
 
   // don't route our own messages
@@ -74,3 +74,6 @@ export async function router(ircMessage: IRCEventMessage) {
     }
   }
 }
+
+process.on('message', (message: IRCEventMessage) => void main(message))
+log(`bot loaded! 🤖🤖`)

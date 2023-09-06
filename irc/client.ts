@@ -7,7 +7,7 @@ import { Client } from 'matrix-org-irc'
 
 const log = debug('pIRCe:irc')
 const botPath = 'irc/bot/'
-const botEntry = botPath + 'index.js'
+const botEntry = botPath + 'main.js'
 
 function getConfig() {
   const config = {
