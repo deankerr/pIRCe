@@ -3,7 +3,7 @@ import debug from 'debug'
 import { ai } from '../api/ai.js'
 import { outputBase64ToImage } from '../api/file.js'
 import { command } from '../command.js'
-import { PLATFORMS } from '../const.js'
+import { PLATFORM } from '../const.js'
 import { stripInitialKeyword } from '../util/input.js'
 
 const log = debug('pIRCe:image')
@@ -25,7 +25,7 @@ export async function image(event: HandlerEvent) {
     // * Construct payload
     parameters.prompt = stripInitialKeyword(message.content, handler.triggerWord ?? '')
 
-    if (platform.id !== PLATFORMS.openai) {
+    if (platform.id !== PLATFORM.openai) {
       parameters.model = model.id
     }
 

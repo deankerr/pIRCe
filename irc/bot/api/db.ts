@@ -4,19 +4,6 @@ import { PrismaClient } from '@prisma/client'
 
 export const prisma = new PrismaClient()
 
-// export async function getRoutesForTarget(server: string, target: string) {
-//   const targetList = [target, '*', target.startsWith('#') ? '#' : '?']
-
-//   const routes = await prisma.route.findMany({
-//     where: { server: { in: [server, '*'] }, target: { in: targetList } },
-//     include: {
-//       profile: true,
-//       model: true,
-//     },
-//   })
-//   return routes
-// }
-
 export async function getHandlers() {
   return await prisma.handler.findMany({
     include: {
@@ -32,11 +19,6 @@ export async function getHandlers() {
     },
   })
 }
-
-// export async function getModel(id: string) {
-// const model = await prisma.model.findUniqueOrThrow({ where: { id } })
-// return model
-// }
 
 export async function createMessage(ircMessage: IRCEventMessage) {
   const msg = await prisma.message.create({

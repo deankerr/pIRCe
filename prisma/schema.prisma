@@ -26,7 +26,7 @@ model Message {
   tag Tag[]
 }
 
-// Interaction? Result? Response?
+// Interaction? Result? Response? MetaTag MemoryTag
 // Genrally denotes previous interaction by Persona
 // Can store arbitrary data I never seem to
 // Could almost just be a field on Messages but might be faster / useful one day
@@ -132,6 +132,7 @@ model Options {
   appURL  String @default("http://pirce.dev")
 }
 
+// just move into options
 // output filter
 model WordList {
   word String @id // the word/phrase

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { Platform } from '@prisma/client'
 import type {
   AIChatMessage,
@@ -97,26 +94,6 @@ async function image(platform: Platform, payload: Record<string, string>, option
 
     return { result }
   } catch (error) {
-    // TODO fix this
-    if (isAxiosError(error) && error?.response?.data) {
-      const { data } = error.response
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const code = data?.error?.code
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const message = data?.error?.message
-      if (
-        typeof code === 'string' &&
-        code === 'content_policy_violation' &&
-        typeof message === 'string'
-      ) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        log(data.error)
-        return {
-          error: message,
-        }
-      }
-    }
-
     return handleError(error)
   }
 }
@@ -170,11 +147,14 @@ function handleError(error: unknown) {
   if (isAxiosError(error)) {
     if (error.response) {
       // API error
-      const { status, statusText, data } = error.response
+      const { status, statusText } = error.response
       log('*** API Response Error ***')
       log('Status: (%s) %s', status, statusText)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      'error' in data ? log('%o', data?.error) : log('%O', data)
+      'error' in error.response.data
+        ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          log('%o', error.response.data?.error)
+        : log('%O', error.response.data)
 
       return error
     } else if (error.request) {

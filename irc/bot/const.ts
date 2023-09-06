@@ -8,13 +8,13 @@ export const WILDCARD = {
   nick: '__NICK__',
 } as const
 
-export const FEATURES = {
-  admin: 'ADMIN',
-  chat: 'CHAT',
-  image: 'IMAGE',
+export const FEATURE = {
+  admin: 'admin',
+  chat: 'chat',
+  image: 'image',
 } as const
 
-export const PLATFORMS = {
+export const PLATFORM = {
   openai: 'openai',
   openrouter: 'openrouter',
   togetherai: 'togetherai',

@@ -1,4 +1,4 @@
-import type { FEATURES } from './const.js'
+import type { FEATURE } from './const.js'
 import type { HandlerEvent, IRCEventMessage } from './types.js'
 import debug from 'debug'
 import { createMessage, getHandlers, getOptions } from './api/db.js'
@@ -13,7 +13,7 @@ const features: Record<string, Feature> = {
   admin,
   chat,
   image,
-} satisfies Record<keyof typeof FEATURES, Feature>
+} satisfies Record<keyof typeof FEATURE, Feature>
 
 const log = debug('pIRCe')
 
