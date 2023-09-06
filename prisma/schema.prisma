@@ -26,43 +26,6 @@ model Message {
   tag Tag[]
 }
 
-// Conditions to trigger a response
-model Route {
-  id Int @id @default(autoincrement())
-
-  server String // * = any or irc.server.org
-  target String // # = any channel, ? = any query (ie. pm), * = any target
-
-  keyword           String? // e.g. "@bot", or %nick
-  startsWithKeyword Boolean @default(true)
-  mentionsKeyword   Boolean @default(false)
-
-  handler String // the function used to respond to event
-
-  overrideOutputTarget String? // output to this target instead
-
-  // the ai profile data to send to handler along with message
-  profile   Profile? @relation(fields: [profileID], references: [id])
-  profileID String?
-
-  model   Model?  @relation(fields: [modelID], references: [id])
-  modelID String?
-}
-
-// Prompt / Persona
-model Profile {
-  id         String  @id // 'bart', 'eee'
-  prompt     String // "system" block
-  promptTail String? // "system" block inserted after last user message
-
-  // our opts
-  conversationLength Int     @default(10) // include messages tagged with this profile
-  contextualLength   Int     @default(0) // include unrelated recent messages
-  characterName      String? // substitue bot's nick with this value
-
-  route Route[]
-}
-
 // Interaction? Result? Response?
 // Genrally denotes previous interaction by Persona
 // Can store arbitrary data I never seem to
@@ -78,33 +41,78 @@ model Tag {
   @@unique([messageID, key])
 }
 
-model Model {
-  id  String @id // identifier for this model + parameter combination eg. openai.turbo, openrouter.nous
-  url String // relevant endpoint eg. 'https://api.openai.com/v1/chat/completions' | 'https://openrouter.ai/api/v1/chat/completions'
+model Handler {
+  id Int @id @default(autoincrement())
 
-  parameters String // JSON
+  // Trigger
+  restrictServer String? // irc.libera.chat
+  restrictTarget String? // #channel-name
+  restrictAdmin Boolean @default(false)
+  allowChannel Boolean @default(true)
+  allowQuery Boolean @default(false)
+  triggerWord String? // $command, weather, %__nick__, %__any__
+  triggerType String @default("command") // command | mentionW
 
-  route Route[]
+  // Action
+  feature String? // function
+  profile Profile? @relation(fields: [profileID], references: [id])
+  profileID Int?
+
+  // Output
+  overrideOutputTarget String? // #channel-name
 }
 
-// OpenAI/OpenRouter Chat Parameters
-// model             String
-// max_tokens        Int    @default(128)
-// temperature       Float  @default(1)
-// top_p             Int    @default(1)
-// n                 Int    @default(1)
-// stop              String @default("[]")
-// presence_penalty  Float  @default(0)
-// frequency_penalty Float  @default(0)
-// logit_bias        String @default("{}")
-// // OpenRouter only
-// top_k      Int    @default(0)
-// transforms String @default("[\"middle-out\"]")
+// Prompt / Persona
+model Profile {
+  id         Int  @id @default(autoincrement())
+  version Int @default(0) // used with id for metatag memory (versioning/erasure)
 
-// OpenAI Image Parameters
-//  n               Int    @default(1)
-//  size            String @default("1024x1024")
-//  response_format String @default("b64_json") // or "url"
+  label String  @unique // friendly name
+  description String?
+
+  parameters String @default("{}") // JSON, temp, top_p etc.
+  
+  model Model? @relation(fields: [modelID, platformID], references: [id, platformID])
+  modelID String?
+  platformID String?
+
+  // Chat 
+  mainPrompt     String? // "system" / instructions
+  examplePrompt String? // JSON? allow examples or fake messages to always follow instructions
+  postPrompt String? // inserted after/just before last message
+  postPromptOffset Int? // 0 = last, 1 = just before last, etc.
+  // Chat Options
+  maxHistoryLength Int? // max messages
+  maxLocalIRCLength Int? // max unrelated ambient irc messages
+  // character name? image?
+
+  handler Handler[]
+}
+
+model Model {
+  id String // value passed to API: "gpt-3.5-turbo" / nousresearch/nous-hermes-llama2-13b / "SG161222/Realistic_Vision_V3.0_VAE"
+  label String? // friendly name
+  description String?
+
+  platform Platform @relation(fields: [platformID], references: [id])
+  platformID String
+  
+  feature String // chat / image
+  promptStyle String // openai/alpacca (variants?)
+  // future: parameters available 
+  // description, stats, cost? pulled from api
+  // max context size
+  profile Profile[]
+  @@id([id, platformID])
+}
+
+// Essentially refers to handler functions existing for these services
+model Platform {
+  id String @id // openai / openrouter / togetherai
+  label String  // OpenAI / OpenRouter / TogetherAI
+  apiKey String? // can also use .env
+  model Model[]
+}
 
 // Options
 model Options {
@@ -117,7 +125,10 @@ model Options {
   outputIRCMaxNewlines   Int    @default(4)
   outputIRCMaxChars      Int    @default(440)
 
-  apiTimeoutMs Int @default(20000)
+  apiTimeoutMs Int @default(30000)
+
+  appName String @default("pIRCe") // for API headers
+  appURL String @default("http://pirce.dev")
 }
 
 // output filter

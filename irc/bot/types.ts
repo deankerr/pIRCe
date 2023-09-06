@@ -235,4 +235,25 @@ export type TogetherAIImageResponse = {
     console.error(response.error?.message)
   
   
+    
+OpenAI/OpenRouter Chat Parameters
+model             String
+max_tokens        Int    @default(128)
+temperature       Float  @default(1)
+top_p             Int    @default(1)
+n                 Int    @default(1)
+stop              String @default("[]")
+presence_penalty  Float  @default(0)
+frequency_penalty Float  @default(0)
+logit_bias        String @default("{}")
+
+OpenRouter only
+top_k      Int    @default(0)
+transforms String @default("[\"middle-out\"]")
+
+OpenAI Image Parameters
+ n               Int    @default(1)
+ size            String @default("1024x1024")
+ response_format String @default("b64_json") // or "url"
+
   */

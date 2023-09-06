@@ -11,7 +11,11 @@
     "postinstall": "prisma generate",
     "irc:dev": "DEBUG=pIRCe* ts-node irc/client.ts",
     "studio": "prisma studio",
-    "migrate": "prisma migrate"
+    "migrate": "prisma migrate",
+    "db": "prisma db"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.1.1",
