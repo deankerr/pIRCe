@@ -1,5 +1,5 @@
-import type { Message } from '@prisma/client'
-import type { ChatEvent, IRCEventMessage } from '../types.js'
+import type { Message, Profile } from '@prisma/client'
+import type { IRCEventMessage } from '../types.js'
 import { PrismaClient } from '@prisma/client'
 
 export const prisma = new PrismaClient()
@@ -33,10 +33,10 @@ export async function getHandlers() {
   })
 }
 
-export async function getModel(id: string) {
-  // const model = await prisma.model.findUniqueOrThrow({ where: { id } })
-  // return model
-}
+// export async function getModel(id: string) {
+// const model = await prisma.model.findUniqueOrThrow({ where: { id } })
+// return model
+// }
 
 export async function createMessage(ircMessage: IRCEventMessage) {
   const msg = await prisma.message.create({
@@ -80,13 +80,14 @@ export async function getWordList() {
 }
 
 // retrieve same profile tagged and/or local messages
-export async function getContextualMessages(botEvent: ChatEvent) {
-  const { profile, message } = botEvent
+export async function getContextualMessages(message: Message, profile: Profile) {
   // const { conversationLength, contextualLength } = profile
-  const conversationLength = 2
-  const contextualLength = 0
+  const conversationLength = profile.maxHistoryLength ?? 0
+  const contextualLength = profile.maxLocalIRCLength ?? 0
   const { server, target } = message
 
+  // TODO proper tag system
+  const tempProfileIDTag = `${profile.id}+${profile.version}`
   // get related tagged
   const related = await prisma.message.findMany({
     where: {
@@ -95,8 +96,7 @@ export async function getContextualMessages(botEvent: ChatEvent) {
       target,
       tag: {
         some: {
-          // key: profile.id,
-          key: 'no',
+          key: tempProfileIDTag,
         },
       },
     },

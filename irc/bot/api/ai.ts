@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { Model, Platform } from '@prisma/client'
+import type { Platform } from '@prisma/client'
 import type {
   AIChatMessage,
   AIChatResponse,
@@ -12,30 +12,24 @@ import type {
 } from '../types.js'
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
-// import { normalizeAPIInput } from '../util/input.js'
 import { getOptions } from './db.js'
 
 const log = debug('pIRCe:ai')
 
 // TODO count tokens (somewhere)
 
-async function chat(model: Model, messages: AIChatMessage[]) {
+async function chat(platform: Platform, payload: Record<string, unknown>, options: Options) {
   try {
-    const { id, url, parameters } = model as any
-    log(
-      'chat %o %o',
-      id,
-      messages.findLast((m) => m.role === 'user'),
-    )
+    log('chat %o', platform.label)
 
-    const parsedParams = JSON.parse(parameters) as Record<string, string>
-    const data = {
-      ...parsedParams,
-      messages,
-    }
+    let url = ''
 
-    const config = await getAxiosConfig(url)
-    const response = await axios<AIChatResponse>({ ...config, data })
+    if (platform.id === 'openai') url = 'https://api.openai.com/v1/chat/completions'
+    if (platform.id === 'openrouter') url = 'https://openrouter.ai/api/v1/chat/completions'
+    if (platform.id === 'togetherai') url = 'https://api.together.xyz/inference'
+
+    const config = createConfig(url, options)
+    const response = await axios<AIChatResponse>({ ...config, data: payload })
 
     return response.data.choices[0]
   } catch (error) {
@@ -43,11 +37,13 @@ async function chat(model: Model, messages: AIChatMessage[]) {
   }
 }
 
-async function moderateMessages(messages: AIChatMessage[]) {
+async function moderateMessages(messages: AIChatMessage[], options: Options) {
   try {
+    log('moderate OpenAI')
+
     const { moderationProfile } = await getOptions()
 
-    const config = await getAxiosConfig('https://api.openai.com/v1/moderations')
+    const config = createConfig('https://api.openai.com/v1/moderations', options)
     const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
 
     log('moderate %o', 'openai')
@@ -133,17 +129,6 @@ function createConfig(url: string, options: Options) {
     url,
     headers: getBackendHeaders(url),
     timeout: options.apiTimeoutMs,
-    timeoutErrorMessage: 'Error: AI Request Timeout',
-  }
-}
-
-async function getAxiosConfig(url: string, options?: Options) {
-  const opts = options ? options : await getOptions()
-  return {
-    method: 'post',
-    url,
-    headers: getBackendHeaders(url),
-    timeout: opts.apiTimeoutMs,
     timeoutErrorMessage: 'Error: AI Request Timeout',
   }
 }

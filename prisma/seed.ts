@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   // Providers
-  // OpenAI
+  //* OpenAI Platform / Models
   const openai = await prisma.platform.upsert({
     where: { id: 'openai' },
     update: {},
@@ -14,7 +14,7 @@ async function main() {
     },
   })
 
-  await prisma.model.upsert({
+  const modelTurbo = await prisma.model.upsert({
     where: {
       id_platformID: {
         id: 'gpt-3.5-turbo',
@@ -48,7 +48,7 @@ async function main() {
     },
   })
 
-  // OpenRouter
+  //* OpenRouter Platform / Models
   const openrouter = await prisma.platform.upsert({
     where: { id: 'openrouter' },
     update: {},
@@ -58,7 +58,8 @@ async function main() {
     },
   })
 
-  await prisma.model.upsert({
+  // GPT4
+  const modelORGPT4 = await prisma.model.upsert({
     where: {
       id_platformID: {
         id: 'openai/gpt-4',
@@ -75,6 +76,7 @@ async function main() {
     },
   })
 
+  // Llama2
   await prisma.model.upsert({
     where: {
       id_platformID: {
@@ -92,7 +94,8 @@ async function main() {
     },
   })
 
-  await prisma.model.upsert({
+  // Nous Hermes
+  const modelHermes = await prisma.model.upsert({
     where: {
       id_platformID: {
         id: 'nousresearch/nous-hermes-llama2-13b',
@@ -119,6 +122,7 @@ async function main() {
     },
   })
 
+  // Realistic Visions
   const modelRV = await prisma.model.upsert({
     where: {
       id_platformID: {
@@ -138,6 +142,106 @@ async function main() {
 
   // Handlers / Profiles
   // 1 openai turbo, 2. openrouter gpt4, 3. openrouter nous, 4. openai dalle, 5. together real
+
+  //* 1. OpenAI/Turbo
+  const profileTurbo = await prisma.profile.upsert({
+    where: {
+      id: 1,
+    },
+    update: {},
+    create: {
+      id: 1,
+      label: 'OpenAI ChatGPT 3.5 Turbo',
+      parameters: JSON.stringify({
+        max_tokens: 256,
+      }),
+      mainPrompt: 'You are Turbo the helpful assistant.',
+      maxHistoryLength: 10,
+      maxLocalIRCLength: 5,
+      modelID: modelTurbo.id,
+      platformID: openai.id,
+    },
+  })
+
+  await prisma.handler.upsert({
+    where: {
+      id: 1,
+    },
+    update: {},
+    create: {
+      id: 1,
+      triggerWord: '@turbo',
+      feature: 'chat',
+      profileID: profileTurbo.id,
+    },
+  })
+
+  //* 2. OpenRouter GPT4
+  const profileGPT4 = await prisma.profile.upsert({
+    where: {
+      id: 2,
+    },
+    update: {},
+    create: {
+      id: 2,
+      label: 'OpenAI ChatGPT 4',
+      parameters: JSON.stringify({
+        max_tokens: 256,
+      }),
+      mainPrompt: 'You are Four, the helpful assistant.',
+      maxHistoryLength: 10,
+      maxLocalIRCLength: 5,
+      modelID: modelORGPT4.id,
+      platformID: openrouter.id,
+    },
+  })
+
+  await prisma.handler.upsert({
+    where: {
+      id: 2,
+    },
+    update: {},
+    create: {
+      id: 2,
+      triggerWord: '@four',
+      feature: 'chat',
+      profileID: profileGPT4.id,
+    },
+  })
+
+  //* 3. OpenRouter Nous Hermes
+
+  const profileHermes = await prisma.profile.upsert({
+    where: {
+      id: 3,
+    },
+    update: {},
+    create: {
+      id: 3,
+      label: 'Nous Hermes',
+      parameters: JSON.stringify({
+        max_tokens: 256,
+      }),
+      mainPrompt: 'You are Hermes, the helpful assistant.',
+      maxHistoryLength: 10,
+      maxLocalIRCLength: 0,
+      modelID: modelHermes.id,
+      platformID: openrouter.id,
+    },
+  })
+
+  await prisma.handler.upsert({
+    where: {
+      id: 3,
+    },
+    update: {},
+    create: {
+      id: 3,
+      triggerWord: '@hermes',
+      feature: 'chat',
+      profileID: profileHermes.id,
+    },
+  })
 
   //* 4. OpenAI/DALL-E
   const profileDALLE = await prisma.profile.upsert({

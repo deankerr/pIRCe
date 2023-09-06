@@ -1,4 +1,4 @@
-import type { MessageEvent } from '../types.js'
+import type { HandlerEvent } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
 import { outputBase64ToImage } from '../api/file.js'
@@ -8,7 +8,7 @@ import { stripInitialKeyword } from '../util/input.js'
 
 const log = debug('pIRCe:image')
 
-export async function image(event: MessageEvent) {
+export async function image(event: HandlerEvent) {
   try {
     const { message, options, handler } = event
 

@@ -1,5 +1,5 @@
 import type { FEATURES } from './const.js'
-import type { IRCEventMessage, MessageEvent } from './types.js'
+import type { HandlerEvent, IRCEventMessage } from './types.js'
 import debug from 'debug'
 import { createMessage, getHandlers, getOptions } from './api/db.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
@@ -8,13 +8,12 @@ import { chat } from './features/chat.js'
 import { image } from './features/image.js'
 import { self } from './util.js'
 
-type Feature = (event: MessageEvent) => void | Promise<void>
+type Feature = (event: HandlerEvent) => void | Promise<void>
 const features: Record<string, Feature> = {
   admin,
-  // chat,
+  chat,
   image,
-}
-//satisfies Record<keyof typeof FEATURES, Feature>
+} satisfies Record<keyof typeof FEATURES, Feature>
 
 const log = debug('pIRCe')
 

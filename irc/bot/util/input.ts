@@ -54,10 +54,10 @@ export function buildOpenChatMessages(profile: Profile, conversation: Message[])
     }
   })
 
-  const result = [{ role: roles.system, content: profile.prompt }, ...messages]
+  const result = [{ role: roles.system, content: profile.mainPrompt ?? '' }, ...messages]
 
-  if (profile.promptTail) {
-    result.push({ role: roles.system, content: profile.promptTail })
+  if (profile.postPrompt) {
+    result.push({ role: roles.system, content: profile.postPrompt })
   }
 
   return result
