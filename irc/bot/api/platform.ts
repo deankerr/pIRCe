@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 // platform const definitions / specific handlers / schemas
 // OpenAI / OpenRouter
-const chatMessagesSchema = z.array(
+export const chatMessagesSchema = z.array(
   z.object({
     role: z.enum(['user', 'assistant', 'system', 'function']),
     name: z.string().optional(),
@@ -10,7 +10,7 @@ const chatMessagesSchema = z.array(
   }),
 )
 
-const allChatParametersSchema = z
+export const allChatParametersSchema = z
   .object({
     model: z.string(),
     prompt: z.string(), // if this not messages
@@ -34,3 +34,35 @@ const allChatParametersSchema = z
   .partial()
 
 export type AllChatParameters = z.infer<typeof allChatParametersSchema>
+
+export const imageRequestSchema = z.object({
+  prompt: z.string(),
+  n: z.number(),
+  size: z.string(), // '256x256' | '512x512' | '1024x1024'.string()
+  response_format: z.string(), // 'url' | 'b64_json'.string()
+  user: z.string().optional(),
+})
+
+export const imageResponseSchema = z.object({
+  created: z.number(),
+  data: z.array(
+    z.object({
+      url: z.string(),
+    }),
+  ),
+})
+
+export const openai = {
+  baseUrl: 'https://api.openai.com/v1',
+  endpoints: {
+    chat: {
+      uri: '/chat/completions',
+    },
+    image: {
+      uri: '/images/generations',
+    },
+    moderation: {
+      uri: '/moderations',
+    },
+  },
+}

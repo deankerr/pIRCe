@@ -1,10 +1,10 @@
 import type { Message } from '@prisma/client'
-import type { AIChatMessage, InitialContext, Options } from '../types.js'
+import type { AIChatMessage, InitialContext, Options } from '../../types.js'
 import debug from 'debug'
-import { ai } from '../api/ai.js'
-import { getContextualMessages } from '../api/db.js'
-import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
-import { validateActionContext } from '../lib/validate.js'
+import { getContextualMessages } from '../../api/db.js'
+import { buildOpenChatMessages, normalizeAPIInput } from '../../lib/input.js'
+import { validateActionContext } from '../../lib/validate.js'
+import { apiChat, apiModerateMessages } from './api.js'
 
 const log = debug('pIRCe:chat')
 
@@ -34,21 +34,24 @@ export async function chat(event: InitialContext) {
       model: model.id,
     }
 
-    const result = await ai.chat(platform, parameters, options)
+    const result = await apiChat(platform, parameters, options)
 
     if (!result || result instanceof Error) return log('chat failed')
 
     // OR.hermes leaks hallucinated response
     const response = result.message.content.replaceAll(/<(human|bot).*$/gm, '').trim()
 
-    log('%s {%s}', response, result.finish_reason ?? '?')
+    log('%s {%s}', response, result.finish_reason)
+
+    const { respond } = ctx
+    await respond.say(ctx, response) //^ this is a bit silly
   } catch (error) {
     log(error)
   }
 }
 
 async function moderateMessages(messages: AIChatMessage[], userMessage: Message, options: Options) {
-  const modResults = await ai.moderateMessages(messages, options)
+  const modResults = await apiModerateMessages(messages, options)
   if (modResults instanceof Error) throw modResults
 
   let abort = false
@@ -70,6 +73,6 @@ async function moderateMessages(messages: AIChatMessage[], userMessage: Message,
 
     return allowed
   })
-  log(messages, abort)
+
   return abort ? null : messages
 }

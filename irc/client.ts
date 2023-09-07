@@ -57,10 +57,13 @@ function createIRCClient() {
 
 function createBot() {
   const bot = fork(botEntry, [config.server, config.nick])
-  bot.on('error', (error) => log('bot error:', error))
+  bot.on('error', (error) => {
+    log('bot error:', error)
+    setTimeout(reloadBot, autoReloadDelay)
+  })
+
   bot.on('exit', () => {
     log('bot has terminated')
-    setTimeout(reloadBot, autoReloadDelay)
   })
 
   bot.on('message', (message) => {
@@ -78,8 +81,9 @@ function createBot() {
   return bot
 }
 
+// function autoReload
+
 function reloadBot() {
-  log('[reloading bot]')
   bot.kill()
   bot = createBot()
 }

@@ -5,7 +5,7 @@ import { createMessage, getHandlers, getOptions } from './api/db.js'
 import { respond } from './command.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
-import { chat } from './features/chat.js'
+import { chat } from './features/chat/chat.js'
 import { image } from './features/image.js'
 import { self } from './lib/util.js'
 

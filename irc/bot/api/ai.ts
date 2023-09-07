@@ -1,64 +1,16 @@
 import type { Platform } from '@prisma/client'
 import type {
-  AIChatMessage,
-  AIChatResponse,
   ModelParameters,
   OpenAIImageResponseB64,
-  OpenAIModerationResponse,
   Options,
   TogetherAIImageResponse,
 } from '../types.js'
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
-import { getOptions } from './db.js'
 
 const log = debug('pIRCe:ai')
 
 // TODO count tokens (somewhere)
-
-async function chat(platform: Platform, parameters: ModelParameters, options: Options) {
-  try {
-    log('chat %o', platform.label)
-
-    let url = ''
-
-    if (platform.id === 'openai') url = 'https://api.openai.com/v1/chat/completions'
-    if (platform.id === 'openrouter') url = 'https://openrouter.ai/api/v1/chat/completions'
-    if (platform.id === 'togetherai') url = 'https://api.together.xyz/inference'
-
-    const config = createConfig(url, options)
-    const response = await axios<AIChatResponse>({ ...config, data: parameters })
-
-    return response.data.choices[0]
-  } catch (error) {
-    return handleError(error)
-  }
-}
-
-async function moderateMessages(messages: AIChatMessage[], options: Options) {
-  try {
-    log('moderate OpenAI')
-
-    const { moderationProfileList } = await getOptions()
-
-    const config = createConfig('https://api.openai.com/v1/moderations', options)
-    const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
-
-    log('moderate %o', 'openai')
-    const response = await axios<OpenAIModerationResponse>({ ...config, data })
-
-    // get flagged keys, remove allowed, return remaining objectional keys
-    const parsed = response.data.results.map((result) => {
-      const categories = result.categories as Record<string, boolean>
-      const flaggedKeys = Object.keys(categories).filter((k) => categories[k])
-      return flaggedKeys.filter((k) => !moderationProfileList.includes(k))
-    })
-
-    return parsed
-  } catch (error) {
-    return handleError(error)
-  }
-}
 
 // TODO better payload type
 async function image(platform: Platform, parameters: ModelParameters, options: Options) {
@@ -99,7 +51,7 @@ async function image(platform: Platform, parameters: ModelParameters, options: O
   }
 }
 
-export const ai = { chat, image, moderateMessages }
+export const ai = { image }
 
 function createConfig(url: string, options: Options) {
   return {
