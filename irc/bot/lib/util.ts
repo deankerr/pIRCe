@@ -14,10 +14,11 @@ export function getClown() {
 }
 
 /* 
+const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)
 
-// remove @command + nick if the text starts with either, replace remaining nicks with character name
+remove @command + nick if the text starts with either, replace remaining nicks with character name
 function adaptKeywords(content: string, profile: Profile) {
-  // TODO remove @trigger hardcode
+
   const nickTrigger = new RegExp(`^${context.me}\\b`)
   const stripTrigger = content.replace(/^@\w*\s/, '').replace(nickTrigger, '')
   return substitute(stripTrigger, context.me, profile.replaceNick)

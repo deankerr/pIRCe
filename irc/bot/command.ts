@@ -1,46 +1,55 @@
-import { createMessage } from './api/db.js'
+import type { ActionContext, InitialContext } from './types.js'
+import { createConversationTags, createMessage } from './api/db.js'
 import { format } from './lib/output.js'
-import { self } from './util.js'
 
-const send = (message: string) => {
+const sendDataToHost = (data: string) => {
   if (!process.send) throw new Error('process.send is unavailable')
-  process.send(message)
+  process.send(data)
 }
 
 export const command = {
-  say: async (target: string, message: string) => {
-    const msg = await createMessage({
-      server: self.server,
-      target,
-      nick: self.nick,
-      content: message,
-      self: true,
-      mask: 'self',
-      type: 'message',
-    })
-    send(`say ${target} ${await format(message)}`)
-    return msg
-  },
-
-  action: async (target: string, message: string) => {
-    const msg = await createMessage({
-      server: self.server,
-      target,
-      nick: self.nick,
-      content: message,
-      self: true,
-      mask: 'self',
-      type: 'action',
-    })
-    send(`action ${target} ${await format(message)}`)
-    return msg
-  },
-
   join: (target: string) => {
-    send(`join ${target}`)
+    sendDataToHost(`join ${target}`)
   },
 
   part: (target: string) => {
-    send(`part ${target}`)
+    sendDataToHost(`part ${target}`)
   },
+
+  say: (target: string, message: string) => {
+    sendDataToHost(`say ${target} ${message}`)
+  },
+
+  action: (target: string, message: string) => {
+    sendDataToHost(`action ${target} ${message}`)
+  },
+}
+
+type AnyContext = InitialContext | ActionContext
+export const respond = {
+  say: (ctx: AnyContext, message: string) => createResponse(ctx, 'say', message),
+  action: (ctx: AnyContext, message: string) => createResponse(ctx, 'action', message),
+}
+
+async function createResponse(
+  ctx: InitialContext | ActionContext,
+  type: 'say' | 'action',
+  content: string,
+) {
+  const target = ctx.handler.overrideOutputTarget ?? ctx.message.target
+
+  const formatted = await format(content, ctx.options)
+  command[type](target, formatted)
+
+  const ourMessage = await createMessage({
+    server: ctx.self.server,
+    target,
+    nick: ctx.self.nick,
+    content,
+    self: true,
+    mask: 'self',
+    type,
+  })
+
+  if (ctx.profile) createConversationTags(ctx.profile, ctx.message, ourMessage)
 }

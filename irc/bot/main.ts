@@ -2,11 +2,12 @@ import type { FEATURE } from './const.js'
 import type { InitialContext, IRCEventMessage } from './types.js'
 import debug from 'debug'
 import { createMessage, getHandlers, getOptions } from './api/db.js'
+import { respond } from './command.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
 import { chat } from './features/chat.js'
 import { image } from './features/image.js'
-import { self } from './util.js'
+import { self } from './lib/util.js'
 
 type Feature = (ctx: InitialContext) => void | Promise<void>
 const features: Record<string, Feature> = {
@@ -71,6 +72,8 @@ export async function main(ircMessage: IRCEventMessage) {
         ...match,
         message,
         options,
+        self,
+        respond,
       })
     }
   }

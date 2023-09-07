@@ -1,9 +1,7 @@
-import { getOptions } from '../api/db.js'
+import type { Options } from '../types.js'
 import { create } from '../api/file.js'
 
-export async function format(text: string) {
-  const options = await getOptions()
-
+export async function format(text: string, options: Options) {
   const filtered = applyWordFilter(options.wordFilterList, text)
   const output = formatNewlines(options.outputIRCMessageMaxNewlines, filtered)
 
@@ -16,14 +14,11 @@ export async function format(text: string) {
   }
 }
 
-// const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)
-
 function applyWordFilter(list: string[], text: string) {
   let filtered = text
   for (const word of list) {
     filtered = text.replaceAll(new RegExp(`${word}`, 'gi'), '****')
   }
-
   return filtered
 }
 
@@ -45,6 +40,3 @@ function formatNewlines(maxNewlines: number, text: string) {
     return lines.join('\n')
   }
 }
-// export function respond(ctx: InitialContext | ActionContext) {
-//
-// }

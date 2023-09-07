@@ -46,14 +46,18 @@ export async function createMessage(ircMessage: IRCEventMessage) {
   return msg
 }
 
-export async function createConversationTag(profile: Profile, message: Message) {
-  return await prisma.conversationTag.create({
-    data: {
-      profileID: profile.id,
-      profileVersion: profile.version,
-      messageID: message.id,
-    },
+export function createConversationTags(profile: Profile, ...message: Message[]) {
+  const tags = message.map(async (msg) => {
+    return await prisma.conversationTag.create({
+      data: {
+        profileID: profile.id,
+        profileVersion: profile.version,
+        messageID: msg.id,
+      },
+    })
   })
+
+  return tags
 }
 
 export async function getOptions() {
@@ -65,6 +69,7 @@ export async function getOptions() {
   return { ...options, moderationProfileList, wordFilterList }
 }
 
+// TODO break this up
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(message: Message, profile: Profile) {
   // const { conversationLength, contextualLength } = profile

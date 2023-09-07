@@ -1,5 +1,6 @@
 import type { Handler, Message, Model, Platform, Profile as RawProfile } from '@prisma/client'
 import type { getOptions } from './api/db.js'
+import type { respond } from './command'
 
 export type Options = Awaited<ReturnType<typeof getOptions>>
 
@@ -16,6 +17,8 @@ export type IRCEventMessage = {
 export type InitialContext = {
   message: Message
   options: Options
+  self: Self
+  respond: typeof respond
   handler: Handler
   profile: Profile | null
   model: Model | null
@@ -25,7 +28,9 @@ export type InitialContext = {
 export type ActionContext = {
   message: Message
   options: Options
+  self: Self
   handler: Handler
+  respond: typeof respond
   profile: Profile
   model: Model
   platform: Platform
@@ -36,6 +41,11 @@ export type Profile = Omit<RawProfile, 'parameters'> & { parameters: ModelParame
 export type ModelParameters = Partial<
   AIChatRequest & OpenAIImageRequest & TogetherAIImageRequest & Record<string, unknown>
 >
+
+type Self = {
+  server: string
+  nick: string
+}
 
 //* API
 //* OpenAI / OpenRouter

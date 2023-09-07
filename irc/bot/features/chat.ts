@@ -2,8 +2,7 @@ import type { Message } from '@prisma/client'
 import type { AIChatMessage, InitialContext, Options } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
-import { createConversationTag, getContextualMessages } from '../api/db.js'
-import { command } from '../command.js'
+import { getContextualMessages } from '../api/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
 import { validateActionContext } from '../lib/validate.js'
 
@@ -43,11 +42,6 @@ export async function chat(event: InitialContext) {
     const response = result.message.content.replaceAll(/<(human|bot).*$/gm, '').trim()
 
     log('%s {%s}', response, result.finish_reason ?? '?')
-
-    const target = handler.overrideOutputTarget ?? message.target
-    await createConversationTag(profile, message)
-    const responseMessage = await command.say(target, response)
-    await createConversationTag(profile, responseMessage)
   } catch (error) {
     log(error)
   }
