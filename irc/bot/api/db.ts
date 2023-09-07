@@ -1,12 +1,12 @@
-import type { Message, Profile as RawProfile } from '@prisma/client'
-import type { IRCEventMessage, ModelParameters, Profile } from '../types.js'
+import type { Message, Profile } from '@prisma/client'
+import type { IRCEventMessage } from '../types.js'
 import { PrismaClient } from '@prisma/client'
 import { parseJsonList } from '../lib/validate.js'
 
 export const prisma = new PrismaClient()
 
 export async function getHandlers() {
-  const handlers = await prisma.handler.findMany({
+  return await prisma.handler.findMany({
     include: {
       profile: {
         include: {
@@ -20,23 +20,18 @@ export async function getHandlers() {
     },
   })
 
-  return handlers.map((handler) => {
-    const profile = parseProfileParameters(handler.profile)
-    const model = handler.profile?.model ?? null
-    const platform = handler.profile?.model?.platform ?? null
-    return {
-      handler,
-      profile,
-      model,
-      platform,
-    }
-  })
-}
-
-function parseProfileParameters(profile: RawProfile | null) {
-  if (!profile) return profile
-  const parameters = JSON.parse(profile.parameters) as ModelParameters
-  return { ...profile, parameters }
+  // return handlers.map((handler) => {
+  //   // const profile = parseProfileParameters(handler.profile)
+  //   const profile = handler.profile
+  //   const model = handler.profile?.model ?? null
+  //   const platform = handler.profile?.model?.platform ?? null
+  //   return {
+  //     handler,
+  //     profile,
+  //     model,
+  //     platform,
+  //   }
+  // })
 }
 
 export async function createMessage(ircMessage: IRCEventMessage) {

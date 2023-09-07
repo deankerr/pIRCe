@@ -1,18 +1,15 @@
 import type { Message } from '@prisma/client'
-import type { AIChatMessage, InitialContext, Options } from '../../types.js'
+import type { ActionContext, AIChatMessage, Options } from '../../types.js'
 import debug from 'debug'
 import { getContextualMessages } from '../../api/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../../lib/input.js'
-import { validateActionContext } from '../../lib/validate.js'
+import { TEMPparseProfileParameters } from '../../lib/validate.js'
 import { apiChat, apiModerateMessages } from './api.js'
 
 const log = debug('pIRCe:chat')
 
-export async function chat(event: InitialContext) {
+export async function chat(ctx: ActionContext) {
   try {
-    const ctx = validateActionContext(event)
-    if (ctx instanceof Error) return log('failed')
-
     const { message, options, handler, profile, model, platform } = ctx
 
     const contextual = await getContextualMessages(message, profile)
@@ -29,7 +26,7 @@ export async function chat(event: InitialContext) {
 
     // * Construct payload
     const parameters = {
-      ...profile.parameters,
+      ...TEMPparseProfileParameters(profile.parameters),
       messages,
       model: model.id,
     }

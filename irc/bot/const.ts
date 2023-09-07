@@ -1,3 +1,10 @@
+// export const FEATURE = {
+//   admin: 'admin',
+//   chat: 'chat',
+//   image: 'image',
+// } as const
+// export type Feature = keyof typeof FEATURE
+
 export const TRIGGER_TYPE = {
   command: 'command',
   mention: 'mention',
@@ -6,12 +13,6 @@ export const TRIGGER_TYPE = {
 
 export const WILDCARD = {
   nick: '__NICK__',
-} as const
-
-export const FEATURE = {
-  admin: 'admin',
-  chat: 'chat',
-  image: 'image',
 } as const
 
 export const PLATFORM = {

@@ -27,7 +27,7 @@ async function main() {
       label: 'ChatGPT 3.5 Turbo',
       platformID: openai.id,
       feature: 'chat',
-      promptStyle: 'openai',
+      promptFormat: 'openai',
     },
   })
 
@@ -44,7 +44,7 @@ async function main() {
       label: 'DALL-E',
       platformID: openai.id,
       feature: 'image',
-      promptStyle: 'openai',
+      promptFormat: 'openai',
     },
   })
 
@@ -72,7 +72,7 @@ async function main() {
       label: 'OpenAI: ChatGPT 4',
       platformID: openrouter.id,
       feature: 'chat',
-      promptStyle: 'openai',
+      promptFormat: 'openai',
     },
   })
 
@@ -90,7 +90,7 @@ async function main() {
       label: 'Meta: Llama v2 70B Chat',
       platformID: openrouter.id,
       feature: 'chat',
-      promptStyle: 'openai',
+      promptFormat: 'openai',
     },
   })
 
@@ -108,7 +108,7 @@ async function main() {
       label: 'Nous: Hermes Llama2 13B',
       platformID: openrouter.id,
       feature: 'chat',
-      promptStyle: 'openai',
+      promptFormat: 'openai',
     },
   })
 
@@ -136,7 +136,7 @@ async function main() {
       label: 'Realistic Vision V3.0',
       platformID: togetherai.id,
       feature: 'image',
-      promptStyle: 'alpaca',
+      promptFormat: 'alpaca',
     },
   })
 
@@ -156,8 +156,8 @@ async function main() {
         max_tokens: 256,
       }),
       mainPrompt: 'You are Turbo the helpful assistant.',
-      maxHistoryLength: 10,
-      maxLocalIRCLength: 5,
+      maxConversationLength: 10,
+      maxLocalMessageLength: 5,
       modelID: modelTurbo.id,
       platformID: openai.id,
     },
@@ -189,8 +189,8 @@ async function main() {
         max_tokens: 256,
       }),
       mainPrompt: 'You are Four, the helpful assistant.',
-      maxHistoryLength: 10,
-      maxLocalIRCLength: 5,
+      maxConversationLength: 10,
+      maxLocalMessageLength: 5,
       modelID: modelORGPT4.id,
       platformID: openrouter.id,
     },
@@ -210,7 +210,6 @@ async function main() {
   })
 
   //* 3. OpenRouter Nous Hermes
-
   const profileHermes = await prisma.profile.upsert({
     where: {
       id: 3,
@@ -223,8 +222,8 @@ async function main() {
         max_tokens: 256,
       }),
       mainPrompt: 'You are Hermes, the helpful assistant.',
-      maxHistoryLength: 10,
-      maxLocalIRCLength: 0,
+      maxConversationLength: 10,
+      maxLocalMessageLength: 0,
       modelID: modelHermes.id,
       platformID: openrouter.id,
     },

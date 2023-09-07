@@ -1,27 +1,24 @@
-import type { InitialContext } from '../types.js'
+import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import { ai } from '../api/ai.js'
 import { create } from '../api/file.js'
 import { command } from '../command.js'
 import { PLATFORM } from '../const.js'
 import { stripInitialKeyword } from '../lib/input.js'
-import { validateActionContext } from '../lib/validate.js'
+import { TEMPparseProfileParameters } from '../lib/validate.js'
 
 const log = debug('pIRCe:image')
 
-export async function image(event: InitialContext) {
+export async function image(ctx: ActionContext) {
   try {
-    const ctx = validateActionContext(event)
-    if (ctx instanceof Error) return log('failed')
-
     const { message, options, handler, profile, model, platform } = ctx
 
     // ? Handle request payload construction / response validation here? (payload)
     // ? api handles url + headers (config)
-
+    const parsed = TEMPparseProfileParameters(profile.parameters)
     // * Construct payload
     const parameters = {
-      ...profile.parameters,
+      ...parsed,
       prompt: stripInitialKeyword(message.content, handler.triggerWord ?? ''),
     }
 

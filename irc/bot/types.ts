@@ -1,4 +1,4 @@
-import type { Handler, Message, Model, Platform, Profile as RawProfile } from '@prisma/client'
+import type { Handler, Message, Model, Platform, Profile } from '@prisma/client'
 import type { getOptions } from './api/db.js'
 import type { respond } from './command'
 
@@ -20,9 +20,6 @@ export type InitialContext = {
   self: Self
   respond: typeof respond
   handler: Handler
-  profile: Profile | null
-  model: Model | null
-  platform: Platform | null
 }
 
 export type ActionContext = {
@@ -36,7 +33,7 @@ export type ActionContext = {
   platform: Platform
 }
 
-export type Profile = Omit<RawProfile, 'parameters'> & { parameters: ModelParameters }
+// export type Profile = Omit<RawProfile, 'parameters'> & { parameters: ModelParameters }
 
 export type ModelParameters = Partial<
   AIChatRequest & OpenAIImageRequest & TogetherAIImageRequest & Record<string, unknown>
@@ -46,6 +43,8 @@ type Self = {
   server: string
   nick: string
 }
+
+// type Feature = (ctx: InitialContext) => void | Promise<void>
 
 //* API
 //* OpenAI / OpenRouter
@@ -153,6 +152,7 @@ export type OpenAIImageRequest = {
 export type OpenAIImageResponseURL = { data: { url: string }[] }
 export type OpenAIImageResponseB64 = { data: { b64_json: string }[] }
 
+//* TogetherAI
 export type TogetherAIImageRequest = {
   model: string
   prompt: string

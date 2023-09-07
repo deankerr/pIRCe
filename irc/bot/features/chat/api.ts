@@ -1,7 +1,6 @@
 import type { Platform } from '@prisma/client'
 import type {
   AIChatMessage,
-  AIChatResponse,
   ModelParameters,
   OpenAIModerationResponse,
   Options,
@@ -12,7 +11,7 @@ import { z } from 'zod'
 import { getOptions } from '../../api/db.js'
 import { create } from '../../api/file.js'
 
-const log = debug('pIRCe:ai')
+const log = debug('pIRCe:chat:ai')
 
 // TODO count tokens (somewhere)
 
@@ -31,7 +30,7 @@ const platforms: { chat: Record<string, TempPlatInfo> } = {
       headers: {
         Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
         'HTTP-Referer': `${getEnv('OPENROUTER_YOUR_SITE_URL')}`, //& these in
-        'X-Title': `${getEnv('OPENROUTER_YOUR_APP_NAME')}`, //& the db now
+        // 'X-Title': `${getEnv('OPENROUTER_YOUR_APP_NAME')}`, //& the db now
       },
     },
     togetherai: {
@@ -43,15 +42,14 @@ const platforms: { chat: Record<string, TempPlatInfo> } = {
   },
 } satisfies { chat: Record<Platform['id'], TempPlatInfo> }
 
+type TempPlatInfo = {
+  url: string
+  headers: Record<string, string>
+}
 //^ temp
 const modHeaders = {
   url: 'https://api.openai.com/v1/moderations',
   headers: { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` },
-}
-
-type TempPlatInfo = {
-  url: string
-  headers: Record<string, string>
 }
 
 export async function apiChat(platform: Platform, parameters: ModelParameters, options: Options) {
@@ -61,13 +59,18 @@ export async function apiChat(platform: Platform, parameters: ModelParameters, o
     const platInfo = platforms.chat[platform.id]
     if (!platInfo) throw new Error(`Unknown platform ID for chat api: ${platform.id}`)
 
+    // TODO type db.getPlatform, schema function (platform, obj)
+    const schema = getPlatformSchema(platform.id)
+    const data = schema.request.parse(parameters)
+
     const config = createConfig(platInfo, options)
-    const response = await axios<AIChatResponse>({ ...config, data: parameters })
+    const response = await axios({ ...config, data })
+
+    const parsed = schema.response.parse(response.data)
 
     //& response data file log
-    if (response) void create.appendLog(`api-chat-${platform.id ?? '?'}`, response.data)
-
-    return response.data.choices[0]
+    if (response) void create.appendLog(`api-chat-${platform.id ?? '?'}`, parsed)
+    return parsed.choices[0]
   } catch (error) {
     return handleError(error)
   }
@@ -79,14 +82,13 @@ export async function apiModerateMessages(messages: AIChatMessage[], options: Op
 
     const { moderationProfileList } = await getOptions()
 
-    //^ temp
+    //^ ### temp
     const platInfo = modHeaders
     if (!platInfo) throw new Error(`Unknown platform ID for chat api: openai?`)
 
     const config = createConfig(platInfo, options)
     const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
 
-    log('moderate %o', 'openai')
     const response = await axios<OpenAIModerationResponse>({ ...config, data })
 
     // get flagged keys, remove allowed, return remaining objectional keys
@@ -159,6 +161,15 @@ function handleError(error: unknown) {
       // something happened ???
       throw new Error('Unknown error error')
     }
+  }
+}
+
+function getPlatformSchema(key: string) {
+  if (key in schema) {
+    const id = key as keyof typeof schema
+    return schema[id]
+  } else {
+    throw new Error(`Invalid schema key: ${key}`)
   }
 }
 
@@ -245,7 +256,7 @@ export const schema = {
         stream: z.boolean(),
       })
       .partial()
-      .required({ model: true, messages: true }),
+      .required({ model: true }),
     response: z.object({
       id: z.string(),
       model: z.string(),
@@ -259,12 +270,14 @@ export const schema = {
           finish_reason: z.string().optional(), //? OpenAI only?
         }),
       ),
-      usage: z.object({
-        //? probably OpenAI only
-        prompt_tokens: z.number(),
-        completion_tokens: z.number(),
-        total_tokens: z.number(),
-      }),
+      //? probably OpenAI only
+      usage: z
+        .object({
+          prompt_tokens: z.number(),
+          completion_tokens: z.number(),
+          total_tokens: z.number(),
+        })
+        .optional(),
     }),
   },
 }

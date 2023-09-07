@@ -1,18 +1,5 @@
-import type { ActionContext, InitialContext } from '../types'
+import type { ModelParameters } from '../types'
 import { z } from 'zod'
-
-export function validateActionContext(ctx: InitialContext): ActionContext | Error {
-  const model = ctx.model !== null
-  const platform = ctx.platform !== null
-  const profile = ctx.profile !== null
-
-  if (model && platform && profile) {
-    return ctx as ActionContext
-  } else {
-    const label = `${ctx.handler.id}/${ctx.handler.triggerWord}/${ctx.profile?.label}/${ctx.model?.label}`
-    throw new Error(`ActionContext validation failed: ${label}`)
-  }
-}
 
 // JSON schema
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
@@ -35,4 +22,9 @@ export const stringToJSONSchema = z.string().transform((str, ctx): z.infer<typeo
 export function parseJsonList(str: string) {
   const json = stringToJSONSchema.parse(str)
   return z.string().array().parse(json)
+}
+
+export function TEMPparseProfileParameters(json: string) {
+  const parameters = stringToJSONSchema.parse(json) as ModelParameters
+  return parameters
 }
