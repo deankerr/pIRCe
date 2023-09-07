@@ -8,6 +8,7 @@ import { Client } from 'matrix-org-irc'
 const log = debug('pIRCe:irc')
 const botPath = 'irc/bot/'
 const botEntry = botPath + 'main.js'
+const autoReloadDelay = 5000
 
 function getConfig() {
   const config = {
@@ -56,9 +57,11 @@ function createIRCClient() {
 
 function createBot() {
   const bot = fork(botEntry, [config.server, config.nick])
-
   bot.on('error', (error) => log('bot error:', error))
-  bot.on('exit', () => log('bot has terminated'))
+  bot.on('exit', () => {
+    log('bot has terminated')
+    setTimeout(reloadBot, autoReloadDelay)
+  })
 
   bot.on('message', (message) => {
     if (typeof message !== 'string') throw new Error('Unknown bot message type')

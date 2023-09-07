@@ -63,13 +63,13 @@ export type AIChatRequest = {
   frequency_penalty?: number // 0
   logit_bias?: Record<string, number>
   user?: string // end user abuse tracking
-
-  // OpenAI only
-  functions?: OpenAIFunctionCall[]
-  function_call?: string
   // OpenRouter only
   top_k?: number
   transforms?: string[]
+
+  // OpenAI only
+  // functions?: OpenAIFunctionCall[]
+  // function_call?: string
 }
 
 export type AIChatResponse = {
@@ -95,7 +95,7 @@ export type AIChatMessage = {
   role: 'user' | 'assistant' | 'system' | 'function'
   name?: string // required if role is 'function'
   content: string
-  function_call?: OpenAIFunctionCall
+  // function_call?: OpenAIFunctionCall
 }
 
 export type OpenAIFunctionCall = {
