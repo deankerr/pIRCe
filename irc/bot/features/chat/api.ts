@@ -15,10 +15,6 @@ const log = debug('pIRCe:chat:ai')
 
 // TODO count tokens (somewhere)
 
-//^ where does this live? const? own platforms file? da db??
-//^ attach + validate at start?
-// TODO: temp headers set up. keys also can be in db
-// ? function call gets headers, retrieves env/db values at that time
 const platforms: { chat: Record<string, TempPlatInfo> } = {
   chat: {
     openai: {
@@ -104,6 +100,7 @@ export async function apiModerateMessages(messages: AIChatMessage[], options: Op
   }
 }
 
+// todo dedupe
 function createConfig(info: TempPlatInfo, options: Options) {
   const { url, headers } = info
   return {
@@ -203,6 +200,7 @@ export const schema = {
       })
       .partial()
       .required({ model: true, messages: true }),
+
     response: z.object({
       id: z.string(),
       object: z.string(),
@@ -226,6 +224,7 @@ export const schema = {
       }),
     }),
   },
+
   //* OpenRouter
   openrouter: {
     request: z
@@ -257,6 +256,7 @@ export const schema = {
       })
       .partial()
       .required({ model: true }),
+
     response: z.object({
       id: z.string(),
       model: z.string(),
