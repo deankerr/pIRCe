@@ -10,22 +10,16 @@ const log = debug('pIRCe:image:api')
 
 export async function apiImage(platform: Platform, parameters: ModelParameters, options: Options) {
   try {
-    const log = debug('pIRCe:api.image')
-
     log('%s %o', platform.label, parameters.prompt)
 
-    const info = getPlatformInfo(platform.id, 'image')
-
-    const config = createConfig(info, options)
+    const configInfo = getPlatformInfo(platform.id, 'image')
+    const config = createConfig(configInfo, options)
 
     const schema = getPlatformSchema(platform.id)
     const data = schema.request.parse(parameters)
 
-    const response = await axios({
-      ...config,
-      data,
-    })
-    log(response)
+    const response = await axios({ ...config, data })
+
     //& response data file log
     await create.appendLog(`api-image-${platform.id ?? '?'}`, response.data)
 
@@ -128,7 +122,7 @@ const schema = {
       created: z.number(),
       data: z.array(
         z.object({
-          b64_json: z.string(),
+          b64_json: z.string(), // TODO or url
         }),
       ),
     }),

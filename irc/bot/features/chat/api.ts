@@ -8,64 +8,30 @@ import type {
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 import { z } from 'zod'
-import { getOptions } from '../../lib/db.js'
 import { create } from '../../lib/file.js'
+import { getPlatformInfo } from '../../platforms.js'
 
 const log = debug('pIRCe:chat:ai')
 
 // TODO count tokens (somewhere)
 
-const platforms: { chat: Record<string, TempPlatInfo> } = {
-  chat: {
-    openai: {
-      url: 'https://api.openai.com/v1/chat/completions',
-      headers: { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` },
-    },
-    openrouter: {
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      headers: {
-        Authorization: `Bearer ${getEnv('OPENROUTER_API_KEY')}`,
-        'HTTP-Referer': `${getEnv('OPENROUTER_YOUR_SITE_URL')}`, //& these in
-        // 'X-Title': `${getEnv('OPENROUTER_YOUR_APP_NAME')}`, //& the db now
-      },
-    },
-    togetherai: {
-      url: 'https://api.together.xyz/inference',
-      headers: {
-        Authorization: `Bearer ${getEnv('TOGETHERAI_API_KEY')}`,
-      },
-    },
-  },
-} satisfies { chat: Record<Platform['id'], TempPlatInfo> }
-
-type TempPlatInfo = {
-  url: string
-  headers: Record<string, string>
-}
-//^ temp
-const modHeaders = {
-  url: 'https://api.openai.com/v1/moderations',
-  headers: { Authorization: `Bearer ${getEnv('OPENAI_API_KEY')}` },
-}
-
 export async function apiChat(platform: Platform, parameters: ModelParameters, options: Options) {
   try {
     log('chat %o', platform.label)
 
-    const platInfo = platforms.chat[platform.id]
-    if (!platInfo) throw new Error(`Unknown platform ID for chat api: ${platform.id}`)
+    const configInfo = getPlatformInfo(platform.id, 'chat')
+    const config = createConfig(configInfo, options)
 
-    // TODO type db.getPlatform, schema function (platform, obj)
     const schema = getPlatformSchema(platform.id)
     const data = schema.request.parse(parameters)
 
-    const config = createConfig(platInfo, options)
     const response = await axios({ ...config, data })
+
+    //& response data file log
+    await create.appendLog(`api-chat-${platform.id ?? '?'}`, response.data)
 
     const parsed = schema.response.parse(response.data)
 
-    //& response data file log
-    if (response) void create.appendLog(`api-chat-${platform.id ?? '?'}`, parsed)
     return parsed.choices[0]
   } catch (error) {
     return handleError(error)
@@ -76,13 +42,11 @@ export async function apiModerateMessages(messages: AIChatMessage[], options: Op
   try {
     log('moderate OpenAI')
 
-    const { moderationProfileList } = await getOptions()
+    const { moderationProfileList } = options
 
-    //^ ### temp
-    const platInfo = modHeaders
-    if (!platInfo) throw new Error(`Unknown platform ID for chat api: openai?`)
+    const configInfo = getPlatformInfo('openai', 'moderation')
+    const config = createConfig(configInfo, options)
 
-    const config = createConfig(platInfo, options)
     const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
 
     const response = await axios<OpenAIModerationResponse>({ ...config, data })
@@ -112,9 +76,9 @@ function createConfig(info: TempPlatInfo, options: Options) {
   }
 }
 
-function getEnv(key: string) {
-  if (!process.env[key]) throw new Error(`${key} not set`)
-  return process.env[key]
+type TempPlatInfo = {
+  url: string
+  headers: Record<string, string>
 }
 
 function handleError(error: unknown) {
@@ -171,8 +135,7 @@ function getPlatformSchema(key: string) {
 }
 
 //* Schema
-//^ probs dont export
-export const schema = {
+const schema = {
   //* OpenAI
   openai: {
     request: z
