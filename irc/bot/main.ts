@@ -67,8 +67,6 @@ export async function main(ircMessage: IRCEventMessage) {
 
   for (const handler of matched) {
     if (!handler.feature) return
-    // const { handler, profile, model, platform } = match
-    // if (handler.feature === null) continue // should already be filtered?
 
     const simple = simpleFeatures[handler.feature]
     if (simple) {
@@ -103,5 +101,9 @@ export async function main(ircMessage: IRCEventMessage) {
   }
 }
 
-process.on('message', (message: IRCEventMessage) => void main(message))
+process.on('message', (message: IRCEventMessage) => {
+  main(message).catch((error) => {
+    log(error)
+  })
+})
 log(`bot loaded! 🤖🤖`)

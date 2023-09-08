@@ -19,25 +19,13 @@ export async function getHandlers() {
       },
     },
   })
-
-  // return handlers.map((handler) => {
-  //   // const profile = parseProfileParameters(handler.profile)
-  //   const profile = handler.profile
-  //   const model = handler.profile?.model ?? null
-  //   const platform = handler.profile?.model?.platform ?? null
-  //   return {
-  //     handler,
-  //     profile,
-  //     model,
-  //     platform,
-  //   }
-  // })
 }
 
 export async function createMessage(ircMessage: IRCEventMessage) {
   const msg = await prisma.message.create({
     data: { ...ircMessage, content: ircMessage.content.trim() },
   })
+
   return msg
 }
 
@@ -67,7 +55,6 @@ export async function getOptions() {
 // TODO break this up
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(message: Message, profile: Profile) {
-  // const { conversationLength, contextualLength } = profile
   const conversationLength = profile.maxConversationLength ?? 0
   const contextualLength = profile.maxLocalMessageLength ?? 0
   const { server, target } = message
