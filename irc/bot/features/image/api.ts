@@ -25,9 +25,9 @@ export async function apiImage(platform: Platform, parameters: ModelParameters, 
       ...config,
       data,
     })
-
+    log(response)
     //& response data file log
-    if (response) void create.appendLog(`api-chat-${platform.id ?? '?'}`, response.data)
+    await create.appendLog(`api-image-${platform.id ?? '?'}`, response.data)
 
     const parsed = schema.response.parse(response.data)
 
@@ -63,6 +63,8 @@ type TempPlatInfo = {
 }
 
 function handleError(error: unknown) {
+  //& error log
+  void create.errorLog(`error-image-api-${new Date().toISOString()}`, error)
   if (isAxiosError(error)) {
     if (error.response) {
       // API error

@@ -1,7 +1,6 @@
 import type { ActionContext } from '../../types.js'
 import debug from 'debug'
-import { command } from '../../command.js'
-import { PLATFORM } from '../../const.js'
+import { respond } from '../../command.js'
 import { create } from '../../lib/file.js'
 import { stripInitialKeyword } from '../../lib/input.js'
 import { TEMPparseProfileParameters } from '../../lib/validate.js'
@@ -11,17 +10,13 @@ const log = debug('pIRCe:image')
 
 export async function image(ctx: ActionContext) {
   try {
-    const { message, options, handler, profile, model, platform } = ctx
+    const { message, options, handler, profile, platform } = ctx
 
     const parsed = TEMPparseProfileParameters(profile.parameters)
     // * Construct payload
     const parameters = {
       ...parsed,
       prompt: stripInitialKeyword(message.content, handler.triggerWord ?? ''),
-    }
-
-    if (platform.id !== PLATFORM.openai) {
-      parameters.model = model.id
     }
 
     const result = await apiImage(platform, parameters, options)
@@ -33,8 +28,7 @@ export async function image(ctx: ActionContext) {
     const fileLabel = await create.base64ToPNG(result.result)
 
     if (fileLabel) {
-      const target = handler.overrideOutputTarget ?? message.target
-      void command.say(target, fileLabel)
+      await respond.say(ctx, fileLabel)
     }
   } catch (error) {
     log(error)
