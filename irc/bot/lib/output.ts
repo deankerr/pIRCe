@@ -1,5 +1,5 @@
 import type { Options } from '../types.js'
-import { create } from '../api/file.js'
+import { create } from './file.js'
 
 export async function format(text: string, options: Options) {
   const filtered = applyWordFilter(options.wordFilterList, text)

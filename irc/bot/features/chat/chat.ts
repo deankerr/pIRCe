@@ -1,7 +1,7 @@
 import type { Message } from '@prisma/client'
 import type { ActionContext, AIChatMessage, Options } from '../../types.js'
 import debug from 'debug'
-import { getContextualMessages } from '../../api/db.js'
+import { getContextualMessages } from '../../lib/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../../lib/input.js'
 import { TEMPparseProfileParameters } from '../../lib/validate.js'
 import { apiChat, apiModerateMessages } from './api.js'

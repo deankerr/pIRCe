@@ -8,8 +8,8 @@ import type {
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 import { z } from 'zod'
-import { getOptions } from '../../api/db.js'
-import { create } from '../../api/file.js'
+import { getOptions } from '../../lib/db.js'
+import { create } from '../../lib/file.js'
 
 const log = debug('pIRCe:chat:ai')
 

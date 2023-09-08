@@ -1,5 +1,5 @@
 import type { ActionContext, InitialContext } from './types.js'
-import { createConversationTags, createMessage } from './api/db.js'
+import { createConversationTags, createMessage } from './lib/db.js'
 import { format } from './lib/output.js'
 
 const sendDataToHost = (data: string) => {
@@ -51,5 +51,5 @@ async function createResponse(
     type,
   })
 
-  if (ctx.profile) createConversationTags(ctx.profile, ctx.message, ourMessage)
+  if ('profile' in ctx) createConversationTags(ctx.profile, ctx.message, ourMessage)
 }

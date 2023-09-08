@@ -3,7 +3,7 @@ import type { ModelParameters, Options } from '../../types.js'
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 import { z } from 'zod'
-import { create } from '../../api/file.js'
+import { create } from '../../lib/file.js'
 import { getPlatformInfo } from '../../platforms.js'
 
 const log = debug('pIRCe:image:api')

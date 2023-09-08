@@ -1,8 +1,8 @@
 import type { ActionContext } from '../../types.js'
 import debug from 'debug'
-import { create } from '../../api/file.js'
 import { command } from '../../command.js'
 import { PLATFORM } from '../../const.js'
+import { create } from '../../lib/file.js'
 import { stripInitialKeyword } from '../../lib/input.js'
 import { TEMPparseProfileParameters } from '../../lib/validate.js'
 import { apiImage } from './api.js'
@@ -23,9 +23,6 @@ export async function image(ctx: ActionContext) {
     if (platform.id !== PLATFORM.openai) {
       parameters.model = model.id
     }
-
-    // ? move to specialised per platform modules?
-    // ? e.g. OpenAI doesnt take model param, Together does
 
     const result = await apiImage(platform, parameters, options)
     if (result instanceof Error) throw result

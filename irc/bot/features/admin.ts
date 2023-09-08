@@ -1,7 +1,7 @@
 import type { InitialContext } from '../types.js'
 import debug from 'debug'
-import { prisma } from '../api/db.js'
 import { command } from '../command.js'
+import { prisma } from '../lib/db.js'
 
 const log = debug('pIRCe:admin')
 

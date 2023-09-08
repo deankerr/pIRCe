@@ -1,6 +1,6 @@
 import type { Handler, Message, Model, Platform, Profile } from '@prisma/client'
-import type { getOptions } from './api/db.js'
 import type { respond } from './command'
+import type { getOptions } from './lib/db.js'
 
 export type Options = Awaited<ReturnType<typeof getOptions>>
 

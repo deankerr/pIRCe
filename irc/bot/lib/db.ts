@@ -1,7 +1,7 @@
 import type { Message, Profile } from '@prisma/client'
 import type { IRCEventMessage } from '../types.js'
 import { PrismaClient } from '@prisma/client'
-import { parseJsonList } from '../lib/validate.js'
+import { parseJsonList } from './validate.js'
 
 export const prisma = new PrismaClient()
 
