@@ -1,13 +1,12 @@
-import type { Model, Options, Profile, Route } from '@prisma/client'
-import { api } from '~/utils/api'
+// import { api } from '~/utils/api'
 import Head from 'next/head'
 
 export default function Home() {
   // const hello = api.example.hello.useQuery({ text: 'from tRPC' })
-  const routes = api.botConfig.getRoutes.useQuery()
-  const profiles = api.botConfig.getProfiles.useQuery()
-  const models = api.botConfig.getModels.useQuery()
-  const options = api.botConfig.getOptions.useQuery()
+  // const routes = api.botConfig.getRoutes.useQuery()
+  // const profiles = api.botConfig.getProfiles.useQuery()
+  // const models = api.botConfig.getModels.useQuery()
+  // const options = api.botConfig.getOptions.useQuery()
 
   return (
     <>
@@ -19,160 +18,9 @@ export default function Home() {
       <main className="flex min-h-screen flex-col items-center justify-center base-content">
         <div className="container flex flex-col items-center justify-center gap-6 px-4 py-16">
           <h1 className="prose">pIRCe dashboard</h1>
-          {routes.data ? <RoutesTable routes={routes.data} /> : 'Loading Routes data...'}
-          {profiles.data ? <ProfilesTable profiles={profiles.data} /> : 'Loading Profiles data...'}
-          {models.data ? <ModelsTable models={models.data} /> : 'Loading Models data...'}
-          {options.data ? <OptionsTable options={options.data} /> : 'Loading Options data...'}
+          <p>Coming in 2024</p>
         </div>
       </main>
     </>
-  )
-}
-
-type RoutesTableProps = {
-  routes: Route[]
-}
-
-const RoutesTable = (props: RoutesTableProps) => {
-  const { routes } = props
-  return (
-    <div>
-      <h2 className="">Routes</h2>
-      <table className="table-zebra">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">ID</th>
-            <th className="px-4 py-2">Target</th>
-            <th className="px-4 py-2">Keyword</th>
-            <th className="px-4 py-2">StartsWithKeyword</th>
-            <th className="px-4 py-2">MentionsKeyword</th>
-            <th className="px-4 py-2">Handler</th>
-            <th className="px-4 py-2">OverrideOutputTarget</th>
-            <th className="px-4 py-2">ProfileID</th>
-            <th className="px-4 py-2">ModelID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {routes.map((r) => (
-            <tr key={r.id} className="hover">
-              <td className="border px-2 py-1">{r.id}</td>
-              <td className="border px-2 py-1">{r.target}</td>
-              <td className="border px-2 py-1">{r.keyword}</td>
-              <td className="border px-2 py-1">{r.startsWithKeyword.toString()}</td>
-              <td className="border px-2 py-1">{r.mentionsKeyword.toString()}</td>
-              <td className="border px-2 py-1">{r.handler}</td>
-              <td className="border px-2 py-1">{r.overrideOutputTarget}</td>
-              <td className="border px-2 py-1">{r.profileID}</td>
-              <td className="border px-2 py-1">{r.modelID}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-type ProfilesTableProps = {
-  profiles: Profile[]
-}
-
-const ProfilesTable = (props: ProfilesTableProps) => {
-  const { profiles } = props
-  return (
-    <div>
-      <h2>Profiles</h2>
-      <table className="table-zebra">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">ID</th>
-            <th className="px-4 py-2">Prompt</th>
-            <th className="px-4 py-2">Prompt Tail</th>
-            <th className="px-4 py-2">Conversation Length</th>
-            <th className="px-4 py-2">Contextual Length</th>
-            <th className="px-4 py-2">Character Name</th>
-          </tr>
-        </thead>
-        <tbody>
-          {profiles.map((p) => (
-            <tr key={p.id}>
-              <td className="border px-4 py-2">{p.id}</td>
-              <td className="border px-4 py-2">{p.prompt}</td>
-              <td className="border px-4 py-2">{p.promptTail}</td>
-              <td className="border px-4 py-2">{p.conversationLength}</td>
-              <td className="border px-4 py-2">{p.contextualLength}</td>
-              <td className="border px-4 py-2">{p.characterName}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-type ModelsTableProps = {
-  models: Model[]
-}
-
-const ModelsTable = (props: ModelsTableProps) => {
-  const { models } = props
-  return (
-    <div>
-      <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-[2rem]">Models</h2>
-      <table className="table-zebra">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">ID</th>
-            <th className="px-4 py-2">URL</th>
-            <th className="px-4 py-2">Parameters</th>
-          </tr>
-        </thead>
-        <tbody>
-          {models.map((m) => (
-            <tr key={m.id}>
-              <td className="border px-4 py-2">{m.id}</td>
-              <td className="border px-4 py-2">{m.url}</td>
-              <td className="border px-4 py-2">{m.parameters}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-type OptionsTableProps = {
-  options: Options[]
-}
-
-const OptionsTable = (props: OptionsTableProps) => {
-  const { options } = props
-  return (
-    <div>
-      <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-[2rem]">Options</h2>
-      <table className="text-zebra">
-        <thead>
-          <tr>
-            <th className="px-4 py-2">Moderation Profile</th>
-            <th className="px-4 py-2">Output File URL Template</th>
-            <th className="px-4 py-2">Output File Dir</th>
-            <th className="px-4 py-2">Output Filename ID Length</th>
-            <th className="px-4 py-2">Output IRC Max Newlines</th>
-            <th className="px-4 py-2">Output IRC Max Chars</th>
-            <th className="px-4 py-2">API Timeout Ms</th>
-          </tr>
-        </thead>
-        <tbody>
-          {options.map((o) => (
-            <tr key={o.options}>
-              <td className="border px-4 py-2">{o.moderationProfile}</td>
-              <td className="border px-4 py-2">{o.outputFileURLTemplate}</td>
-              <td className="border px-4 py-2">{o.outputFileDir}</td>
-              <td className="border px-4 py-2">{o.outputFilenameIDLength}</td>
-              <td className="border px-4 py-2">{o.outputIRCMaxNewlines}</td>
-              <td className="border px-4 py-2">{o.outputIRCMaxChars}</td>
-              <td className="border px-4 py-2">{o.apiTimeoutMs}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   )
 }

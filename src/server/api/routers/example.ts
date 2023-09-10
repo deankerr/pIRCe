@@ -7,8 +7,8 @@ export const exampleRouter = createTRPCRouter({
       greeting: `Hello ${input.text}`,
     }
   }),
-  getAll: publicProcedure.query(({ ctx }) => {
-    // return ctx.prisma.example.findMany()
-    return [{ id: 1, name: 'example' }]
-  }),
+  // getAll: publicProcedure.query(({ ctx }) => {
+  //   // return ctx.prisma.example.findMany()
+  //   return [{ id: 1, name: 'example' }]
+  // }),
 })

@@ -7,9 +7,9 @@ export const botConfigRouter = createTRPCRouter({
       greeting: `Hello ${input.text}`,
     }
   }),
-  getRoutes: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.route.findMany()
-  }),
+  // getRoutes: publicProcedure.query(({ ctx }) => {
+  //   return ctx.prisma.route.findMany()
+  // }),
   getProfiles: publicProcedure.query(({ ctx }) => {
     return ctx.prisma.profile.findMany()
   }),
