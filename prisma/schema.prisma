@@ -122,6 +122,7 @@ model Platform {
 // Options
 model Options {
   options               String @id @default("options") // there can only be one
+  adminHostMask         String?
   moderationProfileList String @default("[]") // categories to allow 
   wordFilterList        String @default("[]") // censored words
 

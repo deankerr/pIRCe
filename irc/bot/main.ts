@@ -25,6 +25,7 @@ export async function main(ircMessage: IRCEventMessage) {
   const message = await createMessage(ircMessage)
   if (message.self) return // don't route our own messages
 
+  const options = await getOptions()
   // find all matching handlers
   const allHandlers = await getHandlers()
 
@@ -41,7 +42,10 @@ export async function main(ircMessage: IRCEventMessage) {
     if (isChannel && !handler.allowChannel) return false
     if (!isChannel && !handler.allowQuery) return false
 
-    // TODO check admin status
+    // admin restricted
+    if (handler.restrictAdmin && options.adminHostMask) {
+      if (message.mask !== options.adminHostMask) return false
+    }
 
     // trigger on anything is now true
     if (handler.triggerType === TRIGGER_TYPE.anything) return true
@@ -72,7 +76,7 @@ export async function main(ircMessage: IRCEventMessage) {
     if (simple) {
       const context = {
         message,
-        options: await getOptions(),
+        options,
         self,
         handler,
         respond,
