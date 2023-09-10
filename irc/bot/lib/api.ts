@@ -11,13 +11,15 @@ const log = debug('pIRCe:api')
 export async function request(
   platform: Platform,
   feature: string,
-  payload: object,
+  payload: Record<string, unknown>,
   options: Options,
 ) {
   try {
     const { url, headers } = getPlatformConfig(platform, feature, options)
 
-    log('%s %o %s', platform.label, url, feature)
+    const label = 'model' in payload ? `${platform.id}/${payload.model as string}` : platform.id
+    log('%s: %o %s', feature, label, url)
+
     const response = await got
       .post({
         url,

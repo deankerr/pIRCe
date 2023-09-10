@@ -1,4 +1,3 @@
-import type { ModelParameters } from '../types'
 import { z } from 'zod'
 
 // JSON schema
@@ -24,7 +23,7 @@ export function parseJsonList(str: string) {
   return z.string().array().parse(json)
 }
 
-export function TEMPparseProfileParameters(json: string) {
-  const parameters = stringToJSONSchema.parse(json) as ModelParameters
-  return parameters
+export function parseJsonRecord(data: string) {
+  const json = stringToJSONSchema.parse(data)
+  return z.object({}).passthrough().parse(json)
 }

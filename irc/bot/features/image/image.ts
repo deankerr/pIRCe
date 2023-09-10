@@ -7,19 +7,16 @@ import { respond } from '../../command.js'
 import { request } from '../../lib/api.js'
 import { create } from '../../lib/file.js'
 import { stripInitialKeyword } from '../../lib/input.js'
-import { TEMPparseProfileParameters } from '../../lib/validate.js'
+import { parseJsonRecord } from '../../lib/validate.js'
 
 const log = debug('pIRCe:image')
 
 export async function image(ctx: ActionContext) {
   try {
-    const parameters = TEMPparseProfileParameters(ctx.profile.parameters)
-    const payload = {
-      ...parameters,
-      prompt: stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? ''),
-    }
+    const prompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
+    const payload = createPayload(ctx, { prompt })
 
-    log(`${ctx.platform.label} ${ctx.model.label} > %o`, payload.prompt)
+    log(`%o`, payload.prompt)
     const response = await request(ctx.platform, 'image', payload, ctx.options)
     const imageData = parseResponseImage(ctx.platform, response)
 
@@ -31,6 +28,22 @@ export async function image(ctx: ActionContext) {
     }
     log(error)
   }
+}
+
+function createPayload(ctx: ActionContext, input: object) {
+  const parameters = parseJsonRecord(ctx.profile.parameters)
+  const model = ctx.model.id
+
+  const payload = {
+    ...parameters,
+    model,
+    ...input,
+  }
+
+  if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
+  const s = schema[ctx.platform.id as keyof typeof schema].request
+
+  return s.parse(payload)
 }
 
 function parseResponseImage(platform: Platform, response: unknown) {

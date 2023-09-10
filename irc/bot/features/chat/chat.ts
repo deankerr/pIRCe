@@ -6,7 +6,7 @@ import { respond } from '../../command.js'
 import { request } from '../../lib/api.js'
 import { getContextualMessages } from '../../lib/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../../lib/input.js'
-import { TEMPparseProfileParameters } from '../../lib/validate.js'
+import { parseJsonRecord } from '../../lib/validate.js'
 
 const log = debug('pIRCe:chat')
 
@@ -22,15 +22,9 @@ export async function chat(ctx: ActionContext) {
     }
 
     messages = normalizeAPIInput(messages, ctx.handler.triggerWord)
-
-    // TODO parse input
-    const payload = {
-      ...TEMPparseProfileParameters(ctx.profile.parameters),
-      messages,
-      model: ctx.model.id,
-    }
-
     messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
+
+    const payload = createPayload(ctx, { messages })
     const response = await request(ctx.platform, 'chat', payload, ctx.options)
 
     const message = parseResponseMessage(ctx.platform, response)
@@ -41,6 +35,22 @@ export async function chat(ctx: ActionContext) {
   } catch (error) {
     log(error)
   }
+}
+
+function createPayload(ctx: ActionContext, input: object) {
+  const parameters = parseJsonRecord(ctx.profile.parameters)
+  const model = ctx.model.id
+
+  const payload = {
+    ...parameters,
+    model,
+    ...input,
+  }
+
+  if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
+  const s = schema[ctx.platform.id as keyof typeof schema].request
+
+  return s.parse(payload)
 }
 
 function parseResponseMessage(platform: Platform, response: unknown) {
