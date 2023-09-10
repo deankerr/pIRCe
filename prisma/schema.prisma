@@ -128,10 +128,10 @@ model Options {
   outputFilePath             String  @default("output")
   outputFileBaseURL          String? // eg "web.site/{filename}"
   outputURLFilenameExtension Boolean @default(true)
-  outputFilenameLength       Int     @default(3) // i.e. 3 = abc.txt
+  outputFilenameLength       Int     @default(4) // i.e. 3 = abc.txt
 
   outputIRCMessageMaxNewlines Int @default(4)
-  outputIRCMessageMaxLength   Int @default(440)
+  outputIRCMessageMaxLength   Int @default(430)
 
   apiTimeoutMs Int @default(30000)
 

@@ -52,7 +52,9 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
     log('created %o', filepath)
 
     if (options.outputFileBaseURL) {
-      return options.outputFileBaseURL + options.outputURLFilenameExtension ? extension : ''
+      let label = options.outputFileBaseURL + id
+      if (options.outputURLFilenameExtension) label += `.${extension}`
+      return label
     } else {
       return filename
     }

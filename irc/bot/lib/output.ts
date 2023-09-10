@@ -8,7 +8,7 @@ export async function format(text: string, options: Options) {
   // add text file URL output if above max char length
   if (output.length > options.outputIRCMessageMaxLength) {
     const fileLabel = await create.text(output)
-    return output + fileLabel
+    return `${output.slice(0, options.outputIRCMessageMaxLength)} ${fileLabel}`
   } else {
     return output
   }
