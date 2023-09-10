@@ -1,12 +1,12 @@
 import type { Message, Platform } from '@prisma/client'
-import type { ActionContext, AIChatMessage } from '../../types.js'
+import type { ActionContext, AIChatMessage } from '../types.js'
 import debug from 'debug'
 import { z } from 'zod'
-import { respond } from '../../command.js'
-import { request } from '../../lib/api.js'
-import { getContextualMessages } from '../../lib/db.js'
-import { buildOpenChatMessages, normalizeAPIInput } from '../../lib/input.js'
-import { parseJsonRecord } from '../../lib/validate.js'
+import { respond } from '../command.js'
+import { request } from '../lib/api.js'
+import { getContextualMessages } from '../lib/db.js'
+import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
+import { parseJsonRecord } from '../lib/validate.js'
 
 const log = debug('pIRCe:chat')
 
