@@ -1,10 +1,5 @@
 import type { Platform } from '@prisma/client'
-import type {
-  AIChatMessage,
-  ModelParameters,
-  OpenAIModerationResponse,
-  Options,
-} from '../../types.js'
+import type { AIChatMessage, ModelParameters, Options } from '../../types.js'
 import axios, { isAxiosError } from 'axios'
 import debug from 'debug'
 import { z } from 'zod'
@@ -47,18 +42,25 @@ export async function apiModerateMessages(messages: AIChatMessage[], options: Op
     const configInfo = getPlatformInfo('openai', 'moderation')
     const config = createConfig(configInfo, options)
 
-    const data = { input: messages.map((m) => `${m.name ?? ''} ${m.content}`) }
+    const schema = schemaModeration
+    const input = messages.map((m) => `${m.name ?? ''} ${m.content}`)
+    const data = schema.request.parse({ input })
 
-    const response = await axios<OpenAIModerationResponse>({ ...config, data })
+    const response = await axios({ ...config, data })
+
+    //& response data file log
+    await create.appendLog(`api-moderation-openai`, response.data)
+
+    const parsed = schema.response.parse(response.data)
 
     // get flagged keys, remove allowed, return remaining objectional keys
-    const parsed = response.data.results.map((result) => {
-      const categories = result.categories as Record<string, boolean>
+    const parsedCategories = parsed.results.map((result) => {
+      const { categories } = result
       const flaggedKeys = Object.keys(categories).filter((k) => categories[k])
       return flaggedKeys.filter((k) => !moderationProfileList.includes(k))
     })
 
-    return parsed
+    return parsedCategories
   } catch (error) {
     return handleError(error)
   }
@@ -243,4 +245,22 @@ const schema = {
         .optional(),
     }),
   },
+}
+
+const schemaModeration = {
+  request: z.object({
+    input: z.string().or(z.string().array()),
+    model: z.optional(z.enum(['text-moderation-stable', 'text-moderation-latest'])),
+  }),
+  response: z.object({
+    id: z.string(),
+    model: z.string(),
+    results: z.array(
+      z.object({
+        flagged: z.boolean(),
+        categories: z.record(z.boolean()),
+        category_scores: z.record(z.number()),
+      }),
+    ),
+  }),
 }
