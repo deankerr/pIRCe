@@ -2,25 +2,36 @@ import type { Platform } from '@prisma/client'
 import type { PlatformID } from '../platforms.js'
 import type { Options } from '../types.js'
 import debug from 'debug'
-import got from 'got'
+import got, { HTTPError } from 'got'
 import { platforms2 } from '../platforms.js'
+import { create } from './../lib/file.js'
 
 const log = debug('pIRCe:api')
 
 export const reqAPI = { image }
 
 export async function image(platform: Platform, payload: object, options: Options) {
-  const { url, headers } = getPlatformConfig(platform, 'image', options)
+  try {
+    const { url, headers } = getPlatformConfig(platform, 'image', options)
 
-  const response = await got
-    .post({
-      url,
-      headers,
-      json: payload,
-    })
-    .json()
+    const response = await got
+      .post({
+        url,
+        headers,
+        json: payload,
+      })
+      .json()
 
-  log(response)
+    return response
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      log(`image: ${error.name} ${error.message}`)
+      log(error.response.body)
+      log(error)
+    }
+    await create.errorLog('api-image', error)
+    throw error
+  }
 }
 
 function getPlatformConfig(platform: Platform, feature: string, options: Options) {
