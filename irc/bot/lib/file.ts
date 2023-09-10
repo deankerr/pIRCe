@@ -19,9 +19,10 @@ async function appendLog(name: string, data: unknown) {
 
 async function errorLog(name: string, data: unknown) {
   try {
-    const filename = `${name}-${new Date().toISOString()}.log`
+    const filename = `error-${name}-${new Date().toISOString()}.log`
     const filepath = await getFilepath('logs', filename)
     await writeFile(filepath, util.format('%o', data))
+    log('created %o', filepath)
   } catch (error) {
     log(error)
   }

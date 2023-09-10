@@ -64,7 +64,7 @@ export const platforms2 = {
     },
   },
   openrouter: {
-    features: { chat: 'https://api.openai.com/v1/chat/completions' },
+    features: { chat: 'https://openrouter.ai/api/v1/chat/completions' },
     headers: {
       Authorization: 'Bearer',
       'HTTP-Referer': '',

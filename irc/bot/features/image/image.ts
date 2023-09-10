@@ -4,7 +4,7 @@ import debug from 'debug'
 import { HTTPError } from 'got'
 import { z } from 'zod'
 import { respond } from '../../command.js'
-import { reqAPI } from '../../lib/api.js'
+import { request } from '../../lib/api.js'
 import { create } from '../../lib/file.js'
 import { stripInitialKeyword } from '../../lib/input.js'
 import { TEMPparseProfileParameters } from '../../lib/validate.js'
@@ -20,8 +20,8 @@ export async function image(ctx: ActionContext) {
     }
 
     log(`${ctx.platform.label} ${ctx.model.label} > %o`, payload.prompt)
-    const response = await reqAPI.image(ctx.platform, payload, ctx.options)
-    const imageData = getImageData(ctx.platform, response)
+    const response = await request(ctx.platform, 'image', payload, ctx.options)
+    const imageData = parseResponseImage(ctx.platform, response)
 
     const fileLabel = await create.base64ToPNG(imageData)
     if (fileLabel) await respond.say(ctx, fileLabel)
@@ -29,11 +29,11 @@ export async function image(ctx: ActionContext) {
     if (error instanceof HTTPError) {
       // TODO handleable rejections
     }
-    throw error
+    log(error)
   }
 }
 
-function getImageData(platform: Platform, response: unknown) {
+function parseResponseImage(platform: Platform, response: unknown) {
   if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
   const s = schema[platform.id as keyof typeof schema].response
   const parsed = s.parse(response)

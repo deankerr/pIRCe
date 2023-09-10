@@ -8,12 +8,17 @@ import { create } from './../lib/file.js'
 
 const log = debug('pIRCe:api')
 
-export const reqAPI = { image }
-
-export async function image(platform: Platform, payload: object, options: Options) {
+// TODO timeout options
+export async function request(
+  platform: Platform,
+  feature: string,
+  payload: object,
+  options: Options,
+) {
   try {
-    const { url, headers } = getPlatformConfig(platform, 'image', options)
+    const { url, headers } = getPlatformConfig(platform, feature, options)
 
+    log('%s %o %s', platform.label, url, feature)
     const response = await got
       .post({
         url,
@@ -25,11 +30,10 @@ export async function image(platform: Platform, payload: object, options: Option
     return response
   } catch (error) {
     if (error instanceof HTTPError) {
-      log(`image: ${error.name} ${error.message}`)
-      log(error.response.body)
-      log(error)
+      log(`response error: ${error.name} ${error.message}`)
+      log('response body: %o', error.response.body)
     }
-    await create.errorLog('api-image', error)
+    await create.errorLog(`api-${feature}`, error)
     throw error
   }
 }
