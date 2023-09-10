@@ -81,3 +81,5 @@ export const platforms2 = {
     },
   },
 }
+
+export type PlatformID = keyof typeof platforms2

@@ -1,6 +1,7 @@
 import type { ActionContext } from '../../types.js'
 import debug from 'debug'
 import { respond } from '../../command.js'
+import { reqAPI } from '../../lib/api.js'
 import { create } from '../../lib/file.js'
 import { stripInitialKeyword } from '../../lib/input.js'
 import { TEMPparseProfileParameters } from '../../lib/validate.js'
@@ -10,6 +11,7 @@ const log = debug('pIRCe:image')
 
 export async function image(ctx: ActionContext) {
   try {
+    await image2(ctx)
     const { message, options, handler, profile, platform } = ctx
 
     const parsed = TEMPparseProfileParameters(profile.parameters)
@@ -33,4 +35,14 @@ export async function image(ctx: ActionContext) {
   } catch (error) {
     log(error)
   }
+}
+
+export async function image2(ctx: ActionContext) {
+  const parameters = TEMPparseProfileParameters(ctx.profile.parameters)
+  const payload = {
+    ...parameters,
+    prompt: stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? ''),
+  }
+
+  await reqAPI.image(ctx.platform, payload, ctx.options)
 }
