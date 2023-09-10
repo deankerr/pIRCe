@@ -17,7 +17,7 @@ export async function image(ctx: ActionContext) {
     const payload = createPayload(ctx, { prompt })
 
     log(`%o`, payload.prompt)
-    const response = await request(ctx.platform, 'image', payload, ctx.options)
+    const response = await request(ctx, 'image', payload)
     const imageData = parseResponseImage(ctx.platform, response)
 
     const fileLabel = await create.base64ToPNG(imageData)

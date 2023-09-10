@@ -1,5 +1,5 @@
 import type { Message, Platform } from '@prisma/client'
-import type { ActionContext, AIChatMessage, Options } from '../../types.js'
+import type { ActionContext, AIChatMessage } from '../../types.js'
 import debug from 'debug'
 import { z } from 'zod'
 import { respond } from '../../command.js'
@@ -16,7 +16,7 @@ export async function chat(ctx: ActionContext) {
     let messages = buildOpenChatMessages(ctx.profile, contextual)
 
     if (ctx.platform.id === 'openai') {
-      const moderated = await moderateMessages(ctx.platform, messages, ctx.message, ctx.options)
+      const moderated = await moderateMessages(ctx, messages, ctx.message)
       if (!moderated) return log('chat failed')
       messages = moderated
     }
@@ -25,7 +25,7 @@ export async function chat(ctx: ActionContext) {
     messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
 
     const payload = createPayload(ctx, { messages })
-    const response = await request(ctx.platform, 'chat', payload, ctx.options)
+    const response = await request(ctx, 'chat', payload)
 
     const message = parseResponseMessage(ctx.platform, response)
       .replaceAll(/<(human|bot).*$/gm, '') // TODO handle OR/alpaca leakage
@@ -65,17 +65,16 @@ function parseResponseMessage(platform: Platform, response: unknown) {
 }
 
 async function moderateMessages(
-  platform: Platform,
+  ctx: ActionContext,
   messages: AIChatMessage[],
   userMessage: Message,
-  options: Options,
 ) {
-  const { moderationProfileList } = options
+  const { moderationProfileList } = ctx.options
 
   const input = messages.map((m) => `${m.name ?? ''} ${m.content}`)
   const payload = schemaModeration.request.parse({ input })
 
-  const response = await request(platform, 'moderation', payload, options)
+  const response = await request(ctx, 'moderation', payload)
   const parsed = schemaModeration.response.parse(response)
 
   // get flagged keys, remove allowed, return remaining objectional keys

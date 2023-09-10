@@ -1,5 +1,4 @@
-import type { Platform } from '@prisma/client'
-import type { Options } from '../types.js'
+import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import got, { HTTPError } from 'got'
 import { platforms } from '../platforms.js'
@@ -9,15 +8,15 @@ const log = debug('pIRCe:api')
 
 // TODO timeout options
 export async function request(
-  platform: Platform,
+  ctx: ActionContext,
   feature: string,
   payload: Record<string, unknown>,
-  options: Options,
 ) {
   try {
-    const { url, headers } = getPlatformConfig(platform, feature, options)
+    const { url, headers } = getPlatformConfig(ctx, feature)
 
-    const label = 'model' in payload ? `${platform.id}/${payload.model as string}` : platform.id
+    const label =
+      'model' in payload ? `${ctx.platform.id}/${payload.model as string}` : ctx.platform.id
     log('%s: %o %s', feature, label, url)
 
     const response = await got
@@ -25,6 +24,9 @@ export async function request(
         url,
         headers,
         json: payload,
+        timeout: {
+          request: ctx.options.apiTimeoutMs,
+        },
       })
       .json()
 
@@ -39,37 +41,42 @@ export async function request(
   }
 }
 
-function getPlatformConfig(platform: Platform, feature: string, options: Options) {
-  if (!(platform.id in platforms)) throw new Error(`Unknown platform id: ${platform.id}`)
-  const platformRecord = platforms[platform.id as keyof typeof platforms]
+function getPlatformConfig(ctx: ActionContext, feature: string) {
+  const platformRecord: PlatformRecord = platforms
 
-  if (!(feature in platformRecord.features)) {
-    throw new Error(`Unsupported feature: ${feature} for platform id: ${platform.id}`)
-  }
+  const platform = platformRecord[ctx.platform.id]
+  if (!platform) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
 
-  const url = platformRecord.features[feature as keyof typeof platformRecord.features]
-  const headers = { ...platformRecord.headers }
+  const url = platform.features[feature]
+  if (!url) throw new Error(`Unsupported feature: ${feature} for platform id: ${ctx.platform.id}`)
 
-  const key = platform.apiKey ?? process.env[`${platform.id.toUpperCase()}_API_KEY`]
-  if (!key) throw new Error(`Missing API key for: ${platform.id}`)
+  const key = ctx.platform.apiKey ?? process.env[`${ctx.platform.id.toUpperCase()}_API_KEY`]
+  if (!key) throw new Error(`Missing API key for: ${ctx.platform.id}`)
+
+  const headers = { ...platform.headers }
 
   if ('Authorization' in headers) {
     headers.Authorization += ` ${key}`
   }
 
   if ('HTTP-Referer' in headers) {
-    const value = options.appURL ?? 'http://site.url'
+    const value = ctx.options.appURL ?? 'http://site.url'
     headers['HTTP-Referer'] += `${value}`
   }
 
   if ('X-Title' in headers) {
-    const value = options.appName ?? 'a pIRCeBot'
+    const value = ctx.options.appName ?? 'a pIRCeBot'
     headers['X-Title'] += `${value}`
   }
 
   return { url, headers }
 }
 
+type PlatformRecord = Record<string, PlatformData>
+type PlatformData = {
+  features: Record<string, string>
+  headers: Record<string, string>
+}
 /* 
     OpenAI Error
     400	BadRequestError
