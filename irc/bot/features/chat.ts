@@ -28,10 +28,17 @@ export async function chat(ctx: ActionContext) {
     const response = await request(ctx, 'chat', payload)
 
     const message = parseResponseMessage(ctx.platform, response)
-      .replaceAll(/<(human|bot).*$/gm, '') // TODO handle OR/alpaca leakage
+    log('raw: %o', message)
+
+    // clean some prompt data that leaks into response, commonly with OpenRouter
+    const cleaned = message
+      .replaceAll(new RegExp(`^${ctx.profile.characterName ?? ''}:`, 'gm'), '')
+      .replaceAll(/<(human|bot).*$/gm, '')
+      .replaceAll(/###.*$/gm, '')
+      .replaceAll(/\n\n##/gm, '')
       .trim()
 
-    await respond.say(ctx, message)
+    await respond.say(ctx, cleaned)
   } catch (error) {
     log(error)
   }

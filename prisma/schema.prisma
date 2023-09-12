@@ -85,7 +85,7 @@ model Profile {
   // Chat Options
   maxConversationLength Int? // max messages
   maxLocalMessageLength Int? // max unrelated ambient irc messages
-  // character name? image?
+  characterName         String?
 
   handler         Handler[]
   conversationTag ConversationTag[]
