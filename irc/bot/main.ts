@@ -4,6 +4,7 @@ import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
 import { chat } from './features/chat.js'
 import { image } from './features/image.js'
+import { setMemoryTime } from './features/set-memory-time.js'
 import { createMessage, getHandlers, getOptions } from './lib/db.js'
 import { self } from './lib/util.js'
 import { respond } from './send.js'
@@ -13,6 +14,7 @@ type ActionFeature = (ctx: ActionContext) => void | Promise<void>
 
 const simpleFeatures: Record<string, SimpleFeature> = {
   admin,
+  setMemoryTime,
 }
 const actionFeatures: Record<string, ActionFeature> = {
   chat,
@@ -55,7 +57,7 @@ export async function main(ircMessage: IRCEventMessage) {
 
     // command-style trigger, e.g. $chat |  $chat (allow whitespace)
     if (handler.triggerType === TRIGGER_TYPE.command) {
-      const command = new RegExp(`^\\s*${triggerWord} `)
+      const command = new RegExp(`^\\s*${triggerWord}`)
       if (command.test(message.content)) return true
     }
 
@@ -71,7 +73,6 @@ export async function main(ircMessage: IRCEventMessage) {
 
   for (const handler of matched) {
     if (!handler.feature) return
-
     const simple = simpleFeatures[handler.feature]
     if (simple) {
       const context = {

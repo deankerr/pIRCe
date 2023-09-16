@@ -61,6 +61,7 @@ export async function getContextualMessages(message: Message, profile: Profile) 
   const related = await prisma.message.findMany({
     where: {
       id: { lt: message.id }, // before current message
+      time: { gte: profile.maxMessageHistoryTime }, // filter messages older than maxHistoryTime
       server,
       target,
       conversationTag: {
@@ -94,4 +95,13 @@ export async function getContextualMessages(message: Message, profile: Profile) 
   // add user message
   contextual.push(message)
   return contextual
+}
+
+// hacky memory erase feature for profiles stuck in repetition loop
+export function setMessageMaxHistoryTimeAllNow() {
+  return prisma.profile.updateMany({
+    data: {
+      maxMessageHistoryTime: new Date(),
+    },
+  })
 }
