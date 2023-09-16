@@ -7,7 +7,7 @@ const sendDataToHost = (data: string) => {
   process.send(data)
 }
 
-export const command = {
+export const sendRaw = {
   join: (target: string) => {
     sendDataToHost(`join ${target}`)
   },
@@ -39,7 +39,7 @@ async function createResponse(
   const target = ctx.handler.overrideOutputTarget ?? ctx.message.target
 
   const formatted = await format(content, ctx.options)
-  command[type](target, formatted)
+  sendRaw[type](target, formatted)
 
   const ourMessage = await createMessage({
     server: ctx.self.server,

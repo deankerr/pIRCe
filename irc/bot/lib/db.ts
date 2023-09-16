@@ -34,7 +34,6 @@ export function createConversationTags(profile: Profile, ...message: Message[]) 
     return await prisma.conversationTag.create({
       data: {
         profileID: profile.id,
-        profileVersion: profile.version,
         messageID: msg.id,
       },
     })
@@ -52,7 +51,6 @@ export async function getOptions() {
   return { ...options, moderationProfileList, wordFilterList }
 }
 
-// TODO break this up
 // retrieve same profile tagged and/or local messages
 export async function getContextualMessages(message: Message, profile: Profile) {
   const conversationLength = profile.maxConversationLength ?? 0
@@ -68,7 +66,6 @@ export async function getContextualMessages(message: Message, profile: Profile) 
       conversationTag: {
         some: {
           profileID: profile.id,
-          profileVersion: profile.version,
         },
       },
     },

@@ -3,11 +3,11 @@ import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import { HTTPError } from 'got'
 import { z } from 'zod'
-import { respond } from '../command.js'
 import { request } from '../lib/api.js'
 import { create } from '../lib/file.js'
 import { stripInitialKeyword } from '../lib/input.js'
 import { parseJsonRecord } from '../lib/validate.js'
+import { respond } from '../send.js'
 
 const log = debug('pIRCe:image')
 

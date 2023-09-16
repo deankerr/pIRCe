@@ -30,16 +30,15 @@ model Message {
 model ConversationTag {
   id Int @id @default(autoincrement())
 
-  owner          Profile @relation(fields: [profileID, profileVersion], references: [id, version])
+  owner          Profile @relation(fields: [profileID], references: [id])
   profileID      Int
-  profileVersion Int
 
   message   Message @relation(fields: [messageID], references: [id])
   messageID Int
 
   metadata String?
 
-  @@unique([profileID, profileVersion, messageID])
+  @@unique([profileID, messageID])
 }
 
 model Handler {
@@ -66,7 +65,6 @@ model Handler {
 // Prompt / Persona
 model Profile {
   id      Int @id @default(autoincrement())
-  version Int @default(0) // used with id for metatag memory (versioning/erasure)
 
   label       String  @unique // friendly name
   description String?
@@ -78,19 +76,19 @@ model Profile {
   platformID String?
 
   // Chat 
-  mainPrompt            String? // "system" / instructions
-  examplePromptList     String? // JSON? allow examples or fake messages to always follow instructions
-  postPrompt            String? // inserted after/just before last message
-  postPromptOffset      Int? // 0 = last, 1 = just before last, etc.
+  mainPrompt        String? // "system" / instructions
+  examplePromptList String? // JSON? allow examples or fake messages to always follow instructions
+  postPrompt        String? // inserted after/just before last message
+  postPromptOffset  Int? // 0 = last, 1 = just before last, etc.
+
   // Chat Options
   maxConversationLength Int? // max messages
   maxLocalMessageLength Int? // max unrelated ambient irc messages
+  maxMessageHistoryTime DateTime @default(now()) // don't include messages in history before this time
   characterName         String?
 
   handler         Handler[]
   conversationTag ConversationTag[]
-
-  @@unique([id, version])
 }
 
 model Model {
@@ -121,10 +119,10 @@ model Platform {
 
 // Options
 model Options {
-  options               String @id @default("options") // there can only be one
+  options               String  @id @default("options") // there can only be one
   adminHostMask         String?
-  moderationProfileList String @default("[]") // categories to allow 
-  wordFilterList        String @default("[]") // censored words
+  moderationProfileList String  @default("[]") // categories to allow 
+  wordFilterList        String  @default("[]") // censored words
 
   outputFilePath             String  @default("output")
   outputFileBaseURL          String? // eg "web.site/{filename}"
