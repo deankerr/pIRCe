@@ -3,7 +3,7 @@ import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import { HTTPError } from 'got'
 import { z } from 'zod'
-import { request } from '../lib/api.js'
+import { request, requestReplicate } from '../lib/api.js'
 import { create } from '../lib/file.js'
 import { stripInitialKeyword } from '../lib/input.js'
 import { parseJsonRecord } from '../lib/validate.js'
@@ -21,6 +21,31 @@ export async function image(ctx: ActionContext) {
     const imageData = parseResponseImage(ctx.platform, response)
 
     const fileLabel = await create.base64ToPNG(imageData)
+    if (fileLabel) await respond.say(ctx, fileLabel)
+  } catch (error) {
+    if (error instanceof HTTPError) {
+      // TODO handleable rejections
+    }
+    log(error)
+  }
+}
+
+export async function imageReplicate(ctx: ActionContext) {
+  try {
+    const userPrompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
+    const profilePrompt = ctx.profile.mainPrompt ?? ''
+    const prompt = `${profilePrompt} ${userPrompt}`.trim()
+
+    const payload = { model: ctx.model.id, prompt }
+
+    log(`rep %o`, payload.prompt)
+
+    const response = await requestReplicate(ctx, 'image', payload)
+
+    const urls = z.string().array().parse(response)
+    const url = urls[0]!
+
+    const fileLabel = await create.fetchAndSavePNG(url)
     if (fileLabel) await respond.say(ctx, fileLabel)
   } catch (error) {
     if (error instanceof HTTPError) {

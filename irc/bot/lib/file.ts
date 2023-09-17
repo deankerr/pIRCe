@@ -1,7 +1,10 @@
+import { createWriteStream } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import util from 'node:util'
+import { pipeline } from 'node:stream'
+import util, { promisify } from 'node:util'
 import debug from 'debug'
+import got from 'got'
 import { nanoid } from 'nanoid'
 import { getOptions } from './db.js'
 
@@ -49,6 +52,7 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
     const filepath = await getFilepath(options.outputFilePath, filename)
 
     await writeFile(filepath, data, encoding)
+
     log('created %o', filepath)
 
     if (options.outputFileBaseURL) {
@@ -64,4 +68,31 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
   }
 }
 
-export const create = { text, base64ToPNG, file, errorLog, appendLog }
+const streamPipeline = promisify(pipeline)
+
+export async function fetchAndSavePNG(url: string) {
+  try {
+    const response = got.stream(url)
+    const options = await getOptions()
+    const id = nanoid(options.outputFilenameLength)
+    const filename = `${id}.png`
+    const filepath = await getFilepath(options.outputFilePath, filename)
+
+    await streamPipeline(response, createWriteStream(filepath))
+
+    log('created %o', filepath)
+
+    if (options.outputFileBaseURL) {
+      let label = options.outputFileBaseURL + id
+      if (options.outputURLFilenameExtension) label += `.png`
+      return label
+    } else {
+      return filename
+    }
+  } catch (error) {
+    log(error)
+    return null
+  }
+}
+
+export const create = { text, base64ToPNG, file, errorLog, appendLog, fetchAndSavePNG }

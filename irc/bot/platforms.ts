@@ -26,4 +26,10 @@ export const platforms = {
       Authorization: 'Bearer',
     },
   },
+  replicate: {
+    features: {
+      imageReplicate: '',
+    },
+    headers: {},
+  },
 }

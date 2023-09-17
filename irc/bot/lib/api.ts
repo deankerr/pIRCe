@@ -1,6 +1,7 @@
 import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import got, { HTTPError } from 'got'
+import Replicate from 'replicate'
 import { platforms } from '../platforms.js'
 import { create } from './../lib/file.js'
 
@@ -50,8 +51,7 @@ function getPlatformConfig(ctx: ActionContext, feature: string) {
   const url = platform.features[feature]
   if (!url) throw new Error(`Unsupported feature: ${feature} for platform id: ${ctx.platform.id}`)
 
-  const key = ctx.platform.apiKey ?? process.env[`${ctx.platform.id.toUpperCase()}_API_KEY`]
-  if (!key) throw new Error(`Missing API key for: ${ctx.platform.id}`)
+  const key = getApiKey(ctx)
 
   const headers = { ...platform.headers }
 
@@ -77,6 +77,33 @@ type PlatformData = {
   features: Record<string, string>
   headers: Record<string, string>
 }
+
+export function requestReplicate(
+  ctx: ActionContext,
+  feature: string,
+  payload: Record<'model' | 'prompt', string>,
+) {
+  const key = getApiKey(ctx)
+  const replicate = new Replicate({
+    auth: key,
+  })
+
+  return replicate.run(
+    payload.model as `${string}/${string}:${string}`, // ffs dude
+    {
+      input: {
+        prompt: payload.prompt,
+      },
+    },
+  )
+}
+
+function getApiKey(ctx: ActionContext) {
+  const key = ctx.platform.apiKey ?? process.env[`${ctx.platform.id.toUpperCase()}_API_KEY`]
+  if (!key) throw new Error(`Missing API key for: ${ctx.platform.id}`)
+  return key
+}
+
 /* 
     OpenAI Error
     400	BadRequestError
