@@ -7,19 +7,30 @@ import { create } from './../lib/file.js'
 
 const log = debug('pIRCe:api')
 
-// TODO timeout options
 export async function request(
   ctx: ActionContext,
   feature: string,
   payload: Record<string, unknown>,
 ) {
   try {
-    const { url, headers } = getPlatformConfig(ctx, feature)
+    const { url, headers, key } = getPlatformConfig(ctx, feature)
 
     const label =
       'model' in payload ? `${ctx.platform.id}/${payload.model as string}` : ctx.platform.id
     log('%s: %o %s', feature, label, url)
 
+    //* replicate only
+    if (ctx.platform.id === 'replicate') {
+      const replicate = new Replicate({ auth: key })
+
+      const input = { prompt: payload.prompt }
+      return replicate.run(
+        payload.model as `${string}/${string}:${string}`, // ffs dude
+        { input },
+      )
+    }
+
+    //* everyone else
     const response = await got
       .post({
         url,
@@ -69,33 +80,13 @@ function getPlatformConfig(ctx: ActionContext, feature: string) {
     headers['X-Title'] += `${value}`
   }
 
-  return { url, headers }
+  return { url, headers, key }
 }
 
 type PlatformRecord = Record<string, PlatformData>
 type PlatformData = {
   features: Record<string, string>
   headers: Record<string, string>
-}
-
-export function requestReplicate(
-  ctx: ActionContext,
-  feature: string,
-  payload: Record<'model' | 'prompt', string>,
-) {
-  const key = getApiKey(ctx)
-  const replicate = new Replicate({
-    auth: key,
-  })
-
-  return replicate.run(
-    payload.model as `${string}/${string}:${string}`, // ffs dude
-    {
-      input: {
-        prompt: payload.prompt,
-      },
-    },
-  )
 }
 
 function getApiKey(ctx: ActionContext) {

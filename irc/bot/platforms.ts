@@ -28,7 +28,7 @@ export const platforms = {
   },
   replicate: {
     features: {
-      imageReplicate: '',
+      image: 'https://api.replicate.com/v1',
     },
     headers: {},
   },

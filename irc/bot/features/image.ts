@@ -3,9 +3,10 @@ import type { ActionContext } from '../types.js'
 import debug from 'debug'
 import { HTTPError } from 'got'
 import { z } from 'zod'
-import { request, requestReplicate } from '../lib/api.js'
+import { request } from '../lib/api.js'
 import { create } from '../lib/file.js'
 import { stripInitialKeyword } from '../lib/input.js'
+import { getClown } from '../lib/util.js'
 import { parseJsonRecord } from '../lib/validate.js'
 import { respond } from '../send.js'
 
@@ -13,45 +14,29 @@ const log = debug('pIRCe:image')
 
 export async function image(ctx: ActionContext) {
   try {
-    const prompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
+    // combine user and profile prompts
+    const userPrompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
+    const profilePrompt = ctx.profile.mainPrompt ?? ''
+    const prompt = `${userPrompt}, ${profilePrompt}`.trim()
+
     const payload = createPayload(ctx, { prompt })
 
     log(`%o`, payload.prompt)
     const response = await request(ctx, 'image', payload)
-    const imageData = parseResponseImage(ctx.platform, response)
+    const imageData = parseResponseImageData(ctx.platform, response)
 
-    const fileLabel = await create.base64ToPNG(imageData)
+    let fileLabel
+    if (imageData.b64) fileLabel = await create.base64ToPNG(imageData.b64)
+    if (imageData.url) fileLabel = await create.fetchAndSavePNG(imageData.url)
+
     if (fileLabel) await respond.say(ctx, fileLabel)
   } catch (error) {
-    if (error instanceof HTTPError) {
-      // TODO handleable rejections
+    // NSFW content rejection errors
+    if (error instanceof HTTPError && ctx.platform.id === 'openai') {
+      await handleOpenAiError(ctx, error)
+    } else if (error instanceof Error && ctx.platform.id === 'replicate') {
+      await handleReplicateError(ctx, error)
     }
-    log(error)
-  }
-}
-
-export async function imageReplicate(ctx: ActionContext) {
-  try {
-    const userPrompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
-    const profilePrompt = ctx.profile.mainPrompt ?? ''
-    const prompt = `${profilePrompt} ${userPrompt}`.trim()
-
-    const payload = { model: ctx.model.id, prompt }
-
-    log(`rep %o`, payload.prompt)
-
-    const response = await requestReplicate(ctx, 'image', payload)
-
-    const urls = z.string().array().parse(response)
-    const url = urls[0]!
-
-    const fileLabel = await create.fetchAndSavePNG(url)
-    if (fileLabel) await respond.say(ctx, fileLabel)
-  } catch (error) {
-    if (error instanceof HTTPError) {
-      // TODO handleable rejections
-    }
-    log(error)
   }
 }
 
@@ -71,21 +56,27 @@ function createPayload(ctx: ActionContext, input: object) {
   return s.parse(payload)
 }
 
-function parseResponseImage(platform: Platform, response: unknown) {
+function parseResponseImageData(platform: Platform, response: unknown) {
   if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
   const s = schema[platform.id as keyof typeof schema].response
   const parsed = s.parse(response)
 
-  let img
-
+  // todo be better
   if ('data' in parsed) {
-    img = parsed.data[0]?.b64_json
+    const b64 = parsed.data[0]?.b64_json
+    if (!b64) throw new Error('unable to get image data')
+    return { b64 }
   } else if ('output' in parsed) {
-    img = parsed.output.choices[0]?.image_base64
+    const b64 = parsed.output.choices[0]?.image_base64
+    if (!b64) throw new Error('unable to get image data')
+    return { b64 }
+  } else if (Array.isArray(parsed)) {
+    const url = parsed[0]
+    if (!url) throw new Error('unable to get image data')
+    return { url }
   }
 
-  if (!img) throw new Error('unable to get image data')
-  return img
+  throw new Error('unable to get image data')
 }
 
 //* Schema
@@ -137,4 +128,45 @@ const schema = {
       }),
     }),
   },
+
+  replicate: {
+    // are actually model dependant
+    request: z.object({
+      model: z.string(),
+      prompt: z.string(),
+      width: z.string().optional(),
+      height: z.string().optional(),
+      num_outputs: z.number().optional(),
+    }),
+
+    response: z.string().url().array(),
+  },
+}
+
+async function handleOpenAiError(ctx: ActionContext, error: HTTPError) {
+  try {
+    const json = parseJsonRecord(error.response.body)
+    const body = z
+      .object({
+        error: z.object({
+          code: z.string(),
+          message: z.string(),
+        }),
+      })
+      .parse(json)
+
+    if (body && body.error.code === 'content_policy_violation') {
+      const message = `${getClown()} OpenAI sez: ${body.error.message} ${getClown()}`
+      await respond.error(ctx, message)
+    }
+  } catch {
+    return
+  }
+}
+
+async function handleReplicateError(ctx: ActionContext, error: Error) {
+  if (error.message.includes('NSFW')) {
+    const message = `${getClown()} Replicate sez: ${error.message} ${getClown()}`
+    await respond.error(ctx, message)
+  }
 }

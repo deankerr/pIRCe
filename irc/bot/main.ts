@@ -3,7 +3,7 @@ import debug from 'debug'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
 import { chat } from './features/chat.js'
-import { image, imageReplicate } from './features/image.js'
+import { image } from './features/image.js'
 import { setMemoryTime } from './features/set-memory-time.js'
 import { createMessage, getHandlers, getOptions } from './lib/db.js'
 import { self } from './lib/util.js'
@@ -19,7 +19,6 @@ const simpleFeatures: Record<string, SimpleFeature> = {
 const actionFeatures: Record<string, ActionFeature> = {
   chat,
   image,
-  imageReplicate,
 }
 
 const log = debug('pIRCe')

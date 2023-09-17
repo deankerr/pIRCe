@@ -23,7 +23,7 @@ export function parseJsonList(str: string) {
   return z.string().array().parse(json)
 }
 
-export function parseJsonRecord(data: string) {
+export function parseJsonRecord(data: unknown) {
   const json = stringToJSONSchema.parse(data)
   return z.object({}).passthrough().parse(json)
 }

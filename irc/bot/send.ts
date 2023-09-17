@@ -29,12 +29,14 @@ type AnyContext = InitialContext | ActionContext
 export const respond = {
   say: (ctx: AnyContext, message: string) => createResponse(ctx, 'say', message),
   action: (ctx: AnyContext, message: string) => createResponse(ctx, 'action', message),
+  error: (ctx: AnyContext, message: string) => createResponse(ctx, 'say', message, true),
 }
 
 async function createResponse(
   ctx: InitialContext | ActionContext,
   type: 'say' | 'action',
   content: string,
+  error = false,
 ) {
   const target = ctx.handler.overrideOutputTarget ?? ctx.message.target
 
@@ -51,5 +53,5 @@ async function createResponse(
     type,
   })
 
-  if ('profile' in ctx) createConversationTags(ctx.profile, ctx.message, ourMessage)
+  if (!error && 'profile' in ctx) createConversationTags(ctx.profile, ctx.message, ourMessage)
 }
