@@ -3,7 +3,7 @@ import debug from 'debug'
 import got, { HTTPError } from 'got'
 import Replicate from 'replicate'
 import { platforms } from '../platforms.js'
-import { create } from './../lib/file.js'
+import { create } from './file.js'
 
 const log = debug('pIRCe:api')
 

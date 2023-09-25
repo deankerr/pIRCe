@@ -1,12 +1,11 @@
+import type { Message } from 'matrix-org-irc'
 import { fork } from 'node:child_process'
 import chokidar from 'chokidar'
 import debug from 'debug'
-import 'dotenv/config'
-import type { Message } from 'matrix-org-irc'
 import { Client } from 'matrix-org-irc'
 
 const log = debug('pIRCe:irc')
-const botPath = 'irc/bot/'
+const botPath = 'src/bot/'
 const botEntry = botPath + 'main.js'
 const autoReloadDelay = 5000
 
