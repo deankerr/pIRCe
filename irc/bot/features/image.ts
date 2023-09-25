@@ -29,7 +29,7 @@ export async function image(ctx: ActionContext) {
     if (imageData.b64) fileLabel = await create.base64ToPNG(imageData.b64)
     if (imageData.url) fileLabel = await create.fetchAndSavePNG(imageData.url)
 
-    if (fileLabel) await respond.say(ctx, fileLabel)
+    if (fileLabel) await respond.say(ctx, `"${userPrompt}" - by ${ctx.message.nick} ${fileLabel}`)
   } catch (error) {
     // NSFW content rejection errors
     if (error instanceof HTTPError && ctx.platform.id === 'openai') {
