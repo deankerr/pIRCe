@@ -3,7 +3,7 @@
   "module": "src/client.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/client.ts",
+    "dev": "bun --hot src/client.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate",
     "db": "prisma db",

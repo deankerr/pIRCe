@@ -1,11 +1,9 @@
+import type { Message } from 'matrix-org-irc'
 import debug from 'debug'
 import { Client } from 'matrix-org-irc'
 import { main } from './bot/main'
 
 const log = debug('pIRCe:irc')
-// const botPath = 'src/bot/'
-// const botEntry = botPath + 'main.js'
-// const autoReloadDelay = 5000
 
 function getConfig() {
   const config = {
@@ -42,79 +40,45 @@ function createIRCClient() {
   const irc = new Client(server, nick, opts)
 
   irc.on('error', (err) => log('error: %o', err))
-  irc.on('netError', (err) => log('error: %o', err))
+  irc.on('netError', (err) => log('netError: %o', err))
   irc.on('registered', () => {
     log('[connected]')
     if (nickservPW) void irc.say('nickserv', `identify ${nickservPW}`)
   })
-  // irc.on('message', handleMessage)
-  irc.on('message', (from, to, text, message) => {
-    const msg = {
-      server: config.server,
-      target: to,
-      nick: from,
-      content: text,
-      type: 'message',
-      self: false,
-      mask: `${message.user}@${message.host}`,
-    }
-    main(msg).catch((error) => {
-      log('bot error: %O', error)
-    })
-  })
 
+  console.log('irc client created')
   return irc
 }
 
-// function createBot() {
-//   const bot = fork(botEntry, [config.server, config.nick])
-//   bot.on('error', (error) => {
-//     log('bot error:', error)
-//     setTimeout(reloadBot, autoReloadDelay)
-//   })
-
-//   bot.on('exit', () => {
-//     log('bot has terminated')
-//   })
-
-//   bot.on('message', (message) => {
-//     if (typeof message !== 'string') throw new Error('Unknown bot message type')
-
-//     const [command, target, ...rest] = message.split(' ')
-//     const text = rest.join(' ')
-//     if (!target) return log('Invalid command')
-//     if (command === 'join') void irc.join(target)
-//     if (command === 'part') void irc.part(target, '')
-//     if (command === 'say') void irc.say(target, text)
-//     if (command === 'action') void irc.action(target, text)
-//   })
-
-//   return bot
-// }
-
-// function autoReload
-
-// function reloadBot() {
-//   bot.kill()
-//   bot = createBot()
-// }
-
-// function handleMessage(nick: string, target: string, content: string, message: Message) {
-//   if (content === config.reloadKeyword) return reloadBot()
-
-//   bot.send({
-//     server: config.server,
-//     target,
-//     nick,
-//     content,
-//     type: 'message',
-//     self: false,
-//     mask: `${message.user}@${message.host}`,
-//   })
-// }
+function handleMessage(from: string, to: string, text: string, message: Message) {
+  const msg = {
+    server: config.server,
+    target: to,
+    nick: from,
+    content: text,
+    type: 'message',
+    self: false,
+    mask: `${message.user}@${message.host}`,
+  }
+  main(msg).catch((error) => {
+    log('bot error: %O', error)
+  })
+}
 
 const config = getConfig()
 log(`irc options: %O`, config)
 
-const irc = createIRCClient()
-// let bot = createBot()
+declare global {
+  // eslint-disable-next-line no-var
+  var irc: Client
+}
+
+globalThis.irc ??= createIRCClient()
+export const irc = globalThis.irc
+
+if (irc.listenerCount('message') === 0) {
+  irc.on('message', handleMessage)
+} else {
+  irc.removeAllListeners('message')
+  irc.on('message', handleMessage)
+}

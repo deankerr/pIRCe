@@ -1,28 +1,23 @@
 import type { ActionContext, InitialContext } from './types.js'
+import { irc } from '../client.js'
 import { createConversationTags, createMessage } from './lib/db.js'
 import { format } from './lib/output.js'
 
-const sendDataToHost = (data: string) => {
-  // if (!process.send) throw new Error('process.send is unavailable')
-  // process.send(data)
-  console.log('send not implemented', data)
-}
-
 export const sendRaw = {
-  join: (target: string) => {
-    sendDataToHost(`join ${target}`)
+  join: async (target: string) => {
+    await irc.join(target)
   },
 
-  part: (target: string) => {
-    sendDataToHost(`part ${target}`)
+  part: async (target: string) => {
+    await irc.part(target, '')
   },
 
-  say: (target: string, message: string) => {
-    sendDataToHost(`say ${target} ${message}`)
+  say: async (target: string, message: string) => {
+    await irc.say(target, message)
   },
 
-  action: (target: string, message: string) => {
-    sendDataToHost(`action ${target} ${message}`)
+  action: async (target: string, message: string) => {
+    await irc.action(target, message)
   },
 }
 
@@ -42,7 +37,7 @@ async function createResponse(
   const target = ctx.handler.overrideOutputTarget ?? ctx.message.target
 
   const formatted = await format(content, ctx.options)
-  sendRaw[type](target, formatted)
+  await sendRaw[type](target, formatted)
 
   const ourMessage = await createMessage({
     server: ctx.self.server,

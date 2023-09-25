@@ -1,5 +1,4 @@
 import type { ActionContext, InitialContext, IRCEventMessage } from './types.js'
-import debug from 'debug'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
 import { chat } from './features/chat.js'
@@ -20,8 +19,6 @@ const actionFeatures: Record<string, ActionFeature> = {
   chat,
   image,
 }
-
-const log = debug('pIRCe')
 
 export async function main(ircMessage: IRCEventMessage) {
   const message = await createMessage(ircMessage)
@@ -106,9 +103,4 @@ export async function main(ircMessage: IRCEventMessage) {
   }
 }
 
-// process.on('message', (message: IRCEventMessage) => {
-//   main(message).catch((error) => {
-//     log(error)
-//   })
-// })
-log(`bot loaded! 🤖🤖`)
+console.log(`bot loaded! 🤖🤖`)
