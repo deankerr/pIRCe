@@ -106,9 +106,9 @@ export async function main(ircMessage: IRCEventMessage) {
   }
 }
 
-process.on('message', (message: IRCEventMessage) => {
-  main(message).catch((error) => {
-    log(error)
-  })
-})
+// process.on('message', (message: IRCEventMessage) => {
+//   main(message).catch((error) => {
+//     log(error)
+//   })
+// })
 log(`bot loaded! 🤖🤖`)

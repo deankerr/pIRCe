@@ -34,6 +34,7 @@
     "got": "^13.0.0",
     "matrix-org-irc": "^2.2.0",
     "nanoid": "^5.0.1",
+    "replicate": "^0.18.1",
     "supports-color": "^9.4.0",
     "zod": "^3.22.2"
   }

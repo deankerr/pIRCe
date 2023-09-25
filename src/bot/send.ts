@@ -3,8 +3,9 @@ import { createConversationTags, createMessage } from './lib/db.js'
 import { format } from './lib/output.js'
 
 const sendDataToHost = (data: string) => {
-  if (!process.send) throw new Error('process.send is unavailable')
-  process.send(data)
+  // if (!process.send) throw new Error('process.send is unavailable')
+  // process.send(data)
+  console.log('send not implemented', data)
 }
 
 export const sendRaw = {

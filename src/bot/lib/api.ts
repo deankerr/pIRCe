@@ -48,7 +48,7 @@ export async function request(
       log(`response error: ${error.name} ${error.message}`)
       log('response body: %o', error.response.body)
     }
-    await create.errorLog(`api-${feature}`, error)
+    create.errorLog(`api-${feature}`, error)
     throw error
   }
 }

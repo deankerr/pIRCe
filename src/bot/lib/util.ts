@@ -1,5 +1,5 @@
-const server = process.argv[2]
-const nick = process.argv[3]
+const server = process.argv[2] || 'temp.test.server'
+const nick = process.argv[3] || 'tempnick'
 if (!server || !nick) throw new Error(`Server/nick arguments invalid ${server}/${nick}`)
 export const self = { server, nick }
 
