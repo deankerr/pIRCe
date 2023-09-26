@@ -1,6 +1,7 @@
 import type { Message, Platform } from '@prisma/client'
 import type { ActionContext, AIChatMessage } from '../types.js'
 import debug from 'debug'
+import OpenAI from 'openai'
 import { z } from 'zod'
 import { request } from '../lib/api.js'
 import { getContextualMessages } from '../lib/db.js'
@@ -15,23 +16,59 @@ export async function chat(ctx: ActionContext) {
     const contextual = await getContextualMessages(ctx.message, ctx.profile)
     let messages = buildOpenChatMessages(ctx.profile, contextual)
 
-    if (ctx.platform.id === 'openai') {
-      const moderated = await moderateMessages(ctx, messages, ctx.message)
-      if (!moderated) return log('chat failed')
-      messages = moderated
-    }
+    // TODO moderation
+    // if (ctx.platform.id === 'openai') {
+    //   const moderated = await moderateMessages(ctx, messages, ctx.message)
+    //   if (!moderated) return log('chat failed')
+    //   messages = moderated
+    // }
 
     messages = normalizeAPIInput(messages, ctx.handler.triggerWord)
     messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
 
-    const payload = createPayload(ctx, { messages })
-    const response = await request(ctx, 'chat', payload)
+    // const payload = createPayload(ctx, { messages })
+    // const response = await request(ctx, 'chat', payload)
 
-    const message = parseResponseMessage(ctx.platform, response)
-    log('raw: %o', message)
+    // const message = parseResponseMessage(ctx.platform, response)
 
+    // TODO temp adapt libs
+    const parameters = parseJsonRecord(ctx.profile.parameters)
+    const model = ctx.model.id
+    const payloadRaw = {
+      ...parameters,
+      model,
+      messages,
+    }
+
+    let msg: string | undefined
+    if (ctx.platform.id === 'openai') {
+      const parsedRequest = schema.openai.request.parse(payloadRaw)
+      const api = new OpenAI()
+      const responseRaw = await api.chat.completions.create(parsedRequest)
+      const parsedResponse = schema.openai.response.parse(responseRaw)
+      msg = parsedResponse.choices[0].message.content
+    }
+
+    if (ctx.platform.id === 'openrouter') {
+      console.log('openrouter')
+      const parsedRequest = schema.openrouter.request.parse(payloadRaw)
+      const api = new OpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey: process.env.OPENROUTER_API_KEY,
+        defaultHeaders: {
+          'HTTP-Referer': 'https://xono.cx/',
+        },
+      })
+      const responseRaw = await api.chat.completions.create(parsedRequest)
+      console.log(responseRaw)
+      const parsedResponse = schema.openrouter.response.parse(responseRaw)
+      msg = parsedResponse.choices[0].message.content
+    }
+
+    if (!msg) throw new Error('msg not requested')
+    console.log('raw: %o', msg)
     // clean some prompt data that leaks into response, commonly with OpenRouter
-    const cleaned = message
+    const cleaned = msg
       .replaceAll(new RegExp(`^${ctx.profile.characterName ?? ''}:`, 'gm'), '')
       .replaceAll(/<(human|bot).*$/gm, '')
       .replaceAll(/###.*$/gm, '')
@@ -40,7 +77,8 @@ export async function chat(ctx: ActionContext) {
 
     await respond.say(ctx, cleaned)
   } catch (error) {
-    log(error)
+    console.log('chat error')
+    console.log(error)
   }
 }
 
@@ -173,7 +211,7 @@ const schema = {
     request: z
       .object({
         model: z.string(),
-        prompt: z.string(), //^ should only use one
+        // prompt: z.string(), //^ should only use one
         messages: z.array(
           //^ that is compatible
           z.object({
@@ -198,7 +236,7 @@ const schema = {
         stream: z.boolean(),
       })
       .partial()
-      .required({ model: true }),
+      .required({ model: true, messages: true }),
 
     response: z.object({
       id: z.string(),
