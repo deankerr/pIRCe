@@ -3,7 +3,7 @@ import type { ActionContext, AIChatMessage } from '../types.js'
 import debug from 'debug'
 import OpenAI from 'openai'
 import { z } from 'zod'
-import { request } from '../lib/api.js'
+import { pabelChat, request } from '../lib/api.js'
 import { getContextualMessages } from '../lib/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
 import { parseJsonRecord } from '../lib/validate.js'
@@ -43,10 +43,10 @@ export async function chat(ctx: ActionContext) {
     let msg: string | undefined
     if (ctx.platform.id === 'openai') {
       const parsedRequest = schema.openai.request.parse(payloadRaw)
-      const api = new OpenAI()
-      const responseRaw = await api.chat.completions.create(parsedRequest)
-      const parsedResponse = schema.openai.response.parse(responseRaw)
-      msg = parsedResponse.choices[0].message.content
+      const response = await pabelChat(parsedRequest)
+      if (response && typeof response === 'string') {
+        msg = response
+      }
     }
 
     if (ctx.platform.id === 'openrouter') {

@@ -95,6 +95,28 @@ function getApiKey(ctx: ActionContext) {
   return key
 }
 
+export async function pabelChat(params: Record<string, unknown>) {
+  try {
+    const pabelURL = new URL(
+      '/server/api/chat',
+      process.env.PABEL_URL ?? raise('PABEL_URL not set'),
+    )
+    const request = await fetch(pabelURL, {
+      method: 'POST',
+      body: JSON.stringify(params),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    return request.json() as unknown
+  } catch (error) {
+    console.log('pabelChat api error')
+    throw error
+  }
+}
+
+function raise(message: string): never {
+  throw new Error(message)
+}
 /* 
     OpenAI Error
     400	BadRequestError
