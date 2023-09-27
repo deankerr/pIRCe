@@ -95,10 +95,13 @@ function getApiKey(ctx: ActionContext) {
   return key
 }
 
-export async function pabelChat(params: Record<string, unknown>) {
+export async function pabel(
+  type: 'chat' | 'moderation' | 'image',
+  params: Record<string, unknown>,
+) {
   try {
     const pabelURL = new URL(
-      '/server/api/chat',
+      `/server/api/${type}`,
       process.env.PABEL_URL ?? raise('PABEL_URL not set'),
     )
     const request = await fetch(pabelURL, {

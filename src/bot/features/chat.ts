@@ -1,9 +1,8 @@
-import type { Message, Platform } from '@prisma/client'
+import type { Message } from '@prisma/client'
 import type { ActionContext, AIChatMessage } from '../types.js'
 import debug from 'debug'
-import OpenAI from 'openai'
 import { z } from 'zod'
-import { pabelChat, request } from '../lib/api.js'
+import { pabel } from '../lib/api.js'
 import { getContextualMessages } from '../lib/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
 import { parseJsonRecord } from '../lib/validate.js'
@@ -16,12 +15,11 @@ export async function chat(ctx: ActionContext) {
     const contextual = await getContextualMessages(ctx.message, ctx.profile)
     let messages = buildOpenChatMessages(ctx.profile, contextual)
 
-    // TODO moderation
-    // if (ctx.platform.id === 'openai') {
-    //   const moderated = await moderateMessages(ctx, messages, ctx.message)
-    //   if (!moderated) return log('chat failed')
-    //   messages = moderated
-    // }
+    if (ctx.platform.id === 'openai') {
+      const moderated = await moderateMessages(ctx, messages, ctx.message)
+      if (!moderated) return log('chat failed')
+      messages = moderated
+    }
 
     messages = normalizeAPIInput(messages, ctx.handler.triggerWord)
     messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
@@ -43,7 +41,7 @@ export async function chat(ctx: ActionContext) {
     let msg: string | undefined
     if (ctx.platform.id === 'openai') {
       const parsedRequest = schema.openai.request.parse(payloadRaw)
-      const response = await pabelChat(parsedRequest)
+      const response = await pabel('chat', { ...parsedRequest, provider: 'openai' })
       if (response && typeof response === 'string') {
         msg = response
       }
@@ -52,17 +50,10 @@ export async function chat(ctx: ActionContext) {
     if (ctx.platform.id === 'openrouter') {
       console.log('openrouter')
       const parsedRequest = schema.openrouter.request.parse(payloadRaw)
-      const api = new OpenAI({
-        baseURL: 'https://openrouter.ai/api/v1',
-        apiKey: process.env.OPENROUTER_API_KEY,
-        defaultHeaders: {
-          'HTTP-Referer': 'https://xono.cx/',
-        },
-      })
-      const responseRaw = await api.chat.completions.create(parsedRequest)
-      console.log(responseRaw)
-      const parsedResponse = schema.openrouter.response.parse(responseRaw)
-      msg = parsedResponse.choices[0].message.content
+      const response = await pabel('chat', { ...parsedRequest, provider: 'openrouter' })
+      if (response && typeof response === 'string') {
+        msg = response
+      }
     }
 
     if (!msg) throw new Error('msg not requested')
@@ -82,32 +73,32 @@ export async function chat(ctx: ActionContext) {
   }
 }
 
-function createPayload(ctx: ActionContext, input: object) {
-  const parameters = parseJsonRecord(ctx.profile.parameters)
-  const model = ctx.model.id
+// function createPayload(ctx: ActionContext, input: object) {
+//   const parameters = parseJsonRecord(ctx.profile.parameters)
+//   const model = ctx.model.id
 
-  const payload = {
-    ...parameters,
-    model,
-    ...input,
-  }
+//   const payload = {
+//     ...parameters,
+//     model,
+//     ...input,
+//   }
 
-  if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
-  const s = schema[ctx.platform.id as keyof typeof schema].request
+//   if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
+//   const s = schema[ctx.platform.id as keyof typeof schema].request
 
-  return s.parse(payload)
-}
+//   return s.parse(payload)
+// }
 
-function parseResponseMessage(platform: Platform, response: unknown) {
-  if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
-  const s = schema[platform.id as keyof typeof schema].response
-  const parsed = s.parse(response)
+// function parseResponseMessage(platform: Platform, response: unknown) {
+//   if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
+//   const s = schema[platform.id as keyof typeof schema].response
+//   const parsed = s.parse(response)
 
-  const message = parsed.choices[0]?.message.content
-  if (!message) throw new Error('Unable to parse message response')
+//   const message = parsed.choices[0]?.message.content
+//   if (!message) throw new Error('Unable to parse message response')
 
-  return message
-}
+//   return message
+// }
 
 async function moderateMessages(
   ctx: ActionContext,
@@ -119,7 +110,8 @@ async function moderateMessages(
   const input = messages.map((m) => `${m.name ?? ''} ${m.content}`)
   const payload = schemaModeration.request.parse({ input })
 
-  const response = await request(ctx, 'moderation', payload)
+  // const response = await request(ctx, 'moderation', payload)
+  const response = await pabel('moderation', payload)
   const parsed = schemaModeration.response.parse(response)
 
   // get flagged keys, remove allowed, return remaining objectional keys
