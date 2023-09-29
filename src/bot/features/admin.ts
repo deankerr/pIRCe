@@ -14,8 +14,8 @@ export function admin(event: InitialContext) {
   const rest = split.slice(3).join(' ')
   log('%s %s', cmd, arg ?? '')
 
-  if (cmd === 'join') sendRaw.join(arg)
-  if (cmd === 'part') sendRaw.part(arg)
+  if (cmd === 'join') void sendRaw.join(arg)
+  if (cmd === 'part') void sendRaw.part(arg)
   if (cmd === 'action') void sendRaw.action(arg, rest)
   if (cmd === 'say') void sendRaw.say(arg, rest)
   if (cmd === 'replay') void replay()

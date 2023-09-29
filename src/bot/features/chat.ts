@@ -24,12 +24,6 @@ export async function chat(ctx: ActionContext) {
     messages = normalizeAPIInput(messages, ctx.handler.triggerWord)
     messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
 
-    // const payload = createPayload(ctx, { messages })
-    // const response = await request(ctx, 'chat', payload)
-
-    // const message = parseResponseMessage(ctx.platform, response)
-
-    // TODO temp adapt libs
     const parameters = parseJsonRecord(ctx.profile.parameters)
     const model = ctx.model.id
     const payloadRaw = {

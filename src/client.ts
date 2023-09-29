@@ -16,7 +16,6 @@ function getConfig() {
       debug: false,
       floodProtection: true,
     },
-    reloadKeyword: env('BOT_RELOAD', '!!reload!!'),
     nickservPW: env('IRC_NICKSERV_PW', ''),
   }
 
