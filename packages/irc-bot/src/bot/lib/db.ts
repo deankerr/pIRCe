@@ -1,9 +1,9 @@
 import type { Message, Profile } from '@prisma/client'
 import type { IRCEventMessage } from '../types.js'
-import { PrismaClient } from '@prisma/client'
+import { prismaDb } from 'prisma'
 import { parseJsonList } from './validate.js'
 
-export const prisma = new PrismaClient()
+export const prisma = prismaDb
 
 export async function getHandlers() {
   return await prisma.handler.findMany({

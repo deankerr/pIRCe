@@ -100,10 +100,7 @@ export async function pabel(
   params: Record<string, unknown>,
 ) {
   try {
-    const pabelURL = new URL(
-      `/server/api/${type}`,
-      process.env.PABEL_URL ?? raise('PABEL_URL not set'),
-    )
+    const pabelURL = new URL(`/api/${type}`, process.env.PABEL_URL ?? raise('PABEL_URL not set'))
     const request = await fetch(pabelURL, {
       method: 'POST',
       body: JSON.stringify(params),

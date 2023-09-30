@@ -1,5 +1,8 @@
 # Based on https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore
 
+# pirce
+output
+
 # Logs
 
 logs
@@ -170,7 +173,3 @@ dist
 
 # IntelliJ based IDEs
 .idea
-
-# Finder (MacOS) folder config
-.DS_Store
-
