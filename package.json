@@ -1,11 +1,14 @@
 {
   "name": "pirce-monorepo",
   "private": true,
+  "module": "index.ts",
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
     "bun-types": "latest",
+    "@pirce-irc/prisma": "workspace:*",
     "prettier": "^3.0.3",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.0"
   },

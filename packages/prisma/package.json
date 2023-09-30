@@ -1,5 +1,5 @@
 {
-  "name": "prisma",
+  "name": "@pirce-irc/prisma",
   "module": "index.ts",
   "type": "module",
   "scripts": {

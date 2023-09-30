@@ -1,6 +1,6 @@
 import type { Message, Profile } from '@prisma/client'
 import type { IRCEventMessage } from '../types.js'
-import { prismaDb } from 'prisma'
+import { prismaDb } from '@pirce-irc/prisma'
 import { parseJsonList } from './validate.js'
 
 export const prisma = prismaDb

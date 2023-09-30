@@ -1,5 +1,5 @@
 {
-  "name": "pirce",
+  "name": "@pirce-irc/bot",
   "module": "src/client.ts",
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "prisma": "workspace:*",
+    "@pirce-irc/prisma": "workspace:*",
     "chokidar": "^3.5.3",
     "debug": "^4.3.4",
     "got": "^13.0.0",
