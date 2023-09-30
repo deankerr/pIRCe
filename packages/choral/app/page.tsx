@@ -1,113 +1,88 @@
+import dayjs from 'dayjs'
 import Image from 'next/image'
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <>
+      <header className="bg-base-100 text-base-content shadow-sm px-2 border-b-2">
+        <h1 className="text-accent text-2xl">choral</h1>
+      </header>
+      <main>
+        <Channel messages={sampleLog} />
+      </main>
+    </>
   )
 }
+
+function ChatLine({ message }: { message: ChatMessage }) {
+  const { time, nick, content } = message
+
+  return (
+    <tr>
+      <th>{dayjs(time).format('HH:mm')}</th>
+      <td>
+        {nick} {content}
+      </td>
+    </tr>
+  )
+}
+
+function Channel({ messages }: { messages: ChatMessage[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="table">
+        <tbody>
+          {messages.map((msg, i) => (
+            <ChatLine message={msg} key={i} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+type ChatMessage = {
+  time: string
+  nick: string
+  content: string
+}
+
+function createSampleLog() {
+  const messages: ChatMessage[] = []
+  log.forEach((line) => {
+    const [time, nick, ...rest] = line.split(' ')
+    const content = rest.join(' ')
+
+    messages.push({
+      time,
+      nick,
+      content,
+    })
+  })
+
+  return messages
+}
+
+const log = [
+  '2023-08-13T10:13:47.181Z @bobby Officia enim magna ex irure sit velit cupidatat commodo laborum ea elit sunt.',
+  '2023-08-13T10:13:55.956Z Annabelle Irure occaecat Lorem eu amet sunt amet labore amet ut id.',
+  '2023-08-13T10:14:36.267Z @Sonic Sint consectetur laborum ullamco non culpa sunt cupidatat sunt id et laborum esse aliqua elit et.',
+  '2023-08-13T10:14:37.269Z @Sonic Id exercitation labore in dolore est amet eu et eiusmod enim.',
+  '2023-08-13T10:15:11.762Z Annabelle Est id do eiusmod occaecat laboris consectetur.',
+  '2023-08-13T10:15:13.782Z Annabelle Sunt ea nisi tempor sint esse id.',
+  '2023-08-13T10:15:37.987Z Annabelle Elit exercitation sit eiusmod enim Lorem proident deserunt aute.',
+  '2023-08-13T10:15:39.546Z @bobby Id do eiusmod esse dolor tempor sit esse consectetur dolore labore nulla do in non.',
+  '2023-08-13T10:16:02.725Z @Sonic Exercitation officia dolor consequat commodo Lorem do.',
+  '2023-08-13T10:16:07.740Z @Sonic Labore consequat laboris sint incididunt et irure ex cupidatat.',
+  '2023-08-13T10:16:38.023Z Annabelle Voluptate nostrud eu incididunt adipisicing proident sint magna.',
+  '2023-08-13T10:17:08.999Z Annabelle ️Pariatur do sit voluptate qui ullamco labore.',
+  '2023-08-13T10:24:25.253Z @zebra2 Ullamco nisi veniam irure irure elit cillum minim nostrud ullamco.',
+  '2023-08-13T10:24:31.205Z @zebra2 Sit cillum consequat aliqua eu commodo excepteur commodo.',
+  '2023-08-13T10:25:15.879Z @zebra2 Adipisicing culpa ipsum reprehenderit sint cillum enim magna exercitation ea culpa commodo elit elit.',
+  '2023-08-13T10:27:26.008Z Annabelle Eu aute elit labore aliqua magna velit velit ipsum.',
+  '2023-08-13T10:34:30.989Z chase Et aliqua mollit labore irure labore incididunt culpa enim sunt ut est laboris aute.',
+  '2023-08-13T10:39:45.254Z @Sonic Incididunt proident do id mollit adipisicing cillum deserunt sint nulla quis sit irure.',
+  '2023-08-13T10:40:26.798Z Annabelle Occaecat aute laborum duis reprehenderit.',
+]
+
+const sampleLog = createSampleLog()
