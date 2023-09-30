@@ -1,50 +1,49 @@
-// import { createWriteStream } from 'node:fs'
-// import { mkdir, writeFile } from 'node:fs/promises'
-// import { join } from 'node:path'
-// import { pipeline } from 'node:stream'
-// import util, { promisify } from 'node:util'
+import { mkdir } from 'node:fs/promises'
+import { join } from 'node:path'
+import util from 'node:util'
 import debug from 'debug'
-import got from 'got'
 import { nanoid } from 'nanoid'
 import { getOptions } from './db.js'
 
 const log = debug('pIRCe:file')
 
-function appendLog(name: string, data: unknown) {
+async function appendLog(name: string, data: unknown) {
   try {
     const filename = `${name}.log`
-    // const filepath = await getFilepath('logs', filename)
+    const filepath = await getFilepath('logs', filename)
     // await writeFile(filepath, util.format('%o', data))
+    await Bun.write(filepath, util.format('%o', data))
   } catch (error) {
     log(error)
   }
 }
 
-function errorLog(name: string, data: unknown) {
+async function errorLog(name: string, data: unknown) {
   try {
     const filename = `error-${name}-${new Date().toISOString()}.log`
-    // const filepath = await getFilepath('logs', filename)
+    const filepath = await getFilepath('logs', filename)
     // await writeFile(filepath, util.format('%o', data))
-    // log('created %o', filepath)
+    await Bun.write(filepath, util.format('%o', data))
+    log('created %o', filepath)
   } catch (error) {
     log(error)
   }
 }
 
 async function getFilepath(outputDir: string, filename: string) {
-  // await mkdir(outputDir, { recursive: true })
-  // return join(outputDir, filename)
+  await mkdir(outputDir, { recursive: true })
+  return join(outputDir, filename)
 }
 
 async function text(text: string) {
-  return file(text, 'txt', 'utf8')
+  return file(text, 'txt')
 }
 
-async function base64ToPNG(data: string) {
-  return file(data, 'png', 'base64')
-}
+// async function base64ToPNG(data: string) {
+//   return file(data, 'png', 'base64')
+// }
 
-async function file(data: string, extension: string, encoding?: BufferEncoding) {
+async function file(data: string, extension: string) {
   try {
     return 'not implemented'
     const options = await getOptions()
@@ -53,6 +52,7 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
     const filepath = await getFilepath(options.outputFilePath, filename)
 
     // await writeFile(filepath, data, encoding)
+    await Bun.write(filepath, data)
 
     log('created %o', filepath)
 
@@ -73,13 +73,16 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
 
 export async function fetchAndSavePNG(url: string) {
   try {
-    const response = got.stream(url)
+    // const response = got.stream(url)
+    const response = await fetch(url)
     const options = await getOptions()
     const id = nanoid(options.outputFilenameLength)
     const filename = `${id}.png`
     const filepath = await getFilepath(options.outputFilePath, filename)
 
     // await streamPipeline(response, createWriteStream(filepath))
+    const blob = await response.blob()
+    await Bun.write(filepath, blob)
 
     log('created %o', filepath)
 
@@ -96,4 +99,4 @@ export async function fetchAndSavePNG(url: string) {
   }
 }
 
-export const create = { text, base64ToPNG, file, errorLog, appendLog, fetchAndSavePNG }
+export const create = { text, file, errorLog, appendLog, fetchAndSavePNG }

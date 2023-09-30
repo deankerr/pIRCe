@@ -1,16 +1,12 @@
-import type { Platform } from '@prisma/client'
 import type { ActionContext } from '../types.js'
-import debug from 'debug'
 import { HTTPError } from 'got'
 import { z } from 'zod'
-import { request } from '../lib/api.js'
+import { pabel } from '../lib/api.js'
 import { create } from '../lib/file.js'
 import { stripInitialKeyword } from '../lib/input.js'
 import { getClown } from '../lib/util.js'
 import { parseJsonRecord } from '../lib/validate.js'
 import { respond } from '../send.js'
-
-const log = debug('pIRCe:image')
 
 export async function image(ctx: ActionContext) {
   try {
@@ -19,15 +15,30 @@ export async function image(ctx: ActionContext) {
     const profilePrompt = ctx.profile.mainPrompt ?? ''
     const prompt = `${userPrompt}, ${profilePrompt}`.trim()
 
-    const payload = createPayload(ctx, { prompt })
+    // const payload = createPayload(ctx, { prompt })
+    const parameters = parseJsonRecord(ctx.profile.parameters)
+    const model = ctx.model.id
+    const payloadRaw = {
+      ...parameters,
+      model,
+      prompt,
+    }
 
-    log(`%o`, payload.prompt)
-    const response = await request(ctx, 'image', payload)
-    const imageData = parseResponseImageData(ctx.platform, response)
+    let url: string | undefined
+    if (ctx.platform.id === 'openai') {
+      const parsedRequest = schema.openai.request.parse(payloadRaw)
+      const response = await pabel('image', { ...parsedRequest, provider: 'openai' })
+      url = z.string().parse(response)
+    }
 
-    let fileLabel
-    if (imageData.b64) fileLabel = await create.base64ToPNG(imageData.b64)
-    if (imageData.url) fileLabel = await create.fetchAndSavePNG(imageData.url)
+    // const response = await request(ctx, 'image', payload)
+    // const imageData = parseResponseImageData(ctx.platform, response)
+
+    // let fileLabel
+    // if (imageData.b64) fileLabel = await create.base64ToPNG(imageData.b64)
+    // if (imageData.url) fileLabel = await create.fetchAndSavePNG(imageData.url)
+    if (!url) throw new Error('response error')
+    const fileLabel = await create.fetchAndSavePNG(url)
 
     if (fileLabel)
       await respond.say(
@@ -44,44 +55,44 @@ export async function image(ctx: ActionContext) {
   }
 }
 
-function createPayload(ctx: ActionContext, input: object) {
-  const parameters = parseJsonRecord(ctx.profile.parameters)
-  const model = ctx.model.id
+// function createPayload(ctx: ActionContext, input: object) {
+//   const parameters = parseJsonRecord(ctx.profile.parameters)
+//   const model = ctx.model.id
 
-  const payload = {
-    ...parameters,
-    model,
-    ...input,
-  }
+//   const payload = {
+//     ...parameters,
+//     model,
+//     ...input,
+//   }
 
-  if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
-  const s = schema[ctx.platform.id as keyof typeof schema].request
+//   if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
+//   const s = schema[ctx.platform.id as keyof typeof schema].request
 
-  return s.parse(payload)
-}
+//   return s.parse(payload)
+// }
 
-function parseResponseImageData(platform: Platform, response: unknown) {
-  if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
-  const s = schema[platform.id as keyof typeof schema].response
-  const parsed = s.parse(response)
+// function parseResponseImageData(platform: Platform, response: unknown) {
+//   if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
+//   const s = schema[platform.id as keyof typeof schema].response
+//   const parsed = s.parse(response)
 
-  // todo be better
-  if ('data' in parsed) {
-    const b64 = parsed.data[0]?.b64_json
-    if (!b64) throw new Error('unable to get image data')
-    return { b64 }
-  } else if ('output' in parsed) {
-    const b64 = parsed.output.choices[0]?.image_base64
-    if (!b64) throw new Error('unable to get image data')
-    return { b64 }
-  } else if (Array.isArray(parsed)) {
-    const url = parsed[0]
-    if (!url) throw new Error('unable to get image data')
-    return { url }
-  }
+//   // todo be better
+//   if ('data' in parsed) {
+//     const b64 = parsed.data[0]?.b64_json
+//     if (!b64) throw new Error('unable to get image data')
+//     return { b64 }
+//   } else if ('output' in parsed) {
+//     const b64 = parsed.output.choices[0]?.image_base64
+//     if (!b64) throw new Error('unable to get image data')
+//     return { b64 }
+//   } else if (Array.isArray(parsed)) {
+//     const url = parsed[0]
+//     if (!url) throw new Error('unable to get image data')
+//     return { url }
+//   }
 
-  throw new Error('unable to get image data')
-}
+//   throw new Error('unable to get image data')
+// }
 
 //* Schema
 const schema = {
