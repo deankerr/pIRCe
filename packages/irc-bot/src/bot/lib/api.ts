@@ -1,7 +1,7 @@
 import { env } from './util.js'
 
 export async function pabel(
-  type: 'chat' | 'moderation' | 'image',
+  type: 'chat' | 'moderation' | 'image' | 'image/illusion',
   params: Record<string, unknown>,
 ) {
   const pabelURL = new URL(`/api/${type}`, env('PABEL_URL'))

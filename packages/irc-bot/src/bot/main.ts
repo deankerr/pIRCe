@@ -2,6 +2,7 @@ import type { ActionContext, InitialContext, IRCEventMessage } from './types.js'
 import { TRIGGER_TYPE, WILDCARD } from './const.js'
 import { admin } from './features/admin.js'
 import { chat } from './features/chat.js'
+import { illusion } from './features/illusion'
 import { image } from './features/image.js'
 import { setMemoryTime } from './features/set-memory-time.js'
 import { createMessage, getHandlers, getOptions } from './lib/db.js'
@@ -18,6 +19,7 @@ const simpleFeatures: Record<string, SimpleFeature> = {
 const actionFeatures: Record<string, ActionFeature> = {
   chat,
   image,
+  illusion,
 }
 
 export async function main(ircMessage: IRCEventMessage) {
