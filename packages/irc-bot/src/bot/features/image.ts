@@ -10,12 +10,12 @@ import { respond } from '../send.js'
 
 export async function image(ctx: ActionContext) {
   try {
+    console.log('image handler')
     // combine user and profile prompts
     const userPrompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
     const profilePrompt = ctx.profile.mainPrompt ?? ''
     const prompt = `${userPrompt}, ${profilePrompt}`.trim()
 
-    // const payload = createPayload(ctx, { prompt })
     const parameters = parseJsonRecord(ctx.profile.parameters)
     const model = ctx.model.id
     const payloadRaw = {
@@ -24,21 +24,34 @@ export async function image(ctx: ActionContext) {
       prompt,
     }
 
-    let url: string | undefined
+    let result: { url?: string; base64?: string } | undefined
     if (ctx.platform.id === 'openai') {
+      console.log('openai')
       const parsedRequest = schema.openai.request.parse(payloadRaw)
       const response = await pabel('image', { ...parsedRequest, provider: 'openai' })
-      url = z.string().parse(response)
+      result = schema.pabel.response.parse(response)
     }
 
-    // const response = await request(ctx, 'image', payload)
-    // const imageData = parseResponseImageData(ctx.platform, response)
+    if (ctx.platform.id === 'togetherai') {
+      console.log('togetherai')
+      const parsedRequest = schema.togetherai.request.parse(payloadRaw)
+      const response = await pabel('image', { ...parsedRequest, provider: 'togetherai' })
+      result = schema.pabel.response.parse(response)
+    }
 
-    // let fileLabel
-    // if (imageData.b64) fileLabel = await create.base64ToPNG(imageData.b64)
-    // if (imageData.url) fileLabel = await create.fetchAndSavePNG(imageData.url)
-    if (!url) throw new Error('response error')
-    const fileLabel = await create.fetchAndSavePNG(url)
+    if (ctx.platform.id === 'replicate') {
+      console.log('replicate')
+      const parsedRequest = schema.replicate.request.parse(payloadRaw)
+      const response = await pabel('image', { ...parsedRequest, provider: 'replicate' })
+      result = schema.pabel.response.parse(response)
+    }
+
+    if (!result) throw new Error('invalid response')
+
+    console.log('result:', result)
+    let fileLabel
+    if (result.base64) fileLabel = await create.base64ToPNG(result.base64)
+    if (result.url) fileLabel = await create.fetchAndSavePNG(result.url)
 
     if (fileLabel)
       await respond.say(
@@ -54,16 +67,6 @@ export async function image(ctx: ActionContext) {
     }
   }
 }
-
-// function createPayload(ctx: ActionContext, input: object) {
-//   const parameters = parseJsonRecord(ctx.profile.parameters)
-//   const model = ctx.model.id
-
-//   const payload = {
-//     ...parameters,
-//     model,
-//     ...input,
-//   }
 
 //   if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
 //   const s = schema[ctx.platform.id as keyof typeof schema].request
@@ -155,6 +158,13 @@ const schema = {
     }),
 
     response: z.string().url().array(),
+  },
+
+  pabel: {
+    response: z.object({
+      url: z.string().optional(),
+      base64: z.string().optional(),
+    }),
   },
 }
 

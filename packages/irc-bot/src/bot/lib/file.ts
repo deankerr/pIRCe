@@ -39,20 +39,19 @@ async function text(text: string) {
   return file(text, 'txt')
 }
 
-// async function base64ToPNG(data: string) {
-//   return file(data, 'png', 'base64')
-// }
+async function base64ToPNG(data: string) {
+  return file(data, 'png', 'base64')
+}
 
-async function file(data: string, extension: string) {
+async function file(data: string, extension: string, encoding?: BufferEncoding) {
   try {
-    return 'not implemented'
     const options = await getOptions()
     const id = nanoid(options.outputFilenameLength)
     const filename = `${id}.${extension}`
     const filepath = await getFilepath(options.outputFilePath, filename)
 
-    // await writeFile(filepath, data, encoding)
-    await Bun.write(filepath, data)
+    if (encoding) await Bun.write(filepath, Buffer.from(data, 'base64'))
+    else await Bun.write(filepath, data)
 
     log('created %o', filepath)
 
@@ -69,8 +68,6 @@ async function file(data: string, extension: string) {
   }
 }
 
-// const streamPipeline = promisify(pipeline)
-
 export async function fetchAndSavePNG(url: string) {
   try {
     // const response = got.stream(url)
@@ -80,7 +77,6 @@ export async function fetchAndSavePNG(url: string) {
     const filename = `${id}.png`
     const filepath = await getFilepath(options.outputFilePath, filename)
 
-    // await streamPipeline(response, createWriteStream(filepath))
     const blob = await response.blob()
     await Bun.write(filepath, blob)
 
@@ -99,4 +95,4 @@ export async function fetchAndSavePNG(url: string) {
   }
 }
 
-export const create = { text, file, errorLog, appendLog, fetchAndSavePNG }
+export const create = { text, file, errorLog, appendLog, fetchAndSavePNG, base64ToPNG }

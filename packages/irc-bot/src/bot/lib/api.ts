@@ -1,4 +1,5 @@
 import type { ActionContext } from '../types.js'
+import { writeFile } from 'node:fs/promises'
 import debug from 'debug'
 import got, { HTTPError } from 'got'
 import Replicate from 'replicate'
@@ -48,7 +49,7 @@ export async function request(
       log(`response error: ${error.name} ${error.message}`)
       log('response body: %o', error.response.body)
     }
-    create.errorLog(`api-${feature}`, error)
+    await create.errorLog(`api-${feature}`, error)
     throw error
   }
 }
@@ -99,19 +100,19 @@ export async function pabel(
   type: 'chat' | 'moderation' | 'image',
   params: Record<string, unknown>,
 ) {
-  try {
-    const pabelURL = new URL(`/api/${type}`, process.env.PABEL_URL ?? raise('PABEL_URL not set'))
-    const request = await fetch(pabelURL, {
-      method: 'POST',
-      body: JSON.stringify(params),
-      headers: { 'Content-Type': 'application/json' },
-    })
+  const pabelURL = new URL(`/api/${type}`, process.env.PABEL_URL ?? raise('PABEL_URL not set'))
+  const response = await fetch(pabelURL, {
+    method: 'POST',
+    body: JSON.stringify(params),
+    headers: { 'Content-Type': 'application/json' },
+  })
 
-    return request.json() as unknown
-  } catch (error) {
-    console.log('pabelChat api error')
-    throw error
+  const body = (await response.json()) as unknown
+  console.log('pabel:', body)
+  if (body && typeof body === 'object' && 'base64' in body && typeof body.base64 === 'string') {
+    await writeFile('output/img.png', Buffer.from(body.base64, 'base64'))
   }
+  return body
 }
 
 function raise(message: string): never {
