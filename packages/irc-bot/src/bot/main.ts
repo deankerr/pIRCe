@@ -103,4 +103,4 @@ export async function main(ircMessage: IRCEventMessage) {
   }
 }
 
-console.log(`bot loaded! 🤖🤖`)
+// console.log(`bot loaded! 🤖🤖`)

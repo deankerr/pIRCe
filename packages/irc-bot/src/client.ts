@@ -1,9 +1,6 @@
 import type { Message } from 'matrix-org-irc'
-import debug from 'debug'
 import { Client } from 'matrix-org-irc'
 import { main } from './bot/main'
-
-const log = debug('pIRCe:irc')
 
 function getConfig() {
   const config = {
@@ -38,10 +35,10 @@ function createIRCClient() {
   const { server, nick, opts, nickservPW } = config
   const irc = new Client(server, nick, opts)
 
-  irc.on('error', (err) => log('error: %o', err))
-  irc.on('netError', (err) => log('netError: %o', err))
+  irc.on('error', (err) => console.log('error: %o', err))
+  irc.on('netError', (err) => console.log('netError: %o', err))
   irc.on('registered', () => {
-    log('[connected]')
+    console.log('[connected]')
     if (nickservPW) void irc.say('nickserv', `identify ${nickservPW}`)
   })
 
@@ -60,12 +57,12 @@ function handleMessage(from: string, to: string, text: string, message: Message)
     mask: `${message.user}@${message.host}`,
   }
   main(msg).catch((error) => {
-    log('bot error: %O', error)
+    console.log('bot error: %O', error)
   })
 }
 
 const config = getConfig()
-log(`irc options: %O`, config)
+console.log(`irc options: %O`, config)
 
 declare global {
   // eslint-disable-next-line no-var

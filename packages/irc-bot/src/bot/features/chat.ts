@@ -1,14 +1,11 @@
 import type { Message } from '@prisma/client'
 import type { ActionContext, AIChatMessage } from '../types.js'
-import debug from 'debug'
 import { z } from 'zod'
 import { pabel } from '../lib/api.js'
 import { getContextualMessages } from '../lib/db.js'
 import { buildOpenChatMessages, normalizeAPIInput } from '../lib/input.js'
 import { parseJsonRecord } from '../lib/validate.js'
 import { respond } from '../send.js'
-
-const log = debug('pIRCe:chat')
 
 export async function chat(ctx: ActionContext) {
   try {
@@ -17,12 +14,12 @@ export async function chat(ctx: ActionContext) {
 
     if (ctx.platform.id === 'openai') {
       const moderated = await moderateMessages(ctx, messages, ctx.message)
-      if (!moderated) return log('chat failed')
+      if (!moderated) return console.log('chat failed')
       messages = moderated
     }
 
     messages = normalizeAPIInput(messages, ctx.handler.triggerWord)
-    messages.forEach((m) => log('%s: %o', m.name ?? m.role, m.content))
+    messages.forEach((m) => console.log('%s: %o', m.name ?? m.role, m.content))
 
     const parameters = parseJsonRecord(ctx.profile.parameters)
     const model = ctx.model.id
@@ -123,12 +120,12 @@ async function moderateMessages(
     const allowed = result.length === 0
 
     if (!allowed && msg.role === 'system') {
-      log('Moderation failed on system prompt: %o', msg.content)
+      console.log('Moderation failed on system prompt: %o', msg.content)
       abort = true
     }
 
     if (!allowed && msg.content === userMessage.content) {
-      log('Moderation failed: %o', msg.content)
+      console.log('Moderation failed: %o', msg.content)
       abort = true
     }
 

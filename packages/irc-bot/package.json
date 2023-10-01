@@ -9,7 +9,6 @@
     "check": "tsc --noEmit && eslint . --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.9",
     "@types/eslint": "^8.44.3",
     "@types/react-dom": "^18.2.8",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
@@ -25,7 +24,6 @@
   "dependencies": {
     "@pirce-irc/prisma": "workspace:*",
     "chokidar": "^3.5.3",
-    "debug": "^4.3.4",
     "got": "^13.0.0",
     "matrix-org-irc": "^2.2.0",
     "nanoid": "^5.0.1",
@@ -33,7 +31,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "replicate": "^0.18.1",
-    "supports-color": "^9.4.0",
     "zod": "^3.22.2"
   }
 }

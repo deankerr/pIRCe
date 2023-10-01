@@ -1,11 +1,8 @@
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import util from 'node:util'
-import debug from 'debug'
 import { nanoid } from 'nanoid'
 import { getOptions } from './db.js'
-
-const log = debug('pIRCe:file')
 
 async function appendLog(name: string, data: unknown) {
   try {
@@ -14,7 +11,7 @@ async function appendLog(name: string, data: unknown) {
     // await writeFile(filepath, util.format('%o', data))
     await Bun.write(filepath, util.format('%o', data))
   } catch (error) {
-    log(error)
+    console.log(error)
   }
 }
 
@@ -24,9 +21,9 @@ async function errorLog(name: string, data: unknown) {
     const filepath = await getFilepath('logs', filename)
     // await writeFile(filepath, util.format('%o', data))
     await Bun.write(filepath, util.format('%o', data))
-    log('created %o', filepath)
+    console.log('created %o', filepath)
   } catch (error) {
-    log(error)
+    console.log(error)
   }
 }
 
@@ -53,7 +50,7 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
     if (encoding) await Bun.write(filepath, Buffer.from(data, 'base64'))
     else await Bun.write(filepath, data)
 
-    log('created %o', filepath)
+    console.log('created %o', filepath)
 
     if (options.outputFileBaseURL) {
       let label = options.outputFileBaseURL + id
@@ -63,7 +60,7 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
       return filename
     }
   } catch (error) {
-    log(error)
+    console.log(error)
     return null
   }
 }
@@ -80,7 +77,7 @@ export async function fetchAndSavePNG(url: string) {
     const blob = await response.blob()
     await Bun.write(filepath, blob)
 
-    log('created %o', filepath)
+    console.log('created %o', filepath)
 
     if (options.outputFileBaseURL) {
       let label = options.outputFileBaseURL + id
@@ -90,7 +87,7 @@ export async function fetchAndSavePNG(url: string) {
       return filename
     }
   } catch (error) {
-    log(error)
+    console.log(error)
     return null
   }
 }
