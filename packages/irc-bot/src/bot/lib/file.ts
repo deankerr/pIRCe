@@ -8,7 +8,6 @@ async function appendLog(name: string, data: unknown) {
   try {
     const filename = `${name}.log`
     const filepath = await getFilepath('logs', filename)
-    // await writeFile(filepath, util.format('%o', data))
     await Bun.write(filepath, util.format('%o', data))
   } catch (error) {
     console.log(error)
@@ -19,7 +18,6 @@ async function errorLog(name: string, data: unknown) {
   try {
     const filename = `error-${name}-${new Date().toISOString()}.log`
     const filepath = await getFilepath('logs', filename)
-    // await writeFile(filepath, util.format('%o', data))
     await Bun.write(filepath, util.format('%o', data))
     console.log('created %o', filepath)
   } catch (error) {
@@ -67,7 +65,6 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
 
 export async function fetchAndSavePNG(url: string) {
   try {
-    // const response = got.stream(url)
     const response = await fetch(url)
     const options = await getOptions()
     const id = nanoid(options.outputFilenameLength)

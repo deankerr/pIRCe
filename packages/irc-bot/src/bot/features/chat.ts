@@ -64,33 +64,6 @@ export async function chat(ctx: ActionContext) {
   }
 }
 
-// function createPayload(ctx: ActionContext, input: object) {
-//   const parameters = parseJsonRecord(ctx.profile.parameters)
-//   const model = ctx.model.id
-
-//   const payload = {
-//     ...parameters,
-//     model,
-//     ...input,
-//   }
-
-//   if (!(ctx.platform.id in schema)) throw new Error(`Unknown platform id: ${ctx.platform.id}`)
-//   const s = schema[ctx.platform.id as keyof typeof schema].request
-
-//   return s.parse(payload)
-// }
-
-// function parseResponseMessage(platform: Platform, response: unknown) {
-//   if (!(platform.id in schema)) throw new Error(`Unknown platform id: ${platform.id}`)
-//   const s = schema[platform.id as keyof typeof schema].response
-//   const parsed = s.parse(response)
-
-//   const message = parsed.choices[0]?.message.content
-//   if (!message) throw new Error('Unable to parse message response')
-
-//   return message
-// }
-
 async function moderateMessages(
   ctx: ActionContext,
   messages: AIChatMessage[],
@@ -101,7 +74,6 @@ async function moderateMessages(
   const input = messages.map((m) => `${m.name ?? ''} ${m.content}`)
   const payload = schemaModeration.request.parse({ input })
 
-  // const response = await request(ctx, 'moderation', payload)
   const response = await pabel('moderation', payload)
   const parsed = schemaModeration.response.parse(response)
 

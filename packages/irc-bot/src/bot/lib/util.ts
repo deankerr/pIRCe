@@ -23,20 +23,4 @@ export function env(key: string) {
 
 /* 
 const sentenceChunks = filtered.match(/[^.!?"]*[.!?"]+|[^.!?"]+$/g)
-
-remove @command + nick if the text starts with either, replace remaining nicks with character name
-function adaptKeywords(content: string, profile: Profile) {
-
-  const nickTrigger = new RegExp(`^${context.me}\\b`)
-  const stripTrigger = content.replace(/^@\w*\s/, '').replace(nickTrigger, '')
-  return substitute(stripTrigger, context.me, profile.replaceNick)
-}
-
-function substitute(content: string, word: string, withWord: string | null) {
-  if (withWord === null) return content
-  const replacer = new RegExp(`\\b${word}\\b`, 'g')
-  return content.replaceAll(replacer, withWord)
-}
-
-
 */
