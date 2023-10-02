@@ -56,7 +56,7 @@ export async function main(ircMessage: IRCEventMessage) {
 
     // command-style trigger, e.g. $chat |  $chat (allow whitespace)
     if (handler.triggerType === TRIGGER_TYPE.command) {
-      const command = new RegExp(`^\\s*${triggerWord}`)
+      const command = new RegExp(`^\\s*${triggerWord}\\b`)
       if (command.test(message.content)) return true
     }
 
