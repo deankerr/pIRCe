@@ -13,24 +13,18 @@ export async function illusion(ctx: ActionContext) {
 
     const input = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
     const params = parseJsonRecord(ctx.profile.parameters)
-    const defaultText =
-      params.defaultText && typeof params.defaultText === 'string'
-        ? [params.defaultText]
-        : ['I LOVE pIRCe']
+    const defaultText = params.defaultText ? [String(params.defaultText)] : ['I LOVE pIRCe']
 
     // use quoted substrings as text mask values
     const illusionText =
       input.match(/"([^"]*)"/g)?.map((str) => str.replace(/"/g, '')) ?? defaultText
     // remove substrings from image prompt
     const imagePrompt = input.replace(/"([^"]*)"/g, '').trim()
-
-    const maskImage = await createIllusionTextMask(illusionText, 'dataUri')
-
     const profilePrompt = ctx.profile.mainPrompt ?? ''
     const prompt = `${profilePrompt}, ${imagePrompt}`.trim()
+    const maskImage = await createIllusionTextMask(illusionText, 'dataUri')
 
     const payload = {
-      // ...parameters,
       image_url: maskImage,
       prompt,
       negative_prompt:
@@ -59,7 +53,7 @@ export async function illusion(ctx: ActionContext) {
 
 async function createIllusionTextMask(input: string[], outputAs: 'dataUri' | 'file') {
   const font = await Jimp.loadFont('illusion-font.fnt')
-  const text = input[0]
+  const text = input.join(' ')
 
   const textHeight = Jimp.measureTextHeight(font, text, 1024)
   // jimp vert align middle appears broken
