@@ -63,7 +63,7 @@ async function file(data: string, extension: string, encoding?: BufferEncoding) 
   }
 }
 
-export async function fetchAndSavePNG(url: string) {
+async function fetchAndSavePNG(url: string) {
   try {
     const response = await fetch(url)
     const options = await getOptions()
@@ -89,4 +89,22 @@ export async function fetchAndSavePNG(url: string) {
   }
 }
 
-export const create = { text, file, errorLog, appendLog, fetchAndSavePNG, base64ToPNG }
+async function generateUUIDFilepath(extension: string, subdirectory?: string) {
+  const { outputFilenameLength, outputFilePath } = await getOptions()
+  const id = nanoid(outputFilenameLength)
+  const filename = `${id}.${extension}`
+  const path = join(outputFilePath, subdirectory ?? '')
+
+  await mkdir(path, { recursive: true })
+  return join(path, filename)
+}
+
+export const create = {
+  text,
+  file,
+  errorLog,
+  appendLog,
+  fetchAndSavePNG,
+  base64ToPNG,
+  generateUUIDFilepath,
+}

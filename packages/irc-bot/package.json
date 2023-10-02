@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@pirce-irc/prisma": "workspace:*",
+    "jimp": "^0.22.10",
     "matrix-org-irc": "^2.2.0",
     "nanoid": "^5.0.1",
     "replicate": "^0.18.1",

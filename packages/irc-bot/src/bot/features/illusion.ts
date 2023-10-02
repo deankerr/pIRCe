@@ -1,9 +1,9 @@
 import type { ActionContext } from '../types.js'
+import Jimp from 'jimp'
 import { z } from 'zod'
 import { pabel } from '../lib/api.js'
 import { create } from '../lib/file.js'
 import { stripInitialKeyword } from '../lib/input.js'
-import { getClown } from '../lib/util.js'
 import { parseJsonRecord } from '../lib/validate.js'
 import { respond } from '../send.js'
 
@@ -11,13 +11,27 @@ export async function illusion(ctx: ActionContext) {
   try {
     console.log('illusion handler')
 
-    const userPrompt = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
-    const profilePrompt = ctx.profile.mainPrompt ?? ''
-    const prompt = `${profilePrompt}, ${userPrompt}`.trim()
+    const input = stripInitialKeyword(ctx.message.content, ctx.handler.triggerWord ?? '')
+    const params = parseJsonRecord(ctx.profile.parameters)
+    const defaultText =
+      params.defaultText && typeof params.defaultText === 'string'
+        ? [params.defaultText]
+        : ['I LOVE pIRCe']
 
-    const parameters = parseJsonRecord(ctx.profile.parameters)
+    // use quoted substrings as text mask values
+    const illusionText =
+      input.match(/"([^"]*)"/g)?.map((str) => str.replace(/"/g, '')) ?? defaultText
+    // remove substrings from image prompt
+    const imagePrompt = input.replace(/"([^"]*)"/g, '').trim()
+
+    const maskImage = await createIllusionTextMask(illusionText, 'dataUri')
+
+    const profilePrompt = ctx.profile.mainPrompt ?? ''
+    const prompt = `${profilePrompt}, ${imagePrompt}`.trim()
+
     const payload = {
-      ...parameters,
+      // ...parameters,
+      image_url: maskImage,
       prompt,
       negative_prompt:
         '(worst quality, poor details:1.4), lowres, (artist name, signature, watermark:1.4), bad-artist-anime, bad_prompt_version2, bad-hands-5, ng_deepnegative_v1_75t',
@@ -27,15 +41,6 @@ export async function illusion(ctx: ActionContext) {
     console.log(response)
     const result = pabelResponseSchema.parse(response)
 
-    //* response error handling
-    if (result.error) {
-      const { message } = result.error
-      if (message.includes('NSFW') || message.includes('safety')) {
-        const feedback = `${getClown()} ${ctx.platform.id} sez: ${message} ${getClown()}`
-        return await respond.error(ctx, feedback)
-      }
-    }
-
     //* file creation
     let fileLabel
     if (result.base64) fileLabel = await create.base64ToPNG(result.base64)
@@ -44,11 +49,38 @@ export async function illusion(ctx: ActionContext) {
     if (fileLabel)
       await respond.say(
         ctx,
-        `"${userPrompt}" - by ${ctx.message.nick} (${ctx.model.label}) ${fileLabel}`,
+        `"${imagePrompt}" - by ${ctx.message.nick} (${ctx.model.label}) ${fileLabel}`,
       )
   } catch (error) {
     console.log('illusion error')
     console.log(error)
+  }
+}
+
+async function createIllusionTextMask(input: string[], outputAs: 'dataUri' | 'file') {
+  const font = await Jimp.loadFont('illusion-font.fnt')
+  const text = input[0]
+
+  const textHeight = Jimp.measureTextHeight(font, text, 1024)
+  // jimp vert align middle appears broken
+  const verticalOffset = Math.floor(font.info.size * 0.25)
+  const y = 512 - Math.floor(textHeight / 2) - verticalOffset
+
+  const image = new Jimp(1024, 1024, 0xffffffff)
+  image.print(
+    font,
+    0,
+    y,
+    { text, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER, alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE },
+    1024,
+  )
+
+  if (outputAs === 'dataUri') {
+    return image.getBase64Async(Jimp.MIME_PNG)
+  } else {
+    const filepath = await create.generateUUIDFilepath('png', 'illusion-text')
+    image.write(filepath, () => console.log('illusion mask created:', filepath))
+    return filepath
   }
 }
 
