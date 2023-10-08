@@ -8,9 +8,10 @@ export async function pabel(
   const response = await fetch(pabelURL, {
     method: 'POST',
     body: JSON.stringify(params),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', pirce: 'yes sir' },
   })
 
-  const body = (await response.json()) as unknown
+  const body: unknown = type === 'chat' ? await response.text() : await response.json()
+
   return body
 }

@@ -59,8 +59,8 @@ export async function image(ctx: ActionContext) {
 
     //* file creation
     let fileLabel
-    if (result.base64) fileLabel = await create.base64ToPNG(result.base64)
-    if (result.url) fileLabel = await create.fetchAndSavePNG(result.url)
+    if (result.item.base64) fileLabel = await create.base64ToPNG(result.item.base64)
+    if (result.item.url) fileLabel = await create.fetchAndSavePNG(result.item.url)
 
     if (fileLabel)
       await respond.say(
@@ -139,8 +139,10 @@ const schema = {
 }
 
 const pabelResponseSchema = z.object({
-  url: z.string().optional(),
-  base64: z.string().optional(),
+  item: z.object({
+    url: z.string().optional(),
+    base64: z.string().optional(),
+  }),
   error: z.object({ status: z.number(), message: z.string() }).optional(),
 })
 type PabelImageResponse = z.infer<typeof pabelResponseSchema>

@@ -36,9 +36,7 @@ export async function illusion(ctx: ActionContext) {
     const result = pabelResponseSchema.parse(response)
 
     //* file creation
-    let fileLabel
-    if (result.base64) fileLabel = await create.base64ToPNG(result.base64)
-    if (result.url) fileLabel = await create.fetchAndSavePNG(result.url)
+    const fileLabel = await create.fetchAndSavePNG(result.item)
 
     if (fileLabel)
       await respond.say(
@@ -80,8 +78,7 @@ async function createIllusionTextMask(input: string[], outputAs: 'dataUri' | 'fi
 
 //* Schema
 const pabelResponseSchema = z.object({
-  url: z.string().optional(),
-  base64: z.string().optional(),
+  item: z.string(),
   error: z.object({ status: z.number(), message: z.string() }).optional(),
 })
 // type PabelImageResponse = z.infer<typeof pabelResponseSchema>

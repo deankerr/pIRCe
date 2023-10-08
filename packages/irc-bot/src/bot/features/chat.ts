@@ -47,7 +47,8 @@ export async function chat(ctx: ActionContext) {
       }
     }
 
-    if (!msg) throw new Error('msg not requested')
+    if (!msg) throw new Error('unable to get response')
+
     console.log('raw: %o', msg)
     // clean some prompt data that leaks into response, commonly with OpenRouter
     const cleaned = msg
